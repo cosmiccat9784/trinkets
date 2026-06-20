@@ -18,6 +18,14 @@ let activeSnapshot = { mode: "shelf" };
 let activeAdvance = null;
 const colors = ["coral", "mint", "gold", "ink"];
 
+function shuffleArray(array) {
+  for (let i = array.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [array[i], array[j]] = [array[j], array[i]];
+  }
+  return array;
+}
+
 const gameStarters = {
   switchback: startSwitchbackTiles,
   comet: startCometCatch,
@@ -175,16 +183,26 @@ function startSwitchbackTiles() {
     `
   );
 
-  const paths = [
+  const allPaths = [
     [0, 1, 6, 11, 12, 13, 18, 23, 24],
     [0, 5, 10, 11, 12, 7, 8, 9, 14, 19, 24],
     [0, 1, 2, 3, 8, 13, 12, 17, 22, 23, 24],
-    [0, 5, 6, 7, 2, 3, 4, 9, 14, 13, 18, 19, 24]
+    [0, 5, 6, 7, 2, 3, 4, 9, 14, 13, 18, 19, 24],
+    [0, 5, 10, 11, 6, 7, 8, 13, 14, 19, 24],
+    [0, 1, 2, 7, 12, 11, 10, 15, 16, 17, 22, 23, 24],
+    [0, 5, 6, 11, 12, 17, 18, 23, 24],
+    [0, 1, 6, 7, 8, 9, 14, 13, 18, 19, 24],
+    [0, 5, 10, 15, 14, 13, 12, 17, 22, 23, 24],
+    [0, 1, 2, 3, 4, 9, 14, 19, 24],
+    [0, 5, 6, 11, 16, 17, 18, 23, 24],
+    [0, 1, 2, 7, 12, 13, 14, 9, 10, 15, 20, 21, 22, 23, 24]
   ];
   const fillerTiles = [
     ["corner", 0], ["line", 1], ["tee", 2], ["corner", 3], ["line", 0],
-    ["corner", 1], ["tee", 0], ["line", 1], ["corner", 2], ["line", 0]
+    ["corner", 1], ["tee", 0], ["line", 1], ["corner", 2], ["line", 0],
+    ["corner", 2], ["line", 0], ["tee", 1], ["corner", 0], ["line", 1]
   ];
+  const paths = shuffleArray([...allPaths]);
   const puzzles = paths.map((path, pathIndex) => buildSwitchbackPuzzle(path, pathIndex));
   const grid = document.querySelector("#pipeGrid");
   const message = document.querySelector("#switchMessage");
@@ -553,7 +571,7 @@ function startFourLetterForge() {
     `
   );
 
-  const levels = [
+  const allLevels = [
     { start: "COLD", target: "WARM", path: ["CORD", "CARD", "WARD", "WARM"] },
     { start: "WIND", target: "FIRE", path: ["FIND", "FINE", "FIRE"] },
     { start: "HEAD", target: "TAIL", path: ["HEAL", "TEAL", "TELL", "TALL", "TAIL"] },
@@ -561,8 +579,21 @@ function startFourLetterForge() {
     { start: "SAND", target: "GOLD", path: ["BAND", "BEND", "BOND", "BOLD", "GOLD"] },
     { start: "MARS", target: "MOON", path: ["MARE", "MORE", "MOOR", "MOON"] },
     { start: "DUST", target: "MIST", path: ["MUST", "MIST"] },
-    { start: "BIRD", target: "WORM", path: ["BARD", "WARD", "WARM", "WORM"] }
+    { start: "BIRD", target: "WORM", path: ["BARD", "WARD", "WARM", "WORM"] },
+    { start: "LOST", target: "GAIN", path: ["LOST", "LIST", "LAST", "GAST", "GAIN"] },
+    { start: "STAR", target: "MOON", path: ["STAB", "SLAB", "SLOB", "MOB", "MOON"] },
+    { start: "BOOK", target: "LOOK", path: ["BOOT", "LOOT", "LOOK"] },
+    { start: "FISH", target: "DISH", path: ["DISH"] },
+    { start: "WALK", target: "TALK", path: ["WALK", "TALK"] },
+    { start: "PLAY", target: "STAY", path: ["SLAY", "STAY"] },
+    { start: "RING", target: "SING", path: ["KING", "SING"] },
+    { start: "FROG", target: "FROM", path: ["FLOG", "FROM"] },
+    { start: "BEAR", target: "PEAR", path: ["TEAR", "PEAR"] },
+    { start: "BLUE", target: "GLUE", path: ["GLUE"] },
+    { start: "CAT", target: "HAT", path: ["HAT"] },
+    { start: "DOG", target: "FOG", path: ["FOG"] }
   ];
+  const levels = shuffleArray([...allLevels]);
   const extraWords = [
     "BAND", "BARD", "BARN", "BEND", "BIRD", "BOLD", "BOLT", "BOND", "BOOK", "BOON", "BOOT",
     "BORN", "BURN", "CARD", "CARE", "CAVE", "CODE", "COLD", "CORD", "CORE", "CORK", "COVE",
@@ -571,7 +602,35 @@ function startFourLetterForge() {
     "LAKE", "LAME", "LATE", "LINE", "LIVE", "LOCK", "LONG", "LOVE", "MARE", "MARS", "MART",
     "MATE", "MELT", "MIST", "MOON", "MOOR", "MORE", "MUSK", "MUST", "PLAY", "PLOT", "PORT",
     "SAND", "SOAR", "SOOT", "SOON", "STAR", "TALL", "TAIL", "TEAL", "TELL", "TOLD", "WAND",
-    "WARD", "WARE", "WARM", "WIND", "WINE", "WIRE", "WORM"
+    "WARD", "WARE", "WARM", "WIND", "WINE", "WIRE", "WORM", "BOOK", "BOOT", "BORN", "BURN",
+    "CARE", "CART", "CAST", "FISH", "FIST", "FLOG", "FOIL", "FORK", "FROM", "GAIN", "GAIN",
+    "HAIR", "HALF", "HAND", "HEAR", "HEAT", "HIDE", "HILL", "HINT", "HOPE", "HORN", "HUNT",
+    "KING", "KISS", "KITE", "KNEE", "KNOB", "KNOT", "KNOW", "LAST", "LATE", "LAWN", "LEFT",
+    "LIST", "LOOK", "LOST", "LOVE", "LUCK", "MAKE", "MALL", "MASK", "MAST", "MORE", "MUST",
+    "NAIL", "NAME", "NEAT", "NEED", "NODE", "NONE", "NOON", "NORM", "NOTE", "OBEY", "ODDS",
+    "ONCE", "ONLY", "OPEN", "ORAL", "OVEN", "OVER", "PAIN", "PAIR", "PALM", "PANE", "PART",
+    "PASS", "PAST", "PATH", "PEAR", "PLAY", "PLOT", "PLUG", "PLUS", "PULL", "PUMP", "PURE",
+    "RACE", "RAIL", "RAIN", "RANK", "RARE", "RASH", "RISK", "ROAD", "ROAM", "ROCK", "ROLE",
+    "ROLL", "ROOT", "ROPE", "ROSE", "RUIN", "RULE", "SALT", "SAME", "SAVE", "SEAT", "SEED",
+    "SEEN", "SELF", "SELL", "SEND", "SHED", "SHOW", "SHUT", "SICK", "SIDE", "SIGN", "SING",
+    "SINK", "SIZE", "SKIN", "SLAB", "SLAM", "SLAP", "SLED", "SLID", "SLIM", "SLIP", "SLOT",
+    "SLOW", "SLOB", "SLUG", "SMOG", "SNAP", "SNOW", "SOAK", "SOAR", "SOCK", "SODA", "SOFA",
+    "SOFT", "SOIL", "SOLD", "SOLE", "SOON", "SOOT", "SORT", "SOUL", "SOUP", "SPAN", "SPIN",
+    "SPOT", "STAB", "STAR", "STAY", "STEM", "STEP", "STEW", "STOP", "STUB", "STUD", "SUCH",
+    "SUIT", "SUNG", "SURE", "SWIM", "TAIL", "TAKE", "TALE", "TALK", "TALL", "TAME", "TANK",
+    "TAPE", "TART", "TEAL", "TEAR", "TELL", "TEND", "TENT", "TEST", "THEM", "THEN", "THEY",
+    "THIN", "THIS", "THUS", "TIDE", "TIDY", "TIED", "TIER", "TILE", "TILL", "TIME", "TINY",
+    "TOLD", "TOLL", "TOMB", "TONE", "TOOK", "TOOL", "TOPS", "TORE", "TORN", "TOSS", "TOUR",
+    "TOWN", "TRAP", "TRAY", "TREE", "TRIM", "TRIO", "TRIP", "TROD", "TROT", "TRUE", "TUBE",
+    "TUCK", "TUFT", "TUNE", "TURN", "TUSK", "TWIN", "TYPE", "UGLY", "UNDO", "UNIT", "UPON",
+    "URGE", "USED", "USER", "VAIN", "VALE", "VARY", "VAST", "VEIL", "VEIN", "VENT", "VERY",
+    "VEST", "VETO", "VIEW", "VINE", "VOID", "VOTE", "WADE", "WAGE", "WAIL", "WAIT", "WAKE",
+    "WALK", "WALL", "WAND", "WANT", "WARD", "WARM", "WARN", "WARP", "WARY", "WASH", "WAVE",
+    "WAVY", "WAXY", "WEAK", "WEAR", "WEED", "WEEK", "WELL", "WENT", "WERE", "WEST", "WHAT",
+    "WHEN", "WHOM", "WICK", "WIDE", "WIFE", "WILD", "WILL", "WILT", "WILY", "WIND", "WINE",
+    "WING", "WINK", "WIPE", "WIRE", "WISE", "WISH", "WITH", "WOKE", "WOLF", "WOOD", "WOOL",
+    "WORD", "WORE", "WORK", "WORM", "WORN", "WOVE", "WRAP", "WREN", "YARD", "YARN", "YEAR",
+    "YELL", "YOUR", "ZEST", "ZINC", "ZONE", "ZOOM"
   ];
   const dictionary = new Set(levels.flatMap((level) => [level.start, level.target, ...level.path]).concat(extraWords));
   let levelIndex = 0;
@@ -675,7 +734,7 @@ function startPocketMaze() {
     `
   );
 
-  const mazeMaps = [
+  const allMazeMaps = [
     {
       rows: [
         "#######",
@@ -723,8 +782,81 @@ function startPocketMaze() {
         "#######"
       ],
       shifting: [{ x: 3, y: 3 }, { x: 5, y: 2 }]
+    },
+    {
+      rows: [
+        "########",
+        "#P.....#",
+        "#.####.#",
+        "#.#K...#",
+        "#.#.###.#",
+        "#.....#E",
+        "########"
+      ],
+      shifting: [{ x: 2, y: 2 }, { x: 4, y: 4 }]
+    },
+    {
+      rows: [
+        "#######",
+        "#P.K..#",
+        "#.#.#.#",
+        "#...#.#",
+        "#.#.#.#",
+        "#...#E#",
+        "#######"
+      ],
+      shifting: [{ x: 1, y: 3 }, { x: 5, y: 1 }]
+    },
+    {
+      rows: [
+        "########",
+        "#P#....#",
+        "#.#.##.#",
+        "#.#K...#",
+        "#.#.#..#",
+        "#.....E#",
+        "########"
+      ],
+      shifting: [{ x: 3, y: 2 }, { x: 5, y: 4 }]
+    },
+    {
+      rows: [
+        "#######",
+        "#P...K#",
+        "###.#.#",
+        "#.....#",
+        "#.#.###",
+        "#....E#",
+        "#######"
+      ],
+      shifting: [{ x: 2, y: 1 }, { x: 4, y: 3 }]
+    },
+    {
+      rows: [
+        "########",
+        "#P..K..#",
+        "#.###..#",
+        "#..#...#",
+        "#..#.###",
+        "#......E",
+        "########"
+      ],
+      shifting: [{ x: 2, y: 2 }, { x: 5, y: 3 }]
+    },
+    {
+      rows: [
+        "#######",
+        "#P..#.#",
+        "#.#...#",
+        "#.#.#.#",
+        "#.#.#K#",
+        "#.....E",
+        "#######"
+      ],
+      shifting: [{ x: 1, y: 2 }, { x: 3, y: 4 }]
     }
   ];
+  const mazeMaps = shuffleArray([...allMazeMaps]);
   let mazeIndex = 0;
   let maze;
   let player;
