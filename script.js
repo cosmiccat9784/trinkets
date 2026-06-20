@@ -162,38 +162,93 @@ function startSwitchbackTiles() {
       <div class="game-layout">
         <div class="game-topline">
           <span class="game-stat">Goal: connect S to F</span>
+          <span class="game-stat" id="switchPuzzle">Puzzle: 1/1</span>
           <span class="game-stat" id="switchMoves">Moves: 0</span>
         </div>
         <p class="game-message" id="switchMessage">Click tiles to rotate them. Pipes must meet on both sides.</p>
         <div class="pipe-grid" id="pipeGrid" aria-label="Pipe puzzle grid"></div>
         <div class="game-actions">
           <button class="game-action" id="switchReset" type="button">Reset puzzle</button>
+          <button class="game-action" id="switchNext" type="button">Next puzzle</button>
         </div>
       </div>
     `
   );
 
-  const definitions = [
-    ["end", 0, 0], ["line", 1, 1], ["corner", 2, 0], ["corner", 1, 3], ["line", 0, 2],
-    ["corner", 1, 2], ["line", 0, 1], ["line", 0, 3], ["corner", 2, 1], ["corner", 0, 2],
-    ["line", 1, 2], ["corner", 0, 1], ["corner", 0, 0], ["line", 1, 3], ["corner", 2, 1],
-    ["corner", 1, 3], ["corner", 2, 2], ["line", 0, 1], ["corner", 1, 0], ["line", 0, 2],
-    ["line", 1, 1], ["tee", 0, 2], ["corner", 0, 3], ["line", 1, 1], ["end", 3, 0]
+  const paths = [
+    [0, 1, 6, 11, 12, 13, 18, 23, 24],
+    [0, 5, 10, 11, 12, 7, 8, 9, 14, 19, 24],
+    [0, 1, 2, 3, 8, 13, 12, 17, 22, 23, 24],
+    [0, 5, 6, 7, 2, 3, 4, 9, 14, 13, 18, 19, 24]
   ];
+  const fillerTiles = [
+    ["corner", 0], ["line", 1], ["tee", 2], ["corner", 3], ["line", 0],
+    ["corner", 1], ["tee", 0], ["line", 1], ["corner", 2], ["line", 0]
+  ];
+  const puzzles = paths.map((path, pathIndex) => buildSwitchbackPuzzle(path, pathIndex));
   const grid = document.querySelector("#pipeGrid");
   const message = document.querySelector("#switchMessage");
   const moveLabel = document.querySelector("#switchMoves");
+  const puzzleLabel = document.querySelector("#switchPuzzle");
+  let puzzleIndex = 0;
   let moves = 0;
   let tiles = [];
 
   function reset() {
     moves = 0;
-    tiles = definitions.map(([type, solution, offset]) => ({
+    tiles = puzzles[puzzleIndex].map(([type, solution, offset]) => ({
       type,
       solution,
       rotation: (solution + offset) % 4
     }));
     render();
+  }
+
+  function buildSwitchbackPuzzle(path, pathIndex) {
+    const required = Array.from({ length: 25 }, () => new Set());
+    for (let index = 0; index < path.length - 1; index += 1) {
+      const from = path[index];
+      const to = path[index + 1];
+      const edge = edgeBetween(from, to);
+      required[from].add(edge);
+      required[to].add((edge + 2) % 4);
+    }
+
+    return required.map((edges, index) => {
+      const solvedTile = edges.size ? tileForEdges([...edges]) : fillerTile(index, pathIndex);
+      const offset = (index * 2 + pathIndex + 1) % 4;
+      return [solvedTile.type, solvedTile.rotation, offset];
+    });
+  }
+
+  function edgeBetween(from, to) {
+    const delta = to - from;
+    if (delta === -5) return 0;
+    if (delta === 1) return 1;
+    if (delta === 5) return 2;
+    if (delta === -1) return 3;
+    return 1;
+  }
+
+  function tileForEdges(edges) {
+    const sorted = edges.sort((a, b) => a - b);
+    if (sorted.length === 1) {
+      return { type: "end", rotation: (sorted[0] + 3) % 4 };
+    }
+    if (sorted.length === 2 && (sorted[0] + 2) % 4 === sorted[1]) {
+      return { type: "line", rotation: sorted.includes(1) ? 1 : 0 };
+    }
+    if (sorted.length === 2) {
+      const key = sorted.join(",");
+      const rotations = { "0,1": 0, "1,2": 1, "2,3": 2, "0,3": 3 };
+      return { type: "corner", rotation: rotations[key] };
+    }
+    return { type: "tee", rotation: sorted.includes(3) ? 0 : 1 };
+  }
+
+  function fillerTile(index, pathIndex) {
+    const [type, rotation] = fillerTiles[(index + pathIndex * 3) % fillerTiles.length];
+    return { type, rotation };
   }
 
   function tileEdges(tile) {
@@ -270,10 +325,12 @@ function startSwitchbackTiles() {
       grid.append(button);
     });
     moveLabel.textContent = `Moves: ${moves}`;
+    puzzleLabel.textContent = `Puzzle: ${puzzleIndex + 1}/${puzzles.length}`;
     message.textContent = solved ? "Connected. The switchback path is open." : "Click tiles to rotate them. Pipes must meet on both sides.";
     setSnapshot({
       mode: solved ? "won" : "playing",
       game: "Switchback Tiles",
+      puzzle: puzzleIndex + 1,
       moves,
       connectedTiles: connected.size,
       solved,
@@ -282,6 +339,10 @@ function startSwitchbackTiles() {
   }
 
   document.querySelector("#switchReset").addEventListener("click", reset);
+  document.querySelector("#switchNext").addEventListener("click", () => {
+    puzzleIndex = (puzzleIndex + 1) % puzzles.length;
+    reset();
+  });
   reset();
 }
 
@@ -495,9 +556,23 @@ function startFourLetterForge() {
   const levels = [
     { start: "COLD", target: "WARM", path: ["CORD", "CARD", "WARD", "WARM"] },
     { start: "WIND", target: "FIRE", path: ["FIND", "FINE", "FIRE"] },
-    { start: "HEAD", target: "TAIL", path: ["HEAL", "TEAL", "TELL", "TALL", "TAIL"] }
+    { start: "HEAD", target: "TAIL", path: ["HEAL", "TEAL", "TELL", "TALL", "TAIL"] },
+    { start: "GAME", target: "CODE", path: ["GATE", "GAVE", "CAVE", "COVE", "CODE"] },
+    { start: "SAND", target: "GOLD", path: ["BAND", "BEND", "BOND", "BOLD", "GOLD"] },
+    { start: "MARS", target: "MOON", path: ["MARE", "MORE", "MOOR", "MOON"] },
+    { start: "DUST", target: "MIST", path: ["MUST", "MIST"] },
+    { start: "BIRD", target: "WORM", path: ["BARD", "WARD", "WARM", "WORM"] }
   ];
-  const extraWords = ["GOLD", "TOLD", "BOLD", "BARD", "HARD", "WIRE", "WINE", "LINE", "LIME", "LIVE", "LOVE"];
+  const extraWords = [
+    "BAND", "BARD", "BARN", "BEND", "BIRD", "BOLD", "BOLT", "BOND", "BOOK", "BOON", "BOOT",
+    "BORN", "BURN", "CARD", "CARE", "CAVE", "CODE", "COLD", "CORD", "CORE", "CORK", "COVE",
+    "DARK", "DART", "DASH", "DUSK", "DUST", "FIND", "FINE", "FIRE", "FIRM", "FISH", "FIST",
+    "GAME", "GATE", "GAVE", "GOLD", "HARD", "HARE", "HEAD", "HEAL", "HEAR", "HEAT", "LACE",
+    "LAKE", "LAME", "LATE", "LINE", "LIVE", "LOCK", "LONG", "LOVE", "MARE", "MARS", "MART",
+    "MATE", "MELT", "MIST", "MOON", "MOOR", "MORE", "MUSK", "MUST", "PLAY", "PLOT", "PORT",
+    "SAND", "SOAR", "SOOT", "SOON", "STAR", "TALL", "TAIL", "TEAL", "TELL", "TOLD", "WAND",
+    "WARD", "WARE", "WARM", "WIND", "WINE", "WIRE", "WORM"
+  ];
   const dictionary = new Set(levels.flatMap((level) => [level.start, level.target, ...level.path]).concat(extraWords));
   let levelIndex = 0;
   let current = levels[0].start;
@@ -579,6 +654,7 @@ function startPocketMaze() {
     `
       <div class="game-layout">
         <div class="game-topline">
+          <span class="game-stat" id="mazeNumber">Maze: 1/1</span>
           <span class="game-stat" id="mazeMoves">Moves: 0</span>
           <span class="game-stat" id="mazeKey">Key: no</span>
           <span class="game-stat">Move: arrows, WASD, or buttons</span>
@@ -593,21 +669,63 @@ function startPocketMaze() {
         </div>
         <div class="game-actions">
           <button class="game-action" id="mazeReset" type="button">Reset maze</button>
+          <button class="game-action" id="mazeNext" type="button">Next maze</button>
         </div>
       </div>
     `
   );
 
-  const baseRows = [
-    "#######",
-    "#P..K.#",
-    "#.###.#",
-    "#...#.#",
-    "###.#.#",
-    "#.....E",
-    "#######"
+  const mazeMaps = [
+    {
+      rows: [
+        "#######",
+        "#P..K.#",
+        "#.###.#",
+        "#...#.#",
+        "###.#.#",
+        "#.....E",
+        "#######"
+      ],
+      shifting: [{ x: 2, y: 3 }, { x: 4, y: 5 }]
+    },
+    {
+      rows: [
+        "#######",
+        "#P#...#",
+        "#.#.#K#",
+        "#...#.#",
+        "#.###.#",
+        "#....E#",
+        "#######"
+      ],
+      shifting: [{ x: 2, y: 3 }, { x: 4, y: 1 }]
+    },
+    {
+      rows: [
+        "#######",
+        "#P....#",
+        "###.#.#",
+        "#K..#.#",
+        "#.###.#",
+        "#....E#",
+        "#######"
+      ],
+      shifting: [{ x: 3, y: 2 }, { x: 2, y: 4 }]
+    },
+    {
+      rows: [
+        "#######",
+        "#P#K..#",
+        "#.#.#.#",
+        "#...#.#",
+        "###...#",
+        "#....E#",
+        "#######"
+      ],
+      shifting: [{ x: 3, y: 3 }, { x: 5, y: 2 }]
+    }
   ];
-  const shifting = [{ x: 2, y: 3 }, { x: 4, y: 5 }];
+  let mazeIndex = 0;
   let maze;
   let player;
   let hasKey;
@@ -616,8 +734,9 @@ function startPocketMaze() {
   let won;
 
   function reset() {
-    maze = baseRows.map((row) => row.split(""));
-    player = { x: 1, y: 1 };
+    const map = mazeMaps[mazeIndex];
+    maze = map.rows.map((row) => row.split(""));
+    player = findTile("P");
     hasKey = false;
     moves = 0;
     openShift = true;
@@ -656,7 +775,7 @@ function startPocketMaze() {
     maze[player.y][player.x] = "P";
     if (moves % 5 === 0 && tile !== "E") {
       openShift = !openShift;
-      shifting.forEach(({ x, y }) => {
+      mazeMaps[mazeIndex].shifting.forEach(({ x, y }) => {
         if (maze[y][x] !== "P") {
           maze[y][x] = openShift ? "." : "#";
         }
@@ -680,16 +799,28 @@ function startPocketMaze() {
         grid.append(cell);
       });
     });
+    document.querySelector("#mazeNumber").textContent = `Maze: ${mazeIndex + 1}/${mazeMaps.length}`;
     document.querySelector("#mazeMoves").textContent = `Moves: ${moves}`;
     document.querySelector("#mazeKey").textContent = `Key: ${hasKey ? "yes" : "no"}`;
     setSnapshot({
       mode: won ? "won" : "playing",
       game: "Pocket Maze",
+      maze: mazeIndex + 1,
       player,
       hasKey,
       moves,
       shiftingWallsOpen: openShift
     });
+  }
+
+  function findTile(target) {
+    for (let y = 0; y < maze.length; y += 1) {
+      const x = maze[y].indexOf(target);
+      if (x >= 0) {
+        return { x, y };
+      }
+    }
+    return { x: 1, y: 1 };
   }
 
   function keydown(event) {
@@ -714,6 +845,11 @@ function startPocketMaze() {
     button.addEventListener("click", () => attempt(...map[button.dataset.move]));
   });
   document.querySelector("#mazeReset").addEventListener("click", reset);
+  document.querySelector("#mazeNext").addEventListener("click", () => {
+    mazeIndex = (mazeIndex + 1) % mazeMaps.length;
+    document.querySelector("#mazeMessage").textContent = "Collect the key, then reach the green exit.";
+    reset();
+  });
   document.addEventListener("keydown", keydown);
   activeCleanup = () => document.removeEventListener("keydown", keydown);
   reset();
