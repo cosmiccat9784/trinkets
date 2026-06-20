@@ -867,7 +867,14 @@ function startClueCrate() {
     { q: "I have hands but cannot clap.", a: "clock", h: "It keeps time." },
     { q: "I get wetter the more I dry.", a: "towel", h: "You use it after a shower." },
     { q: "I have pages but I am not a website.", a: "book", h: "You read it." },
-    { q: "I go up and down but never move from my place.", a: "stairs", h: "You climb these." }
+    { q: "I go up and down but never move from my place.", a: "stairs", h: "You climb these." },
+    { q: "I fly without wings. I cry without eyes. Wherever I go, darkness follows me.", a: "cloud", h: "You see these in the sky." },
+    { q: "I have a head and a tail but no body.", a: "coin", h: "You use these for money." },
+    { q: "I am taken from a mine, and shut up in a wooden case, from which I am never released, and yet I am used by everyone.", a: "pencil", h: "You write with these." },
+    { q: "I have a bed but I don't sleep. I have a mouth but I don't eat. I have a head but I don't think.", a: "river", h: "You can float down these." },
+    { q: "I am always ahead, but never behind. I am always right, but never left.", a: "future", h: "You plan for these." },
+    { q: "I have a face but cannot see. I have hands but cannot clap. I have a voice but cannot speak.", a: "telephone", h: "You use these to call people." },
+    { q: "I am lighter than air, but heavy to carry. If you drop me, you break me. If you break me, you win.", a: "egg", h: "You can eat these." }
   ];
   let index = 0;
   let score = 0;
