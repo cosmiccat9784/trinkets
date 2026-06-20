@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 620" role="img" aria-labelledby="title desc">
+  <title id="title">Arcade cabinet with puzzle pieces</title>
+  <desc id="desc">A colorful arcade cabinet surrounded by game and puzzle shapes.</desc>
+  <g stroke="#19212b" stroke-width="10" stroke-linejoin="round" stroke-linecap="round">
+    <path d="M212 90h296l42 430H170z" fill="#ff6b6b"/>
+    <path d="M246 135h228l24 190H222z" fill="#43c6ac"/>
+    <path d="M265 165h190l15 130H250z" fill="#19212b"/>
+    <path d="M278 178h60v46h-60z" fill="#f6c445"/>
+    <path d="M356 178h76v46h-76z" fill="#4f8fcf"/>
+    <path d="M295 242h44v34h-44z" fill="#ff6b6b"/>
+    <path d="M365 242h58v34h-58z" fill="#43c6ac"/>
+    <path d="M230 355h260l16 108H214z" fill="#fff8ea"/>
+    <circle cx="292" cy="404" r="24" fill="#f6c445"/>
+    <circle cx="366" cy="404" r="24" fill="#4f8fcf"/>
+    <circle cx="438" cy="404" r="24" fill="#43c6ac"/>
+    <path d="M294 500h132l12 60H282z" fill="#6a4c93"/>
+    <path d="M144 520h432v54H144z" fill="#19212b"/>
+    <path d="M118 170h70v70h-70z" fill="#f6c445"/>
+    <path d="M112 392h76v76h-76z" fill="#4f8fcf"/>
+    <path d="M544 154h72v72h-72z" fill="#43c6ac"/>
+    <path d="M548 374h76v76h-76z" fill="#f6c445"/>
+    <path d="M92 300h42v42H92z" fill="#ff6b6b"/>
+    <path d="M604 284h42v42h-42z" fill="#ff6b6b"/>
+    <path d="M98 104l38-38 38 38-38 38z" fill="#43c6ac"/>
+    <path d="M560 82l42-42 42 42-42 42z" fill="#4f8fcf"/>
+  </g>
+  <g fill="#19212b">
+    <circle cx="144" cy="196" r="9"/>
+    <circle cx="580" cy="190" r="9"/>
+    <circle cx="586" cy="412" r="9"/>
+    <circle cx="150" cy="430" r="9"/>
+  </g>
+</svg>

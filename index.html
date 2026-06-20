@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Trinkets Arcade</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <a class="brand" href="#home" aria-label="Trinkets Arcade home">
+        <span class="brand-mark" aria-hidden="true"></span>
+        <span>Trinkets Arcade</span>
+      </a>
+      <nav aria-label="Primary navigation">
+        <a href="#games">Games</a>
+        <a href="#puzzles">Puzzles</a>
+        <a href="#scores">Scores</a>
+      </nav>
+    </header>
+
+    <main id="home">
+      <section class="hero" aria-labelledby="hero-title">
+        <div class="hero-copy">
+          <p class="eyebrow">Small games, quick puzzles, odd little challenges</p>
+          <h1 id="hero-title">Play a tiny thing before your tea gets cold.</h1>
+          <p>
+            A cozy cabinet of short games, brain teasers, and score-chasing
+            trinkets built for five-minute pockets of free time.
+          </p>
+          <div class="hero-actions">
+            <a class="primary-button" href="#games">Browse games</a>
+            <button class="icon-button" id="shufflePick" type="button" aria-label="Shuffle a game" title="Shuffle a game">
+              <span aria-hidden="true">?</span>
+            </button>
+          </div>
+        </div>
+        <img
+          class="hero-art"
+          src="assets/arcade-cabinet.svg"
+          alt="A bright arcade cabinet surrounded by puzzle tiles and game pieces"
+        />
+      </section>
+
+      <section class="quick-stats" id="scores" aria-label="Arcade stats">
+        <div>
+          <strong>18</strong>
+          <span>tiny games</span>
+        </div>
+        <div>
+          <strong>7</strong>
+          <span>daily puzzles</span>
+        </div>
+        <div>
+          <strong id="favoriteCount">0</strong>
+          <span>saved picks</span>
+        </div>
+        <div>
+          <strong>5m</strong>
+          <span>average run</span>
+        </div>
+      </section>
+
+      <section class="library" id="games" aria-labelledby="games-title">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">Game shelf</p>
+            <h2 id="games-title">Pick your tiny quest</h2>
+          </div>
+          <div class="filters" aria-label="Filter games">
+            <button class="filter active" type="button" data-filter="all" aria-pressed="true">All</button>
+            <button class="filter" type="button" data-filter="puzzle" aria-pressed="false">Puzzle</button>
+            <button class="filter" type="button" data-filter="arcade" aria-pressed="false">Arcade</button>
+            <button class="filter" type="button" data-filter="word" aria-pressed="false">Word</button>
+          </div>
+        </div>
+
+        <div class="game-grid" id="gameGrid">
+          <article class="game-card" data-category="puzzle" data-game="switchback">
+            <div class="game-art tile-art" aria-hidden="true">
+              <span></span><span></span><span></span><span></span>
+            </div>
+            <div class="game-content">
+              <p class="tag">Puzzle</p>
+              <h3>Switchback Tiles</h3>
+              <p>Slide colored tiles into a clean path before the board locks.</p>
+              <div class="card-actions">
+                <button class="play-button" type="button">Play</button>
+                <button class="save-button" type="button">Save pick</button>
+              </div>
+            </div>
+          </article>
+
+          <article class="game-card" data-category="arcade" data-game="comet">
+            <div class="game-art orbit-art" aria-hidden="true">
+              <span></span><span></span><span></span>
+            </div>
+            <div class="game-content">
+              <p class="tag">Arcade</p>
+              <h3>Comet Catch</h3>
+              <p>Dash around the night board and scoop up streaking lights.</p>
+              <div class="card-actions">
+                <button class="play-button" type="button">Play</button>
+                <button class="save-button" type="button">Save pick</button>
+              </div>
+            </div>
+          </article>
+
+          <article class="game-card" data-category="word" data-game="forge">
+            <div class="game-art word-art" aria-hidden="true">
+              <span>B</span><span>L</span><span>I</span><span>P</span>
+            </div>
+            <div class="game-content">
+              <p class="tag">Word</p>
+              <h3>Four-Letter Forge</h3>
+              <p>Build a chain of little words while the timer quietly narrows.</p>
+              <div class="card-actions">
+                <button class="play-button" type="button">Play</button>
+                <button class="save-button" type="button">Save pick</button>
+              </div>
+            </div>
+          </article>
+
+          <article class="game-card" data-category="puzzle" data-game="maze">
+            <div class="game-art maze-art" aria-hidden="true">
+              <span class="maze-thumb-wall"></span>
+              <span class="maze-thumb-wall"></span>
+              <span class="maze-thumb-wall"></span>
+              <span class="maze-thumb-wall"></span>
+              <span class="maze-thumb-wall"></span>
+              <span class="maze-thumb-wall"></span>
+              <span class="maze-thumb-wall"></span>
+              <span class="maze-thumb-wall"></span>
+              <span>P</span>
+              <span></span>
+              <span></span>
+              <span>K</span>
+              <span></span>
+              <span class="maze-thumb-wall"></span>
+              <span class="maze-thumb-wall"></span>
+              <span></span>
+              <span class="maze-thumb-wall"></span>
+              <span></span>
+              <span class="maze-thumb-wall"></span>
+              <span></span>
+              <span class="maze-thumb-wall"></span>
+              <span class="maze-thumb-wall"></span>
+              <span></span>
+              <span></span>
+              <span></span>
+              <span class="maze-thumb-wall"></span>
+              <span>E</span>
+              <span class="maze-thumb-wall"></span>
+            </div>
+            <div class="game-content">
+              <p class="tag">Puzzle</p>
+              <h3>Pocket Maze</h3>
+              <p>Find the tiny exit through a maze that changes one wall at a time.</p>
+              <div class="card-actions">
+                <button class="play-button" type="button">Play</button>
+                <button class="save-button" type="button">Save pick</button>
+              </div>
+            </div>
+          </article>
+
+          <article class="game-card" data-category="arcade" data-game="bash">
+            <div class="game-art paddle-art" aria-hidden="true">
+              <span>1</span><span>2</span><span>3</span>
+              <span>4</span><span>5</span><span>6</span>
+              <span>7</span><span>8</span><span>9</span>
+            </div>
+            <div class="game-content">
+              <p class="tag">Arcade</p>
+              <h3>Button Bash</h3>
+              <p>Tap fast, dodge faster, and keep your streak alive.</p>
+              <div class="card-actions">
+                <button class="play-button" type="button">Play</button>
+                <button class="save-button" type="button">Save pick</button>
+              </div>
+            </div>
+          </article>
+
+          <article class="game-card" data-category="word" data-game="clue">
+            <div class="game-art clue-art" aria-hidden="true">
+              <span class="crate-lid"></span>
+              <span class="crate-body">?</span>
+              <span class="crate-lock"></span>
+            </div>
+            <div class="game-content">
+              <p class="tag">Word</p>
+              <h3>Clue Crate</h3>
+              <p>Open a stack of bite-sized riddles with one-word answers.</p>
+              <div class="card-actions">
+                <button class="play-button" type="button">Play</button>
+                <button class="save-button" type="button">Save pick</button>
+              </div>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <section class="play-zone" id="puzzles" aria-labelledby="puzzles-title">
+        <div class="section-heading compact">
+          <div>
+            <p class="eyebrow">Today&apos;s table</p>
+            <h2 id="puzzles-title">A quick warm-up</h2>
+          </div>
+          <p id="puzzleStatus" class="status-text">Make the four corners match.</p>
+        </div>
+        <div class="puzzle-board" aria-label="Interactive color puzzle">
+          <button type="button" data-color="coral" aria-label="Top left puzzle tile"></button>
+          <button type="button" data-color="mint" aria-label="Top middle puzzle tile"></button>
+          <button type="button" data-color="gold" aria-label="Top right puzzle tile"></button>
+          <button type="button" data-color="ink" aria-label="Middle left puzzle tile"></button>
+          <button type="button" data-color="coral" aria-label="Center puzzle tile"></button>
+          <button type="button" data-color="mint" aria-label="Middle right puzzle tile"></button>
+          <button type="button" data-color="gold" aria-label="Bottom left puzzle tile"></button>
+          <button type="button" data-color="ink" aria-label="Bottom middle puzzle tile"></button>
+          <button type="button" data-color="coral" aria-label="Bottom right puzzle tile"></button>
+        </div>
+      </section>
+
+      <section class="how-to-play" aria-labelledby="how-title">
+        <div>
+          <p class="eyebrow">Now playable</p>
+          <h2 id="how-title">Every card opens a real mini-game</h2>
+        </div>
+        <p>
+          Puzzle tiles, comet catching, word chains, mazes, reaction rounds, and
+          riddle crates all run in the browser with no install.
+        </p>
+      </section>
+    </main>
+
+    <div class="game-modal" id="gameModal" aria-hidden="true">
+      <div class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+        <header class="modal-header">
+          <div>
+            <p class="eyebrow" id="modalKicker">Mini-game</p>
+            <h2 id="modalTitle">Game</h2>
+          </div>
+          <button class="close-button" id="closeGame" type="button" aria-label="Close game">x</button>
+        </header>
+        <div class="game-shell" id="gameShell"></div>
+      </div>
+    </div>
+
+    <footer>
+      <p>Trinkets Arcade keeps the shelf stocked with small, silly, satisfying playthings.</p>
+    </footer>
+
+    <script src="script.js"></script>
+  </body>
+</html>
