@@ -311,8 +311,8 @@ function startSwitchbackTiles() {
   }
 
   function glyph(tile, index) {
-    if (index === 0) return "S";
-    if (index === 24) return "F";
+    if (index === 0) return '<span class="material-symbols-outlined icon-start">start</span>';
+    if (index === 24) return '<span class="material-symbols-outlined icon-end">flag_2</span>';
     if (tile.type === "line") return tile.rotation % 2 ? "--" : "|";
     if (tile.type === "corner") return "L";
     if (tile.type === "tee") return "T";
@@ -330,7 +330,7 @@ function startSwitchbackTiles() {
       if (index === 0) button.classList.add("start");
       if (index === 24) button.classList.add("end");
       button.type = "button";
-      button.textContent = glyph(tile, index);
+      button.innerHTML = glyph(tile, index);
       button.style.transform = tile.type === "corner" || tile.type === "tee"
         ? `rotate(${tile.rotation * 90}deg)`
         : "";
