@@ -316,9 +316,9 @@ function startSwitchbackTiles() {
   function glyph(tile, index) {
     if (index === 0) return '<span class="material-symbols-outlined icon-start">&#xf4b7;</span>';
     if (index === 24) return '<span class="material-symbols-outlined icon-end">&#xf40f;</span>';
-    if (tile.type === "line") return tile.rotation % 2 ? "--" : "|";
-    if (tile.type === "corner") return "L";
-    if (tile.type === "tee") return "T";
+    if (tile.type === "line") return '<span class="material-symbols-outlined icon-tile" style="transform:rotate(' + (tile.rotation % 2 ? 0 : 90) + 'deg)">&#xf40f;</span>';
+    if (tile.type === "corner") return '<span class="material-symbols-outlined icon-tile" style="transform:rotate(' + (tile.rotation * 90) + 'deg)">&#xe5da;</span>';
+    if (tile.type === "tee") return '<span class="material-symbols-outlined icon-tile" style="transform:rotate(' + (tile.rotation * 90 + 180) + 'deg)">&#xf795;</span>';
     return ".";
   }
 
@@ -334,9 +334,6 @@ function startSwitchbackTiles() {
       if (index === 24) button.classList.add("end");
       button.type = "button";
       button.innerHTML = glyph(tile, index);
-      button.style.transform = tile.type === "corner" || tile.type === "tee"
-        ? `rotate(${tile.rotation * 90}deg)`
-        : "";
       button.setAttribute("aria-label", `Rotate tile ${index + 1}`);
       button.addEventListener("click", () => {
         if (index === 0 || index === 24) return;

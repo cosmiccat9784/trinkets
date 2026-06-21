@@ -707,6 +707,12 @@ footer {
   line-height: 1;
 }
 
+.icon-tile {
+  font-size: 1.6rem;
+  line-height: 1;
+  display: inline-block;
+}
+
 .icon-start {
   color: #2d6a4f;
 }
