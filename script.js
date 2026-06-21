@@ -169,7 +169,7 @@ function startSwitchbackTiles() {
     `
       <div class="game-layout">
         <div class="game-topline">
-          <span class="game-stat">Goal: connect <span class="material-symbols-outlined icon-start" style="font-size:1rem;vertical-align:middle">&#xf4b7;</span> to <span class="material-symbols-outlined icon-end" style="font-size:1rem;vertical-align:middle">&#xf40f;</span></span>
+          <span class="game-stat">Goal: connect <span class="material-symbols-outlined icon-start" style="font-size:1rem;vertical-align:middle">open_in_new</span> to <span class="material-symbols-outlined icon-end" style="font-size:1rem;vertical-align:middle">flag_2</span></span>
           <span class="game-stat" id="switchPuzzle">Puzzle: 1/1</span>
           <span class="game-stat" id="switchMoves">Moves: 0</span>
         </div>
@@ -314,11 +314,11 @@ function startSwitchbackTiles() {
   }
 
   function glyph(tile, index) {
-    if (index === 0) return '<span class="material-symbols-outlined icon-start">&#xf4b7;</span>';
-    if (index === 24) return '<span class="material-symbols-outlined icon-end">&#xf40f;</span>';
-    if (tile.type === "line") return '<span class="material-symbols-outlined icon-tile" style="transform:rotate(' + (tile.rotation % 2 ? 0 : 90) + 'deg)">&#xf40f;</span>';
-    if (tile.type === "corner") return '<span class="material-symbols-outlined icon-tile" style="transform:rotate(' + (tile.rotation * 90) + 'deg)">&#xe5da;</span>';
-    if (tile.type === "tee") return '<span class="material-symbols-outlined icon-tile" style="transform:rotate(' + (tile.rotation * 90 + 180) + 'deg)">&#xf795;</span>';
+    if (index === 0) return '<span class="material-symbols-outlined icon-start">open_in_new</span>';
+    if (index === 24) return '<span class="material-symbols-outlined icon-end">flag_2</span>';
+    if (tile.type === "line") return '<span class="material-symbols-outlined icon-tile" style="transform:rotate(' + (tile.rotation % 2 ? 0 : 90) + 'deg)">remove</span>';
+    if (tile.type === "corner") return '<span class="material-symbols-outlined icon-tile" style="transform:rotate(' + (tile.rotation * 90) + 'deg)">subdirectory_arrow_right</span>';
+    if (tile.type === "tee") return '<span class="material-symbols-outlined icon-tile" style="transform:rotate(' + (tile.rotation * 90 + 180) + 'deg)">align_flex_end</span>';
     return ".";
   }
 
