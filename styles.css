@@ -701,6 +701,20 @@ footer {
   background: var(--gold);
 }
 
+.icon-start,
+.icon-end {
+  font-size: 1.8rem;
+  line-height: 1;
+}
+
+.icon-start {
+  color: #2d6a4f;
+}
+
+.icon-end {
+  color: #d62828;
+}
+
 .arcade-canvas {
   display: block;
   width: min(100%, 720px);
