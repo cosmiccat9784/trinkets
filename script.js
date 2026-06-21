@@ -169,7 +169,7 @@ function startSwitchbackTiles() {
     `
       <div class="game-layout">
         <div class="game-topline">
-          <span class="game-stat">Goal: connect S to F</span>
+          <span class="game-stat">Goal: connect <span class="material-symbols-outlined icon-start" style="font-size:1rem;vertical-align:middle">&#xf4b7;</span> to <span class="material-symbols-outlined icon-end" style="font-size:1rem;vertical-align:middle">&#xf40f;</span></span>
           <span class="game-stat" id="switchPuzzle">Puzzle: 1/1</span>
           <span class="game-stat" id="switchMoves">Moves: 0</span>
         </div>
