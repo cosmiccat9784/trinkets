@@ -235,6 +235,8 @@ function startSwitchbackTiles() {
     return required.map((edges, index) => {
       const solvedTile = edges.size ? tileForEdges([...edges]) : fillerTile(index, pathIndex);
       const offset = (index * 2 + pathIndex + 1) % 4;
+      if (index === 0) return ["start", 0, 0];
+      if (index === 24) return ["finish", 0, 0];
       return [solvedTile.type, solvedTile.rotation, offset];
     });
   }
@@ -270,6 +272,7 @@ function startSwitchbackTiles() {
   }
 
   function tileEdges(tile) {
+    if (tile.type === "start" || tile.type === "finish") return [0, 1, 2, 3];
     const base = {
       end: [1],
       line: [0, 2],
@@ -311,7 +314,7 @@ function startSwitchbackTiles() {
   }
 
   function glyph(tile, index) {
-    if (index === 0) return '<span class="material-symbols-outlined icon-start">&#xe089;</span>';
+    if (index === 0) return '<span class="material-symbols-outlined icon-start">&#xf4b7;</span>';
     if (index === 24) return '<span class="material-symbols-outlined icon-end">&#xf40f;</span>';
     if (tile.type === "line") return tile.rotation % 2 ? "--" : "|";
     if (tile.type === "corner") return "L";
@@ -336,6 +339,7 @@ function startSwitchbackTiles() {
         : "";
       button.setAttribute("aria-label", `Rotate tile ${index + 1}`);
       button.addEventListener("click", () => {
+        if (index === 0 || index === 24) return;
         tile.rotation = (tile.rotation + 1) % 4;
         moves += 1;
         render();
