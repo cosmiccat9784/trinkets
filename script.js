@@ -313,12 +313,13 @@ function startSwitchbackTiles() {
     return seen;
   }
 
-  function glyph(tile, index) {
+  function glyph(tile, index, isConnected) {
+    const lit = isConnected ? "_lit" : "";
     if (index === 0) return '<img src="assets/switchback/start.png" class="tile-img" alt="Start" />';
-    if (index === 24) return '<img src="assets/switchback/end.png" class="tile-img" alt="End" />';
-    if (tile.type === "line") return '<img src="assets/switchback/straight.png" class="tile-img" style="transform:rotate(' + (tile.rotation * 90) + 'deg)" alt="Pipe" />';
-    if (tile.type === "corner") return '<img src="assets/switchback/turn.png" class="tile-img" style="transform:rotate(' + (tile.rotation * 90) + 'deg)" alt="Pipe" />';
-    if (tile.type === "tee") return '<img src="assets/switchback/junction.png" class="tile-img" style="transform:rotate(' + (tile.rotation * 90) + 'deg)" alt="Pipe" />';
+    if (index === 24) return '<img src="assets/switchback/end' + lit + '.png" class="tile-img" alt="End" />';
+    if (tile.type === "line") return '<img src="assets/switchback/straight' + lit + '.png" class="tile-img" style="transform:rotate(' + (tile.rotation * 90) + 'deg)" alt="Pipe" />';
+    if (tile.type === "corner") return '<img src="assets/switchback/turn' + lit + '.png" class="tile-img" style="transform:rotate(' + (tile.rotation * 90) + 'deg)" alt="Pipe" />';
+    if (tile.type === "tee") return '<img src="assets/switchback/junction' + lit + '.png" class="tile-img" style="transform:rotate(' + (tile.rotation * 90) + 'deg)" alt="Pipe" />';
     return ".";
   }
 
@@ -333,7 +334,7 @@ function startSwitchbackTiles() {
       if (index === 0) button.classList.add("start");
       if (index === 24) button.classList.add("end");
       button.type = "button";
-      button.innerHTML = glyph(tile, index);
+      button.innerHTML = glyph(tile, index, connected.has(index));
       button.setAttribute("aria-label", `Rotate tile ${index + 1}`);
       button.addEventListener("click", () => {
         if (index === 0 || index === 24) return;

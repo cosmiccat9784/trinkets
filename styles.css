@@ -708,10 +708,6 @@ footer {
   font-size: clamp(1.5rem, 6vw, 2.4rem);
 }
 
-.pipe-tile.connected {
-  background: #dcf7ef;
-}
-
 .pipe-tile.start,
 .pipe-tile.end {
   background: var(--gold);
