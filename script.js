@@ -792,7 +792,7 @@ function startPocketMaze() {
         "#P.....#",
         "#.####.#",
         "#.#K...#",
-        "#.#.###.#",
+        "#.####.#",
         "#.....#E",
         "########"
       ],
@@ -922,6 +922,7 @@ function startPocketMaze() {
   function render() {
     const grid = document.querySelector("#mazeGrid");
     grid.innerHTML = "";
+    grid.style.gridTemplateColumns = `repeat(${maze[0].length}, minmax(34px, 58px))`;
     maze.forEach((row, y) => {
       row.forEach((tile, x) => {
         const cell = document.createElement("div");
