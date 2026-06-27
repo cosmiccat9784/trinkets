@@ -555,6 +555,8 @@ function startCometCatch() {
       message.textContent = `Time! Final score: ${state.score}.`;
       state.comets.forEach((dot) => spawnParticles(dot.x, dot.y, "#f6c445", 14));
       state.sparks.forEach((dot) => spawnParticles(dot.x, dot.y, "#ff6b6b", 10));
+      state.comets = [];
+      state.sparks = [];
     }
   }
 
