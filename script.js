@@ -675,6 +675,35 @@ function startCometCatch() {
         ctx.fillText(text, 0, 0);
         ctx.restore();
       }
+    } else if (state.time > 0 && state.time <= 6) {
+      const num = Math.ceil(state.time);
+      const text = num === 0 ? "TIME!" : String(num);
+      const frac = state.time - Math.floor(state.time);
+      const scale = 1 + (num <= 1 ? frac * 0.5 : frac * 0.3);
+      ctx.save();
+      ctx.translate(canvas.width / 2, canvas.height / 2);
+      ctx.scale(scale, scale);
+      ctx.fillStyle = "rgba(0,0,0,0.5)";
+      ctx.font = "bold 64px monospace";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText(text, 2, 2);
+      ctx.fillStyle = num <= 2 ? "#ff6b6b" : "#f6c445";
+      ctx.fillText(text, 0, 0);
+      ctx.restore();
+    } else if (state.time <= 0) {
+      const scale = 1 + (performance.now() % 600) / 600 * 0.15;
+      ctx.save();
+      ctx.translate(canvas.width / 2, canvas.height / 2);
+      ctx.scale(scale, scale);
+      ctx.fillStyle = "rgba(0,0,0,0.6)";
+      ctx.font = "bold 56px monospace";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText("TIME!", 2, 2);
+      ctx.fillStyle = "#ff6b6b";
+      ctx.fillText("TIME!", 0, 0);
+      ctx.restore();
     }
 
     ctx.restore();
