@@ -741,6 +741,9 @@ function startCometCatch() {
 
   function keydown(event) {
     keys.add(event.key);
+    if (event.key === "l" && running && countdown <= 0 && state.time > 5) {
+      state.time = 5;
+    }
   }
 
   function keyup(event) {
