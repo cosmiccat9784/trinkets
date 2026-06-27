@@ -807,7 +807,7 @@ footer {
 }
 
 .maze-grid {
-  grid-template-columns: repeat(7, minmax(34px, 58px));
+  /* columns set dynamically in render() */
 }
 
 .maze-cell {
