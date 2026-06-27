@@ -243,7 +243,7 @@ h3 {
 .maze-control:focus-visible,
 .bash-button:focus-visible,
 .pipe-tile:focus-visible,
-.puzzle-board button:focus-visible,
+
 .game-input:focus-visible {
   outline: 4px solid rgba(79, 143, 207, 0.45);
   outline-offset: 3px;
@@ -921,32 +921,6 @@ footer {
   text-align: right;
 }
 
-.puzzle-board {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(76px, 130px));
-  justify-content: center;
-  gap: 12px;
-}
-
-.puzzle-board button {
-  aspect-ratio: 1;
-  width: 100%;
-  border: 3px solid var(--line);
-  border-radius: 8px;
-  box-shadow: 6px 6px 0 var(--line);
-  cursor: pointer;
-  transition: transform 140ms ease, background 140ms ease;
-}
-
-.puzzle-board button:hover {
-  transform: translate(-2px, -2px);
-}
-
-.puzzle-board [data-color="coral"] { background: var(--coral); }
-.puzzle-board [data-color="mint"] { background: var(--mint); }
-.puzzle-board [data-color="gold"] { background: var(--gold); }
-.puzzle-board [data-color="ink"] { background: var(--ink); }
-
 footer {
   padding-top: 30px;
   padding-bottom: 30px;
@@ -1019,7 +993,5 @@ footer p {
     text-align: left;
   }
 
-  .puzzle-board {
-    grid-template-columns: repeat(3, minmax(68px, 1fr));
-  }
+
 }

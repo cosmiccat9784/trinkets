@@ -4,8 +4,7 @@ const saveButtons = document.querySelectorAll(".save-button");
 const playButtons = document.querySelectorAll(".play-button");
 const favoriteCount = document.querySelector("#favoriteCount");
 const shufflePick = document.querySelector("#shufflePick");
-const puzzleButtons = document.querySelectorAll(".puzzle-board button");
-const puzzleStatus = document.querySelector("#puzzleStatus");
+
 const gameModal = document.querySelector("#gameModal");
 const gameShell = document.querySelector("#gameShell");
 const modalTitle = document.querySelector("#modalTitle");
@@ -86,15 +85,6 @@ shufflePick.addEventListener("click", () => {
   chosen.scrollIntoView({ behavior: "smooth", block: "center" });
 });
 
-puzzleButtons.forEach((button) => {
-  button.addEventListener("click", () => {
-    const currentIndex = colors.indexOf(button.dataset.color);
-    const nextColor = colors[(currentIndex + 1) % colors.length];
-    button.dataset.color = nextColor;
-    updatePuzzleStatus();
-  });
-});
-
 closeGame.addEventListener("click", closeActiveGame);
 gameModal.addEventListener("click", (event) => {
   if (event.target === gameModal) {
@@ -107,20 +97,6 @@ document.addEventListener("keydown", (event) => {
     closeActiveGame();
   }
 });
-
-function updatePuzzleStatus() {
-  const cornerColors = [
-    puzzleButtons[0].dataset.color,
-    puzzleButtons[2].dataset.color,
-    puzzleButtons[6].dataset.color,
-    puzzleButtons[8].dataset.color
-  ];
-  const solved = cornerColors.every((color) => color === cornerColors[0]);
-
-  puzzleStatus.textContent = solved
-    ? "Corner match. That one counts."
-    : "Make the four corners match.";
-}
 
 function openGame(title, kicker, html) {
   closeCurrentGameOnly();
