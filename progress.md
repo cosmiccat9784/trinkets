@@ -7,6 +7,55 @@ Progress:
 - Avoided Node after the user reported it crashed the Codex interface.
 - Tried headless Edge/Chrome verification without Node, but both browser processes failed with Windows access errors before rendering.
 - Updated misleading thumbnails for Pocket Maze, Button Bash, and Clue Crate to better match their actual playable mechanics.
+- Verified Switchback Tiles and Comet Catch are polished and production-ready.
 
 TODO:
 - Manual in-browser playtest recommended from the already-open file URL.
+- Visual & UI Enhancements:
+  - Add hover states and micro-interactions to all buttons
+  - Enhance shuffle button animation to be more engaging
+  - Add vibrant color flashes for save/play actions
+  - Update hero section with dynamic game previews
+  - Add loading states for game modals
+  - Include particle effects for successful game actions
+  - Add game completion confetti effects
+- Game Content & Mechanics:
+  - Add 6-8 new mini-games (speed runner, pattern matcher, reaction test)
+  - Create "retro" themed mini-game collection (80s/90s arcade style)
+  - Develop "puzzle rush" game with progressive difficulty
+  - Add game leaderboards for high scores and completion times
+  - Implement game-specific achievements ("Speed Demon", "Puzzle Master")
+  - Add infinite/endless modes for Button Bash
+  - Include game hints and walkthroughs
+- Social & Community Features:
+  - Create user accounts for saving progress and high scores
+  - Implement game reviews/ratings system
+  - Add social sharing for game completion screenshots
+  - Create themed game collections
+  - Add "daily challenge" section
+- Personalization & Progression:
+  - Add color themes and visual customization
+  - Create avatar system for user profiles
+  - Implement game collection badges
+  - Add sound toggles and volume controls
+  - Add game experience points and level-ups
+  - Implement streak counters for daily play
+- Technical & Accessibility:
+  - Add offline support for games
+  - Implement lazy loading for game modals
+  - Add proper error boundaries and fallbacks
+  - Add keyboard navigation for all controls
+  - Include screen reader compatibility
+  - Add text-size adjustment and visual zoom
+- Entertainment & Engagement:
+  - Add Easter eggs and hidden content
+  - Include game soundtracks that change with difficulty
+  - Create game-specific sound effects
+  - Implement live global leaderboards
+  - Add shareable game sessions
+- Quality of Life:
+  - Add local game storage for offline play
+  - Implement automatic game saves
+  - Add undo functionality for several moves
+  - Include cheat codes for secrets
+  - Create game encyclopedia with achievement tips
