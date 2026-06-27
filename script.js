@@ -263,7 +263,8 @@ function startSwitchbackTiles() {
       const rotations = { "0,1": 0, "1,2": 1, "2,3": 2, "0,3": 3 };
       return { type: "corner", rotation: rotations[key] };
     }
-    return { type: "tee", rotation: sorted.includes(3) ? 0 : 1 };
+    const missing = [0, 1, 2, 3].find((e) => !sorted.includes(e));
+    return { type: "tee", rotation: (missing + 2) % 4 };
   }
 
   function fillerTile(index, pathIndex) {
@@ -277,7 +278,7 @@ function startSwitchbackTiles() {
       end: [1],
       line: [0, 2],
       corner: [0, 1],
-      tee: [0, 1, 2]
+      tee: [0, 1, 3]
     }[tile.type];
     return base.map((edge) => (edge + tile.rotation) % 4);
   }
