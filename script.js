@@ -379,10 +379,9 @@ function startCometCatch() {
         <div class="game-topline">
           <span class="game-stat" id="cometScore">Score: 0</span>
           <span class="game-stat" id="cometTime">Time: 45</span>
-          <span class="game-stat">Move: WASD, arrows, mouse, or touch</span>
         </div>
         <canvas class="arcade-canvas" id="cometCanvas" width="720" height="540"></canvas>
-        <p class="game-message" id="cometMessage">Catch gold comets. Avoid red sparks.</p>
+        <p class="game-message" id="cometMessage"></p>
         <div class="game-actions">
           <button class="game-action" id="cometRestart" type="button">Restart</button>
         </div>
@@ -399,44 +398,105 @@ function startCometCatch() {
   let raf = 0;
   let last = performance.now();
   let running = true;
+  let countdown = 3.5;
   let state;
+
+  function spawnFromEdge(dot) {
+    const side = Math.floor(Math.random() * 4);
+    const speed = 80 + Math.random() * 60;
+    if (side === 0) {
+      dot.x = -dot.r;
+      dot.y = Math.random() * canvas.height;
+      dot.vx = speed;
+      dot.vy = (Math.random() - 0.5) * speed * 0.6;
+    } else if (side === 1) {
+      dot.x = canvas.width + dot.r;
+      dot.y = Math.random() * canvas.height;
+      dot.vx = -speed;
+      dot.vy = (Math.random() - 0.5) * speed * 0.6;
+    } else if (side === 2) {
+      dot.x = Math.random() * canvas.width;
+      dot.y = -dot.r;
+      dot.vx = (Math.random() - 0.5) * speed * 0.6;
+      dot.vy = speed;
+    } else {
+      dot.x = Math.random() * canvas.width;
+      dot.y = canvas.height + dot.r;
+      dot.vx = (Math.random() - 0.5) * speed * 0.6;
+      dot.vy = -speed;
+    }
+    dot.trail = [];
+  }
+
+  function makeDot(radius, color) {
+    const dot = { x: 0, y: 0, vx: 0, vy: 0, r: radius, color, trail: [] };
+    spawnFromEdge(dot);
+    return dot;
+  }
 
   function reset() {
     state = {
-      player: { x: 360, y: 270, r: 18 },
-      comets: makeDots(7, 12, "#f6c445"),
-      sparks: makeDots(5, 14, "#ff6b6b"),
+      player: { x: 360, y: 270, r: 16 },
+      comets: Array.from({ length: 5 }, () => makeDot(11, "#f6c445")),
+      sparks: Array.from({ length: 3 }, () => makeDot(13, "#ff6b6b")),
+      particles: [],
+      popups: [],
       score: 0,
-      time: 45
+      time: 45,
+      hitFlash: 0,
+      shakeX: 0,
+      shakeY: 0,
+      nextCometScore: 30,
+      nextSparkScore: 60,
+      hintTimer: 3.5
     };
     running = true;
-    message.textContent = "Catch gold comets. Avoid red sparks.";
+    countdown = 3.5;
+    message.textContent = "";
     last = performance.now();
   }
 
-  function makeDots(count, radius, color) {
-    return Array.from({ length: count }, (_, index) => ({
-      x: 80 + ((index * 113) % 560),
-      y: 70 + ((index * 83) % 390),
-      vx: ((index % 2 ? 1 : -1) * (55 + index * 8)),
-      vy: ((index % 3 ? 1 : -1) * (42 + index * 6)),
-      r: radius,
-      color
-    }));
-  }
-
   function moveDot(dot, dt) {
+    dot.trail.push({ x: dot.x, y: dot.y });
+    if (dot.trail.length > 8) dot.trail.shift();
     dot.x += dot.vx * dt;
     dot.y += dot.vy * dt;
-    if (dot.x < dot.r || dot.x > canvas.width - dot.r) dot.vx *= -1;
-    if (dot.y < dot.r || dot.y > canvas.height - dot.r) dot.vy *= -1;
-    dot.x = Math.max(dot.r, Math.min(canvas.width - dot.r, dot.x));
-    dot.y = Math.max(dot.r, Math.min(canvas.height - dot.r, dot.y));
+  }
+
+  function isOffscreen(dot) {
+    return dot.x < -60 || dot.x > canvas.width + 60 ||
+           dot.y < -60 || dot.y > canvas.height + 60;
+  }
+
+  function spawnParticles(x, y, color, count) {
+    for (let i = 0; i < count; i++) {
+      const angle = Math.random() * Math.PI * 2;
+      const speed = 40 + Math.random() * 100;
+      state.particles.push({
+        x, y,
+        vx: Math.cos(angle) * speed,
+        vy: Math.sin(angle) * speed,
+        life: 0.5 + Math.random() * 0.3,
+        maxLife: 0.5 + Math.random() * 0.3,
+        r: 2 + Math.random() * 3,
+        color
+      });
+    }
+  }
+
+  function spawnPopup(x, y, text, color) {
+    state.popups.push({ x, y, text, color, life: 1.0, maxLife: 1.0 });
   }
 
   function update(dt) {
     if (!running) return;
-    const speed = 250;
+
+    if (countdown > 0) {
+      countdown -= dt;
+      return;
+    }
+
+    const speed = 260;
     if (keys.has("ArrowLeft") || keys.has("a")) state.player.x -= speed * dt;
     if (keys.has("ArrowRight") || keys.has("d")) state.player.x += speed * dt;
     if (keys.has("ArrowUp") || keys.has("w")) state.player.y -= speed * dt;
@@ -445,52 +505,199 @@ function startCometCatch() {
     state.player.y = Math.max(state.player.r, Math.min(canvas.height - state.player.r, state.player.y));
     state.time = Math.max(0, state.time - dt);
 
-    state.comets.forEach((dot) => moveDot(dot, dt));
-    state.sparks.forEach((dot) => moveDot(dot, dt));
+    state.comets.forEach((dot) => {
+      moveDot(dot, dt);
+      if (isOffscreen(dot)) spawnFromEdge(dot);
+    });
+    state.sparks.forEach((dot) => {
+      moveDot(dot, dt);
+      if (isOffscreen(dot)) spawnFromEdge(dot);
+    });
 
     state.comets.forEach((dot) => {
       if (distance(state.player, dot) < state.player.r + dot.r) {
         state.score += 10;
-        dot.x = 50 + Math.random() * 620;
-        dot.y = 50 + Math.random() * 440;
+        spawnParticles(dot.x, dot.y, "#f6c445", 8);
+        spawnPopup(dot.x, dot.y - 20, "+10", "#f6c445");
+        spawnFromEdge(dot);
       }
     });
     state.sparks.forEach((dot) => {
       if (distance(state.player, dot) < state.player.r + dot.r) {
         state.score = Math.max(0, state.score - 8);
-        dot.x = 50 + Math.random() * 620;
-        dot.y = 50 + Math.random() * 440;
+        spawnParticles(dot.x, dot.y, "#ff6b6b", 10);
+        spawnPopup(dot.x, dot.y - 20, "-8", "#ff6b6b");
+        state.hitFlash = 0.3;
+        state.shakeX = (Math.random() - 0.5) * 12;
+        state.shakeY = (Math.random() - 0.5) * 12;
+        spawnFromEdge(dot);
       }
     });
 
+    while (state.score >= state.nextCometScore) {
+      state.comets.push(makeDot(11, "#f6c445"));
+      state.nextCometScore += 30;
+    }
+    while (state.score >= state.nextSparkScore) {
+      state.sparks.push(makeDot(13, "#ff6b6b"));
+      state.nextSparkScore += 50;
+    }
+
+    state.particles.forEach((p) => {
+      p.x += p.vx * dt;
+      p.y += p.vy * dt;
+      p.vx *= 0.95;
+      p.vy *= 0.95;
+      p.life -= dt;
+    });
+    state.particles = state.particles.filter((p) => p.life > 0);
+
+    state.popups.forEach((p) => {
+      p.y -= 40 * dt;
+      p.life -= dt;
+    });
+    state.popups = state.popups.filter((p) => p.life > 0);
+
+    if (state.hitFlash > 0) state.hitFlash -= dt;
+    state.shakeX *= 0.88;
+    state.shakeY *= 0.88;
+
+    state.hintTimer -= dt;
+
     if (state.time <= 0) {
       running = false;
-      message.textContent = `Time. Final score: ${state.score}.`;
+      message.textContent = `Time! Final score: ${state.score}.`;
     }
   }
 
   function render() {
-    ctx.fillStyle = "#fff8ea";
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.save();
+    ctx.translate(state.shakeX, state.shakeY);
+
+    ctx.fillStyle = "#0f1729";
+    ctx.fillRect(-10, -10, canvas.width + 20, canvas.height + 20);
     drawGrid(ctx, canvas.width, canvas.height);
-    [...state.comets, ...state.sparks].forEach((dot) => {
+
+    for (let i = 0; i < 30; i++) {
+      const sx = (i * 137 + 50) % canvas.width;
+      const sy = (i * 97 + 30) % canvas.height;
+      ctx.fillStyle = `rgba(255,255,255,${0.15 + (i % 3) * 0.1})`;
+      ctx.beginPath();
+      ctx.arc(sx, sy, 1 + (i % 2), 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    state.comets.forEach((dot) => {
+      for (let t = 0; t < dot.trail.length; t++) {
+        const alpha = (t / dot.trail.length) * 0.35;
+        const size = dot.r * (t / dot.trail.length) * 0.7;
+        ctx.fillStyle = `rgba(246,196,69,${alpha})`;
+        ctx.beginPath();
+        ctx.arc(dot.trail[t].x, dot.trail[t].y, size, 0, Math.PI * 2);
+        ctx.fill();
+      }
       ctx.fillStyle = dot.color;
-      ctx.strokeStyle = "#19212b";
-      ctx.lineWidth = 4;
+      ctx.strokeStyle = "#0f1729";
+      ctx.lineWidth = 3;
       ctx.beginPath();
       ctx.arc(dot.x, dot.y, dot.r, 0, Math.PI * 2);
       ctx.fill();
       ctx.stroke();
+      ctx.fillStyle = "rgba(255,255,255,0.5)";
+      ctx.beginPath();
+      ctx.arc(dot.x - dot.r * 0.25, dot.y - dot.r * 0.25, dot.r * 0.35, 0, Math.PI * 2);
+      ctx.fill();
     });
+
+    state.sparks.forEach((dot) => {
+      ctx.fillStyle = dot.color;
+      ctx.strokeStyle = "#0f1729";
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.arc(dot.x, dot.y, dot.r, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+      ctx.fillStyle = "rgba(255,255,255,0.4)";
+      ctx.beginPath();
+      ctx.arc(dot.x - dot.r * 0.2, dot.y - dot.r * 0.2, dot.r * 0.3, 0, Math.PI * 2);
+      ctx.fill();
+    });
+
+    state.particles.forEach((p) => {
+      const alpha = p.life / p.maxLife;
+      ctx.fillStyle = p.color;
+      ctx.globalAlpha = alpha;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.r * alpha, 0, Math.PI * 2);
+      ctx.fill();
+    });
+    ctx.globalAlpha = 1;
+
+    state.popups.forEach((p) => {
+      const alpha = p.life / p.maxLife;
+      ctx.fillStyle = p.color;
+      ctx.globalAlpha = alpha;
+      ctx.font = "bold 18px monospace";
+      ctx.textAlign = "center";
+      ctx.fillText(p.text, p.x, p.y);
+    });
+    ctx.globalAlpha = 1;
+
+    if (state.hitFlash > 0) {
+      ctx.fillStyle = `rgba(255,107,107,${state.hitFlash * 0.3})`;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+    }
+
+    const pr = state.player.r;
+    const px = state.player.x;
+    const py = state.player.y;
     ctx.fillStyle = "#43c6ac";
-    ctx.strokeStyle = "#19212b";
-    ctx.lineWidth = 5;
+    ctx.strokeStyle = "#0f1729";
+    ctx.lineWidth = 4;
     ctx.beginPath();
-    ctx.arc(state.player.x, state.player.y, state.player.r, 0, Math.PI * 2);
+    ctx.arc(px, py, pr, 0, Math.PI * 2);
     ctx.fill();
     ctx.stroke();
+    ctx.fillStyle = "rgba(255,255,255,0.45)";
+    ctx.beginPath();
+    ctx.arc(px - pr * 0.25, py - pr * 0.3, pr * 0.35, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = "rgba(67,198,172,0.2)";
+    ctx.beginPath();
+    ctx.arc(px, py, pr + 6, 0, Math.PI * 2);
+    ctx.fill();
+
+    if (countdown > 0) {
+      const num = Math.ceil(countdown);
+      const text = num > 3 ? "" : num === 0 ? "GO!" : String(num);
+      if (text) {
+        const frac = countdown - Math.floor(countdown);
+        const scale = 1 + frac * 0.4;
+        ctx.save();
+        ctx.translate(canvas.width / 2, canvas.height / 2);
+        ctx.scale(scale, scale);
+        ctx.fillStyle = "rgba(0,0,0,0.5)";
+        ctx.font = "bold 72px monospace";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillText(text, 2, 2);
+        ctx.fillStyle = num === 0 ? "#43c6ac" : "#fff8ea";
+        ctx.fillText(text, 0, 0);
+        ctx.restore();
+      }
+    }
+
+    ctx.restore();
+
     scoreLabel.textContent = `Score: ${state.score}`;
     timeLabel.textContent = `Time: ${Math.ceil(state.time)}`;
+
+    if (state.hintTimer > 0) {
+      message.textContent = "Move with WASD, arrows, or mouse";
+    } else if (running) {
+      message.textContent = "";
+    }
+
     setSnapshot({
       mode: running ? "playing" : "ended",
       game: "Comet Catch",
