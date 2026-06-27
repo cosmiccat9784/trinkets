@@ -713,6 +713,15 @@ footer {
   background: var(--gold);
 }
 
+.pipe-tile.end.solved {
+  animation: finish-bounce 0.6s ease infinite alternate;
+}
+
+@keyframes finish-bounce {
+  0% { transform: scale(1); }
+  100% { transform: scale(1.12); box-shadow: 6px 6px 0 var(--line), 0 0 12px var(--gold); }
+}
+
 .icon-start,
 .icon-end {
   font-size: 1.8rem;

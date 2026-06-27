@@ -333,7 +333,10 @@ function startSwitchbackTiles() {
       button.className = "pipe-tile";
       if (connected.has(index)) button.classList.add("connected");
       if (index === 0) button.classList.add("start");
-      if (index === 24) button.classList.add("end");
+      if (index === 24) {
+        button.classList.add("end");
+        if (solved) button.classList.add("solved");
+      }
       button.type = "button";
       button.innerHTML = glyph(tile, index, connected.has(index));
       button.setAttribute("aria-label", `Rotate tile ${index + 1}`);
