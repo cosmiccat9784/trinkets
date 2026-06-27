@@ -554,6 +554,20 @@ function startCometCatch() {
     ctx.fillRect(-10, -10, canvas.width + 20, canvas.height + 20);
     drawGrid(ctx, canvas.width, canvas.height);
 
+    const barW = canvas.width - 40;
+    const barH = 8;
+    const barX = 20;
+    const barY = 14;
+    const pct = Math.max(0, state.time / 45);
+    ctx.fillStyle = "rgba(255,255,255,0.1)";
+    ctx.fillRect(barX, barY, barW, barH);
+    const barColor = pct > 0.5 ? "#43c6ac" : pct > 0.2 ? "#f6c445" : "#ff6b6b";
+    ctx.fillStyle = barColor;
+    ctx.fillRect(barX, barY, barW * pct, barH);
+    ctx.strokeStyle = "rgba(255,255,255,0.25)";
+    ctx.lineWidth = 1;
+    ctx.strokeRect(barX, barY, barW, barH);
+
     for (let i = 0; i < 30; i++) {
       const sx = (i * 137 + 50) % canvas.width;
       const sy = (i * 97 + 30) % canvas.height;
