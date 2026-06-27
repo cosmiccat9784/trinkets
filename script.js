@@ -465,7 +465,17 @@ function startCometCatch() {
   }
 
   function update(dt) {
-    if (!running) return;
+    if (!running) {
+      state.particles.forEach((p) => {
+        p.x += p.vx * dt;
+        p.y += p.vy * dt;
+        p.vx *= 0.95;
+        p.vy *= 0.95;
+        p.life -= dt;
+      });
+      state.particles = state.particles.filter((p) => p.life > 0);
+      return;
+    }
 
     if (countdown > 0) {
       countdown -= dt;
