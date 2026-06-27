@@ -729,6 +729,19 @@ footer {
   display: inline-block;
 }
 
+.tile-img {
+  width: 70%;
+  height: 70%;
+  object-fit: contain;
+}
+
+.tile-img-inline {
+  width: 1.2rem;
+  height: 1.2rem;
+  vertical-align: middle;
+  object-fit: contain;
+}
+
 .icon-start {
   color: #2d6a4f;
 }
