@@ -375,37 +375,36 @@ footer {
 .tile-art span:nth-child(3) { background: var(--mint); }
 .tile-art span:nth-child(4) { background: var(--sky); }
 
-.orbit-art {
-  background:
-    radial-gradient(circle at center, transparent 28%, var(--line) 29% 31%, transparent 32%),
-    #dbeafa;
+.comet-art {
+  background: #0f1729;
+  overflow: hidden;
 }
 
-.orbit-art span {
+.comet-body {
   position: absolute;
-  width: 24px;
-  height: 24px;
+  width: 28px;
+  height: 28px;
+  background: var(--gold);
   border: 3px solid var(--line);
   border-radius: 50%;
-  box-shadow: 4px 4px 0 var(--line);
+  top: 50%;
+  left: 55%;
+  transform: translate(-50%, -50%);
+  box-shadow: 4px 4px 0 var(--line), 0 0 12px var(--gold);
+  z-index: 2;
 }
 
-.orbit-art span:nth-child(1) {
-  top: 34px;
-  left: 48px;
-  background: var(--gold);
-}
-
-.orbit-art span:nth-child(2) {
-  right: 54px;
-  top: 72px;
-  background: var(--coral);
-}
-
-.orbit-art span:nth-child(3) {
-  bottom: 32px;
-  left: 44%;
-  background: var(--mint);
+.comet-trail {
+  position: absolute;
+  width: 80px;
+  height: 8px;
+  background: linear-gradient(to left, var(--gold), transparent);
+  top: 50%;
+  right: 42%;
+  transform: translateY(-50%) rotate(-18deg);
+  border-radius: 4px;
+  opacity: 0.7;
+  z-index: 1;
 }
 
 .word-art {
