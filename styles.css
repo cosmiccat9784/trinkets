@@ -358,23 +358,23 @@ footer {
 
 .tile-art {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  grid-template-rows: repeat(3, 1fr);
-  place-content: center;
+  grid-template-columns: repeat(3, 40px);
+  grid-template-rows: repeat(3, 40px);
   gap: 3px;
   padding: 10px;
   background: var(--cream);
+  justify-content: center;
 }
 
 .tile-art span {
-  aspect-ratio: 1;
   border: 2px solid var(--line);
-  border-radius: 6px;
-  box-shadow: 3px 3px 0 var(--line);
+  border-radius: 4px;
+  box-shadow: 2px 2px 0 var(--line);
   background: white;
   display: flex;
   align-items: center;
   justify-content: center;
+  overflow: hidden;
 }
 
 .tile-art img {
