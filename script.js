@@ -1168,6 +1168,7 @@ function startPocketMaze() {
   ];
   const mazeMaps = allMazeMaps;
   let mazeIndex = 0;
+  let discovered = new Set([0]);
   let maze;
   let player;
   let hasKey;
@@ -1183,6 +1184,8 @@ function startPocketMaze() {
     moves = 0;
     openShift = true;
     won = false;
+    discovered.add(mazeIndex);
+    document.querySelector("#mazeNext").disabled = true;
     render();
   }
 
@@ -1210,6 +1213,8 @@ function startPocketMaze() {
       document.querySelector("#mazeMessage").textContent = "Key collected! Find the exit door.";
     } else if (tile === "E") {
       won = true;
+      discovered.add(mazeIndex + 1);
+      document.querySelector("#mazeNext").disabled = false;
       if (mazeIndex + 1 >= mazeMaps.length) {
         document.querySelector("#mazeMessage").textContent = "";
         showWinScreen();
@@ -1354,16 +1359,22 @@ function startPocketMaze() {
       document.querySelector(".game-layout").appendChild(overlay);
       overlay.querySelector(".maze-level-picker-close").addEventListener("click", closeLevelPicker);
       overlay.addEventListener("click", (e) => { if (e.target === overlay) closeLevelPicker(); });
-      const btnGrid = overlay.querySelector(".maze-level-picker-grid");
-      for (let i = 0; i < mazeMaps.length; i++) {
-        const btn = document.createElement("button");
-        btn.type = "button";
-        btn.className = "maze-level-btn";
-        btn.textContent = i + 1;
-        if (i === mazeIndex) btn.classList.add("current");
+    }
+    const btnGrid = overlay.querySelector(".maze-level-picker-grid");
+    btnGrid.innerHTML = "";
+    for (let i = 0; i < mazeMaps.length; i++) {
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "maze-level-btn";
+      btn.textContent = i + 1;
+      if (i === mazeIndex) btn.classList.add("current");
+      if (!discovered.has(i)) {
+        btn.classList.add("locked");
+        btn.disabled = true;
+      } else {
         btn.addEventListener("click", () => { goToMaze(i); closeLevelPicker(); });
-        btnGrid.appendChild(btn);
       }
+      btnGrid.appendChild(btn);
     }
     overlay.classList.add("open");
   }

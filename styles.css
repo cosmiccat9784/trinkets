@@ -1038,6 +1038,19 @@ footer {
   box-shadow: inset 0 0 0 2px var(--line);
 }
 
+.maze-level-btn.locked {
+  background: #d1d5db;
+  color: #9ca3af;
+  cursor: not-allowed;
+  box-shadow: none;
+  opacity: 0.5;
+}
+
+#mazeNext:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
 .maze-controls {
   display: grid;
   grid-template-columns: repeat(3, 54px);
