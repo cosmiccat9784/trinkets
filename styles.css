@@ -358,22 +358,38 @@ footer {
 
 .tile-art {
   display: grid;
-  grid-template-columns: repeat(2, 72px);
-  grid-template-rows: repeat(2, 72px);
+  grid-template-columns: repeat(3, 1fr);
+  grid-template-rows: repeat(3, 1fr);
   place-content: center;
-  gap: 10px;
-  background: #fbe1d4;
+  gap: 3px;
+  padding: 10px;
+  background: var(--cream);
 }
 
 .tile-art span {
-  border: 3px solid var(--line);
-  box-shadow: 5px 5px 0 var(--line);
+  aspect-ratio: 1;
+  border: 2px solid var(--line);
+  border-radius: 6px;
+  box-shadow: 3px 3px 0 var(--line);
+  background: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.tile-art span:nth-child(1) { background: var(--coral); }
-.tile-art span:nth-child(2) { background: var(--gold); }
-.tile-art span:nth-child(3) { background: var(--mint); }
-.tile-art span:nth-child(4) { background: var(--sky); }
+.tile-art img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.tile-art .tile-start {
+  background: var(--gold);
+}
+
+.tile-art .tile-end {
+  background: var(--gold);
+}
 
 .comet-art {
   background: #0f1729;
