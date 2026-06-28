@@ -1390,6 +1390,66 @@ function startPocketMaze() {
     reset();
   }
 
+  function handleCheatCode(e) {
+    if (e.ctrlKey && e.key === "p") {
+      e.preventDefault();
+      openCheatPopup();
+    }
+  }
+
+  function openCheatPopup() {
+    let popup = document.querySelector("#mazeCheatPopup");
+    if (!popup) {
+      popup = document.createElement("div");
+      popup.id = "mazeCheatPopup";
+      popup.className = "maze-cheat-overlay";
+      popup.innerHTML = `<div class="maze-cheat-box">
+        <div class="maze-cheat-header">
+          <span class="material-symbols-outlined" style="color:var(--gold)">lock</span>
+          <strong>Secret Code</strong>
+          <button class="maze-cheat-close" type="button">&times;</button>
+        </div>
+        <p class="maze-cheat-hint">Enter the magic words to unlock all levels...</p>
+        <div class="maze-cheat-row">
+          <input class="game-input maze-cheat-input" type="text" placeholder="Type cheat code" autocomplete="off" />
+          <button class="game-action maze-cheat-submit" type="button">Go</button>
+        </div>
+        <p class="maze-cheat-feedback"></p>
+      </div>`;
+      document.querySelector(".game-layout").appendChild(popup);
+      popup.querySelector(".maze-cheat-close").addEventListener("click", closeCheatPopup);
+      popup.addEventListener("click", (ev) => { if (ev.target === popup) closeCheatPopup(); });
+      const input = popup.querySelector(".maze-cheat-input");
+      popup.querySelector(".maze-cheat-submit").addEventListener("click", () => tryCheatCode(input));
+      input.addEventListener("keydown", (ev) => { if (ev.key === "Enter") tryCheatCode(input); });
+    }
+    popup.classList.add("open");
+    popup.querySelector(".maze-cheat-input").value = "";
+    popup.querySelector(".maze-cheat-feedback").textContent = "";
+    popup.querySelector(".maze-cheat-input").focus();
+  }
+
+  function closeCheatPopup() {
+    const popup = document.querySelector("#mazeCheatPopup");
+    if (popup) popup.classList.remove("open");
+  }
+
+  function tryCheatCode(input) {
+    const val = input.value.trim().toLowerCase();
+    const fb = document.querySelector(".maze-cheat-feedback");
+    if (val === "open sesame") {
+      for (let i = 0; i < mazeMaps.length; i++) discovered.add(i);
+      fb.textContent = "All levels unlocked!";
+      fb.style.color = "var(--mint)";
+      setTimeout(closeCheatPopup, 800);
+    } else {
+      fb.textContent = "Wrong code. Try again.";
+      fb.style.color = "var(--coral)";
+      input.value = "";
+      input.focus();
+    }
+  }
+
   document.querySelectorAll(".maze-control").forEach((button) => {
     const map = { up: [0, -1], down: [0, 1], left: [-1, 0], right: [1, 0] };
     button.addEventListener("click", () => attempt(...map[button.dataset.move]));
@@ -1398,7 +1458,11 @@ function startPocketMaze() {
   document.querySelector("#mazeNext").addEventListener("click", advanceMaze);
   document.querySelector("#mazeNumber").addEventListener("click", openLevelPicker);
   document.addEventListener("keydown", keydown);
-  activeCleanup = () => document.removeEventListener("keydown", keydown);
+  document.addEventListener("keydown", handleCheatCode);
+  activeCleanup = () => {
+    document.removeEventListener("keydown", keydown);
+    document.removeEventListener("keydown", handleCheatCode);
+  };
   reset();
 }
 
