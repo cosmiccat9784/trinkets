@@ -1338,13 +1338,54 @@ function startPocketMaze() {
     });
   }
 
+  function openLevelPicker() {
+    let overlay = document.querySelector("#mazeLevelPicker");
+    if (!overlay) {
+      overlay = document.createElement("div");
+      overlay.id = "mazeLevelPicker";
+      overlay.className = "maze-level-picker-overlay";
+      overlay.innerHTML = `<div class="maze-level-picker">
+        <div class="maze-level-picker-header">
+          <strong>Jump to Maze</strong>
+          <button class="maze-level-picker-close" type="button">&times;</button>
+        </div>
+        <div class="maze-level-picker-grid"></div>
+      </div>`;
+      document.querySelector(".game-layout").appendChild(overlay);
+      overlay.querySelector(".maze-level-picker-close").addEventListener("click", closeLevelPicker);
+      overlay.addEventListener("click", (e) => { if (e.target === overlay) closeLevelPicker(); });
+      const btnGrid = overlay.querySelector(".maze-level-picker-grid");
+      for (let i = 0; i < mazeMaps.length; i++) {
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "maze-level-btn";
+        btn.textContent = i + 1;
+        if (i === mazeIndex) btn.classList.add("current");
+        btn.addEventListener("click", () => { goToMaze(i); closeLevelPicker(); });
+        btnGrid.appendChild(btn);
+      }
+    }
+    overlay.classList.add("open");
+  }
+
+  function closeLevelPicker() {
+    const overlay = document.querySelector("#mazeLevelPicker");
+    if (overlay) overlay.classList.remove("open");
+  }
+
+  function goToMaze(idx) {
+    mazeIndex = idx;
+    document.querySelector("#mazeMessage").textContent = "Collect the key, then reach the exit door.";
+    reset();
+  }
+
   document.querySelectorAll(".maze-control").forEach((button) => {
     const map = { up: [0, -1], down: [0, 1], left: [-1, 0], right: [1, 0] };
     button.addEventListener("click", () => attempt(...map[button.dataset.move]));
   });
   document.querySelector("#mazeReset").addEventListener("click", reset);
   document.querySelector("#mazeNext").addEventListener("click", advanceMaze);
-  document.querySelector("#mazeNumber").addEventListener("click", advanceMaze);
+  document.querySelector("#mazeNumber").addEventListener("click", openLevelPicker);
   document.addEventListener("keydown", keydown);
   activeCleanup = () => document.removeEventListener("keydown", keydown);
   reset();
