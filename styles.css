@@ -903,6 +903,62 @@ footer {
   100% { transform: scale(1.2) rotate(10deg); }
 }
 
+.maze-win {
+  text-align: center;
+  padding: 32px 16px;
+  animation: win-fadein 0.6s ease;
+}
+
+@keyframes win-fadein {
+  0% { opacity: 0; transform: scale(0.8); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+.maze-win-icon {
+  animation: win-bounce 1s ease infinite alternate;
+}
+
+@keyframes win-bounce {
+  0% { transform: translateY(0); }
+  100% { transform: translateY(-12px); }
+}
+
+.maze-win-title {
+  font-size: 2.4rem;
+  font-weight: 900;
+  background: linear-gradient(135deg, var(--gold), var(--coral));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin: 12px 0 8px;
+}
+
+.maze-win-sub {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #394354;
+  margin-bottom: 20px;
+}
+
+.maze-win-restart {
+  font-size: 1rem;
+  padding: 10px 24px;
+}
+
+#mazeNumber {
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+#mazeNumber:hover {
+  background: var(--gold);
+}
+
+#mazeNumber:active {
+  transform: translate(2px, 2px);
+  box-shadow: 1px 1px 0 var(--line);
+}
+
 .maze-controls {
   display: grid;
   grid-template-columns: repeat(3, 54px);
