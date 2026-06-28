@@ -548,15 +548,17 @@ footer {
 
 .maze-art .maze-thumb-player {
   background: var(--coral);
+  font-size: 1.1rem;
 }
 
 .maze-art .maze-thumb-key-cell {
   background: var(--gold);
-  color: var(--ink);
+  font-size: 1.1rem;
 }
 
 .maze-art .maze-thumb-exit-cell {
   background: var(--mint);
+  font-size: 1.1rem;
 }
 
 .maze-thumb-icon {
