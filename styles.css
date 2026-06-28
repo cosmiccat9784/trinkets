@@ -371,24 +371,107 @@ footer {
   border-radius: 4px;
   box-shadow: 2px 2px 0 var(--line);
   background: white;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  position: relative;
   overflow: hidden;
 }
 
-.tile-art img {
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-}
-
-.tile-art .tile-start {
-  background: var(--gold);
-}
-
+.tile-art .tile-start,
 .tile-art .tile-end {
   background: var(--gold);
+}
+
+.tile-art .tile-pipe::before,
+.tile-art .tile-pipe::after {
+  content: "";
+  position: absolute;
+  background: var(--mint);
+  border-radius: 3px;
+}
+
+.tile-art .tile-pipe.v::before {
+  width: 6px;
+  height: 100%;
+  left: calc(50% - 3px);
+  top: 0;
+}
+
+.tile-art .tile-pipe.h::before {
+  width: 100%;
+  height: 6px;
+  top: calc(50% - 3px);
+  left: 0;
+}
+
+.tile-art .tile-pipe.tl::before {
+  width: 6px;
+  height: 50%;
+  left: calc(50% - 3px);
+  top: 0;
+}
+
+.tile-art .tile-pipe.tl::after {
+  width: 50%;
+  height: 6px;
+  left: 50%;
+  top: calc(50% - 3px);
+}
+
+.tile-art .tile-pipe.tr::before {
+  width: 6px;
+  height: 50%;
+  left: calc(50% - 3px);
+  top: 0;
+}
+
+.tile-art .tile-pipe.tr::after {
+  width: 50%;
+  height: 6px;
+  left: 0;
+  top: calc(50% - 3px);
+}
+
+.tile-art .tile-pipe.bl::before {
+  width: 6px;
+  height: 50%;
+  left: calc(50% - 3px);
+  bottom: 0;
+  top: auto;
+}
+
+.tile-art .tile-pipe.bl::after {
+  width: 50%;
+  height: 6px;
+  left: 50%;
+  top: calc(50% - 3px);
+}
+
+.tile-art .tile-pipe.br::before {
+  width: 6px;
+  height: 50%;
+  left: calc(50% - 3px);
+  bottom: 0;
+  top: auto;
+}
+
+.tile-art .tile-pipe.br::after {
+  width: 50%;
+  height: 6px;
+  left: 0;
+  top: calc(50% - 3px);
+}
+
+.tile-art .tile-pipe.tee::before {
+  width: 100%;
+  height: 6px;
+  top: calc(50% - 3px);
+  left: 0;
+}
+
+.tile-art .tile-pipe.tee::after {
+  width: 6px;
+  height: 50%;
+  left: calc(50% - 3px);
+  top: 50%;
 }
 
 .comet-art {
@@ -443,10 +526,10 @@ footer {
 
 .maze-art {
   display: grid;
-  grid-template-columns: repeat(7, 28px);
-  grid-template-rows: repeat(4, 28px);
+  grid-template-columns: repeat(7, 34px);
+  grid-template-rows: repeat(4, 34px);
   place-content: center;
-  gap: 7px;
+  gap: 6px;
   background: var(--gold);
 }
 
@@ -456,7 +539,6 @@ footer {
   background: white;
   border: 3px solid var(--line);
   box-shadow: 3px 3px 0 var(--line);
-  font-size: 0.9rem;
   font-weight: 900;
 }
 
@@ -464,30 +546,24 @@ footer {
   background: var(--ink);
 }
 
-.maze-art span:nth-child(9) {
+.maze-art .maze-thumb-player {
   background: var(--coral);
 }
 
-.maze-art span:nth-child(12) {
+.maze-art .maze-thumb-key-cell {
   background: var(--gold);
+  color: var(--ink);
 }
 
-.maze-art span:nth-child(28) {
+.maze-art .maze-thumb-exit-cell {
   background: var(--mint);
 }
 
 .maze-thumb-icon {
-  font-size: 1.3rem;
+  font-size: 1.4rem;
   line-height: 1;
   color: white;
-}
-
-.maze-thumb-icon.maze-thumb-key {
-  color: var(--ink);
-}
-
-.maze-thumb-icon.maze-thumb-exit {
-  color: white;
+  pointer-events: none;
 }
 
 .paddle-art {
