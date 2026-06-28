@@ -47,6 +47,7 @@ TODO:
   - Add keyboard navigation for all controls
   - Include screen reader compatibility
   - Add text-size adjustment and visual zoom
+  - Include mobile versions of games
 - Entertainment & Engagement:
   - Add Easter eggs and hidden content
   - Include game soundtracks that change with difficulty
