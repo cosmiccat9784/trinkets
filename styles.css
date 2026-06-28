@@ -461,6 +461,20 @@ footer {
   background: var(--mint);
 }
 
+.maze-thumb-icon {
+  font-size: 1.3rem;
+  line-height: 1;
+  color: white;
+}
+
+.maze-thumb-icon.maze-thumb-key {
+  color: var(--ink);
+}
+
+.maze-thumb-icon.maze-thumb-exit {
+  color: white;
+}
+
 .paddle-art {
   display: grid;
   grid-template-columns: repeat(3, 54px);
