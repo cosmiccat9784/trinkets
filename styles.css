@@ -846,6 +846,47 @@ footer {
   background: var(--gold);
 }
 
+.maze-icon {
+  font-size: 1.5rem;
+  line-height: 1;
+  pointer-events: none;
+}
+
+.maze-icon-player {
+  color: white;
+}
+
+.maze-icon-key {
+  color: var(--ink);
+}
+
+.maze-icon-exit {
+  color: white;
+}
+
+.maze-icon-open {
+  animation: exit-pulse 0.8s ease infinite alternate;
+}
+
+@keyframes exit-pulse {
+  0% { transform: scale(1); }
+  100% { transform: scale(1.15); }
+}
+
+.maze-won .maze-cell.player {
+  background: var(--mint);
+}
+
+.maze-won .maze-cell.player .maze-icon-player {
+  color: white;
+  animation: player-celebrate 0.5s ease infinite alternate;
+}
+
+@keyframes player-celebrate {
+  0% { transform: scale(1) rotate(0deg); }
+  100% { transform: scale(1.2) rotate(10deg); }
+}
+
 .maze-controls {
   display: grid;
   grid-template-columns: repeat(3, 54px);
@@ -858,6 +899,7 @@ footer {
   height: 48px;
   background: white;
   box-shadow: 4px 4px 0 var(--line);
+  font-size: 0;
 }
 
 .maze-control[data-move="up"] {

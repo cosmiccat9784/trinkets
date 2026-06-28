@@ -967,13 +967,13 @@ function startPocketMaze() {
           <span class="game-stat" id="mazeKey">Key: no</span>
           <span class="game-stat">Move: arrows, WASD, or buttons</span>
         </div>
-        <p class="game-message" id="mazeMessage">Collect the key, then reach the green exit.</p>
+        <p class="game-message" id="mazeMessage">Collect the key, then reach the exit door.</p>
         <div class="maze-grid" id="mazeGrid" aria-label="Pocket maze"></div>
         <div class="maze-controls" aria-label="Maze movement controls">
-          <button class="maze-control" type="button" data-move="up">U</button>
-          <button class="maze-control" type="button" data-move="left">L</button>
-          <button class="maze-control" type="button" data-move="down">D</button>
-          <button class="maze-control" type="button" data-move="right">R</button>
+          <button class="maze-control" type="button" data-move="up" aria-label="Move up"><span class="material-symbols-outlined">arrow_upward</span></button>
+          <button class="maze-control" type="button" data-move="left" aria-label="Move left"><span class="material-symbols-outlined">arrow_back</span></button>
+          <button class="maze-control" type="button" data-move="down" aria-label="Move down"><span class="material-symbols-outlined">arrow_downward</span></button>
+          <button class="maze-control" type="button" data-move="right" aria-label="Move right"><span class="material-symbols-outlined">arrow_forward</span></button>
         </div>
         <div class="game-actions">
           <button class="game-action" id="mazeReset" type="button">Reset maze</button>
@@ -1137,7 +1137,7 @@ function startPocketMaze() {
       return;
     }
     if (tile === "E" && !hasKey) {
-      document.querySelector("#mazeMessage").textContent = "The exit needs the key first.";
+      document.querySelector("#mazeMessage").textContent = "The exit is locked. Find the key first.";
       return;
     }
     maze[player.y][player.x] = ".";
@@ -1146,10 +1146,10 @@ function startPocketMaze() {
     moves += 1;
     if (tile === "K") {
       hasKey = true;
-      document.querySelector("#mazeMessage").textContent = "Key collected. Find the exit.";
+      document.querySelector("#mazeMessage").textContent = "Key collected! Find the exit door.";
     } else if (tile === "E") {
       won = true;
-      document.querySelector("#mazeMessage").textContent = `Escaped in ${moves} moves.`;
+      document.querySelector("#mazeMessage").textContent = `Escaped in ${moves} moves! Well played.`;
     } else {
       document.querySelector("#mazeMessage").textContent = moves % 5 === 0 ? "The maze shifted." : "Keep going.";
     }
@@ -1169,6 +1169,15 @@ function startPocketMaze() {
     const grid = document.querySelector("#mazeGrid");
     grid.innerHTML = "";
     grid.style.gridTemplateColumns = `repeat(${maze[0].length}, minmax(34px, 58px))`;
+    const icons = {
+      P: '<span class="material-symbols-outlined maze-icon maze-icon-player">person</span>',
+      K: '<span class="material-symbols-outlined maze-icon maze-icon-key">key</span>',
+      E: won
+        ? '<span class="material-symbols-outlined maze-icon maze-icon-exit maze-icon-open">door_front</span>'
+        : '<span class="material-symbols-outlined maze-icon maze-icon-exit">logout</span>',
+      "#": "",
+      ".": ""
+    };
     maze.forEach((row, y) => {
       row.forEach((tile, x) => {
         const cell = document.createElement("div");
@@ -1177,13 +1186,18 @@ function startPocketMaze() {
         if (tile === "P") cell.classList.add("player");
         if (tile === "K") cell.classList.add("key");
         if (tile === "E") cell.classList.add("exit");
-        cell.textContent = { P: "P", K: "K", E: "E", "#": "", ".": "" }[tile];
+        cell.innerHTML = icons[tile] || "";
         grid.append(cell);
       });
     });
     document.querySelector("#mazeNumber").textContent = `Maze: ${mazeIndex + 1}/${mazeMaps.length}`;
     document.querySelector("#mazeMoves").textContent = `Moves: ${moves}`;
     document.querySelector("#mazeKey").textContent = `Key: ${hasKey ? "yes" : "no"}`;
+    if (won) {
+      grid.classList.add("maze-won");
+    } else {
+      grid.classList.remove("maze-won");
+    }
     setSnapshot({
       mode: won ? "won" : "playing",
       game: "Pocket Maze",
@@ -1229,7 +1243,7 @@ function startPocketMaze() {
   document.querySelector("#mazeReset").addEventListener("click", reset);
   document.querySelector("#mazeNext").addEventListener("click", () => {
     mazeIndex = (mazeIndex + 1) % mazeMaps.length;
-    document.querySelector("#mazeMessage").textContent = "Collect the key, then reach the green exit.";
+    document.querySelector("#mazeMessage").textContent = "Collect the key, then reach the exit door.";
     reset();
   });
   document.addEventListener("keydown", keydown);
