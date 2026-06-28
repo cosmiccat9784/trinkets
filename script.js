@@ -838,9 +838,7 @@ function startFourLetterForge() {
     { start: "RING", target: "SING", path: ["KING", "SING"] },
     { start: "FROG", target: "FROM", path: ["FLOG", "FROM"] },
     { start: "BEAR", target: "PEAR", path: ["TEAR", "PEAR"] },
-    { start: "BLUE", target: "GLUE", path: ["GLUE"] },
-    { start: "CAT", target: "HAT", path: ["HAT"] },
-    { start: "DOG", target: "FOG", path: ["FOG"] }
+    { start: "BLUE", target: "GLUE", path: ["GLUE"] }
   ];
   const levels = shuffleArray([...allLevels]);
   const extraWords = [
