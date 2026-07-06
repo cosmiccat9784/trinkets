@@ -806,28 +806,65 @@ function startFourLetterForge() {
   );
 
   const allLevels = [
-    { start: "COLD", target: "WARM", path: ["CORD", "CARD", "CART", "WART", "WARM"] },
+    { start: "COLD", target: "WARM", path: ["CORD", "CARD", "WARD", "WARM"] },
     { start: "WIND", target: "FIRE", path: ["FIND", "FINE", "FIRE"] },
     { start: "HEAD", target: "TAIL", path: ["HEAL", "TEAL", "TELL", "TALL", "TAIL"] },
-    { start: "GAME", target: "CODE", path: ["GAVE", "CAVE", "COVE", "CODE"] },
-    { start: "SAND", target: "GOLD", path: ["BAND", "BOND", "BOLD", "GOLD"] },
-    { start: "DART", target: "MOON", path: ["DARN", "BARN", "BORN", "BOON", "MOON"] },
-    { start: "BIRD", target: "WORM", path: ["BARD", "BARE", "BORE", "WORE", "WORM"] },
-    { start: "TOIL", target: "DELL", path: ["TOLL", "TELL", "DELL"] },
-    { start: "BOOK", target: "TOOT", path: ["LOOK", "LOOT", "TOOT"] },
-    { start: "TENT", target: "FALL", path: ["FENT", "FELT", "FELL", "FALL"] },
-    { start: "PLAY", target: "STAY", path: ["SLAY", "STAY"] },
-    { start: "DISH", target: "MIST", path: ["FISH", "FIST", "MIST"] },
-    { start: "FROG", target: "FLAW", path: ["FLOG", "FLAG", "FLAW"] },
-    { start: "PEAR", target: "POST", path: ["PEAT", "PEST", "POST"] },
-    { start: "KELP", target: "MILT", path: ["KELT", "MELT", "MILT"] },
-    { start: "RING", target: "WIND", path: ["KING", "KIND", "WIND"] },
-    { start: "BEAR", target: "FEAT", path: ["FEAR", "FEAT"] },
-    { start: "FILM", target: "WIRE", path: ["FIRM", "FIRE", "WIRE"] },
+    { start: "GAME", target: "CODE", path: ["GATE", "GAVE", "CAVE", "COVE", "CODE"] },
+    { start: "SAND", target: "GOLD", path: ["BAND", "BEND", "BOND", "BOLD", "GOLD"] },
+    { start: "MARS", target: "MOON", path: ["MARE", "MORE", "MOOR", "MOON"] },
+    { start: "DUST", target: "MIST", path: ["DUSK", "MUSK", "MUST", "MIST"] },
+    { start: "BIRD", target: "WORM", path: ["BARD", "WARD", "WARM", "WORM"] },
+    { start: "LOST", target: "GAIN", path: ["LOST", "LIST", "LAST", "GAST", "GAIN"] },
+    { start: "STAR", target: "MOON", path: ["STAB", "SLAB", "SLOB", "MOB", "MOON"] },
+    { start: "BOOK", target: "LOOK", path: ["BOOT", "LOOT", "LOOK"] },
+    { start: "FISH", target: "DISH", path: ["DISH"] },
+    { start: "WALK", target: "TALK", path: ["WALL", "TALL", "TALK"] },
+    { start: "PLAY", target: "STAY", path: ["SLAY", "SLAB", "STAB", "STAR", "STAY"] },
+    { start: "RING", target: "SING", path: ["WING", "KING", "SING"] },
+    { start: "FROG", target: "FROM", path: ["FLOG", "FROM"] },
+    { start: "BEAR", target: "PEAR", path: ["TEAR", "PEAR"] },
+    { start: "BLUE", target: "GLUE", path: ["GLUE"] }
   ];
   const levels = shuffleArray([...allLevels]);
-  const extraWords = [];
-  const dictionary = new Set(levels.flatMap((level) => [level.start, level.target, ...level.path]));
+  const extraWords = [
+    "BAND", "BARD", "BARN", "BEND", "BIRD", "BOLD", "BOLT", "BOND", "BOOK", "BOON", "BOOT",
+    "BORN", "BURN", "CARD", "CARE", "CAVE", "CODE", "COLD", "CORD", "CORE", "CORK", "COVE",
+    "DARK", "DART", "DASH", "DUSK", "DUST", "FIND", "FINE", "FIRE", "FIRM", "FISH", "FIST",
+    "GAME", "GATE", "GAVE", "GOLD", "HARD", "HARE", "HEAD", "HEAL", "HEAR", "HEAT", "LACE",
+    "LAKE", "LAME", "LATE", "LINE", "LIVE", "LOCK", "LONG", "LOVE", "MARE", "MARS", "MART",
+    "MATE", "MELT", "MIST", "MOON", "MOOR", "MORE", "MUSK", "MUST", "PLAY", "PLOT", "PORT",
+    "SAND", "SOAR", "SOOT", "SOON", "STAR", "TALL", "TAIL", "TEAL", "TELL", "TOLD", "WAND",
+    "WARD", "WARE", "WARM", "WIND", "WINE", "WIRE", "WORM", "BOOK", "BOOT", "BORN", "BURN",
+    "CARE", "CART", "CAST", "FISH", "FIST", "FLOG", "FOIL", "FORK", "FROM", "GAIN", "GAIN",
+    "HAIR", "HALF", "HAND", "HEAR", "HEAT", "HIDE", "HILL", "HINT", "HOPE", "HORN", "HUNT",
+    "KING", "KISS", "KITE", "KNEE", "KNOB", "KNOT", "KNOW", "LAST", "LATE", "LAWN", "LEFT",
+    "LIST", "LOOK", "LOST", "LOVE", "LUCK", "MAKE", "MALL", "MASK", "MAST", "MORE", "MUST",
+    "NAIL", "NAME", "NEAT", "NEED", "NODE", "NONE", "NOON", "NORM", "NOTE", "OBEY", "ODDS",
+    "ONCE", "ONLY", "OPEN", "ORAL", "OVEN", "OVER", "PAIN", "PAIR", "PALM", "PANE", "PART",
+    "PASS", "PAST", "PATH", "PEAR", "PLAY", "PLOT", "PLUG", "PLUS", "PULL", "PUMP", "PURE",
+    "RACE", "RAIL", "RAIN", "RANK", "RARE", "RASH", "RISK", "ROAD", "ROAM", "ROCK", "ROLE",
+    "ROLL", "ROOT", "ROPE", "ROSE", "RUIN", "RULE", "SALT", "SAME", "SAVE", "SEAT", "SEED",
+    "SEEN", "SELF", "SELL", "SEND", "SHED", "SHOW", "SHUT", "SICK", "SIDE", "SIGN", "SING",
+    "SINK", "SIZE", "SKIN", "SLAB", "SLAM", "SLAP", "SLED", "SLID", "SLIM", "SLIP", "SLOT",
+    "SLOW", "SLOB", "SLUG", "SMOG", "SNAP", "SNOW", "SOAK", "SOAR", "SOCK", "SODA", "SOFA",
+    "SOFT", "SOIL", "SOLD", "SOLE", "SOON", "SOOT", "SORT", "SOUL", "SOUP", "SPAN", "SPIN",
+    "SPOT", "STAB", "STAR", "STAY", "STEM", "STEP", "STEW", "STOP", "STUB", "STUD", "SUCH",
+    "SUIT", "SUNG", "SURE", "SWIM", "TAIL", "TAKE", "TALE", "TALK", "TALL", "TAME", "TANK",
+    "TAPE", "TART", "TEAL", "TEAR", "TELL", "TEND", "TENT", "TEST", "THEM", "THEN", "THEY",
+    "THIN", "THIS", "THUS", "TIDE", "TIDY", "TIED", "TIER", "TILE", "TILL", "TIME", "TINY",
+    "TOLD", "TOLL", "TOMB", "TONE", "TOOK", "TOOL", "TOPS", "TORE", "TORN", "TOSS", "TOUR",
+    "TOWN", "TRAP", "TRAY", "TREE", "TRIM", "TRIO", "TRIP", "TROD", "TROT", "TRUE", "TUBE",
+    "TUCK", "TUFT", "TUNE", "TURN", "TUSK", "TWIN", "TYPE", "UGLY", "UNDO", "UNIT", "UPON",
+    "URGE", "USED", "USER", "VAIN", "VALE", "VARY", "VAST", "VEIL", "VEIN", "VENT", "VERY",
+    "VEST", "VETO", "VIEW", "VINE", "VOID", "VOTE", "WADE", "WAGE", "WAIL", "WAIT", "WAKE",
+    "WALK", "WALL", "WAND", "WANT", "WARD", "WARM", "WARN", "WARP", "WARY", "WASH", "WAVE",
+    "WAVY", "WAXY", "WEAK", "WEAR", "WEED", "WEEK", "WELL", "WENT", "WERE", "WEST", "WHAT",
+    "WHEN", "WHOM", "WICK", "WIDE", "WIFE", "WILD", "WILL", "WILT", "WILY", "WIND", "WINE",
+    "WING", "WINK", "WIPE", "WIRE", "WISE", "WISH", "WITH", "WOKE", "WOLF", "WOOD", "WOOL",
+    "WORD", "WORE", "WORK", "WORM", "WORN", "WOVE", "WRAP", "WREN", "YARD", "YARN", "YEAR",
+    "YELL", "YOUR", "ZEST", "ZINC", "ZONE", "ZOOM"
+  ];
+  const dictionary = new Set(levels.flatMap((level) => [level.start, level.target, ...level.path]).concat(extraWords));
   let levelIndex = 0;
   let current = levels[0].start;
   let steps = 0;
