@@ -3,7 +3,7 @@ const cards = [...document.querySelectorAll(".game-card")];
 const saveButtons = document.querySelectorAll(".save-button");
 const playButtons = document.querySelectorAll(".play-button");
 const favoriteCount = document.querySelector("#favoriteCount");
-const shufflePick = document.querySelector("#shufflePick");
+
 
 const gameModal = document.querySelector("#gameModal");
 const gameShell = document.querySelector("#gameShell");
@@ -69,21 +69,6 @@ playButtons.forEach((button) => {
   });
 });
 
-shufflePick.addEventListener("click", () => {
-  const visibleCards = cards.filter((card) => !card.classList.contains("hidden"));
-  const chosen = visibleCards[Math.floor(Math.random() * visibleCards.length)] || cards[0];
-
-  chosen.animate(
-    [
-      { transform: "translateY(0)" },
-      { transform: "translateY(-10px)" },
-      { transform: "translateY(0)" }
-    ],
-    { duration: 360, easing: "ease-out" }
-  );
-
-  chosen.scrollIntoView({ behavior: "smooth", block: "center" });
-});
 
 closeGame.addEventListener("click", closeActiveGame);
 gameModal.addEventListener("click", (event) => {

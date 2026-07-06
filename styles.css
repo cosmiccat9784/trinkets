@@ -211,15 +211,8 @@ h3 {
   box-shadow: 6px 6px 0 var(--line);
 }
 
-.icon-button {
-  width: 48px;
-  background: var(--gold);
-  box-shadow: 5px 5px 0 var(--line);
-  font-size: 1.2rem;
-}
 
 .primary-button:hover,
-.icon-button:hover,
 .filter:hover,
 .save-button:hover,
 .play-button:hover,
