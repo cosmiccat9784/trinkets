@@ -826,7 +826,12 @@ function startFourLetterForge() {
     { start: "LEND", target: "BOLD", path: ["BEND", "BOND", "BOLD"] },
   ];
   const levels = shuffleArray([...allLevels]);
-  const dictionary = new Set(levels.flatMap((level) => [level.start, level.target, ...level.path]));
+  let dictionary = new Set(levels.flatMap((level) => [level.start, level.target, ...level.path]));
+  fetch("four_letter_words.txt")
+    .then((r) => r.text())
+    .then((text) => {
+      text.split("\n").forEach((w) => { if (w.trim()) dictionary.add(w.trim().toUpperCase()); });
+    });
   let levelIndex = 0;
   let current = levels[0].start;
   let steps = 0;
@@ -862,7 +867,7 @@ function startFourLetterForge() {
       return;
     }
     if (!dictionary.has(word)) {
-      message.textContent = "That word is not in this tiny forge dictionary.";
+      message.textContent = "That word is not in the dictionary.";
       return;
     }
     if (history.includes(word)) {
