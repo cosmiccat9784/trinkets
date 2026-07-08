@@ -797,9 +797,11 @@ function startFourLetterForge() {
           <form class="game-actions" id="forgeForm">
             <input class="game-input" id="forgeInput" maxlength="4" autocomplete="off" placeholder="Type a 4-letter word" />
             <button class="game-action" type="submit" title="Forge"><span class="material-symbols-outlined">edit</span></button>
+          </form>
+          <div class="game-actions">
             <button class="game-action" id="forgeHint" type="button" title="Hint"><span class="material-symbols-outlined">lightbulb</span></button>
             <button class="game-action" id="forgeRestart" type="button" title="Restart"><span class="material-symbols-outlined">restart_alt</span></button>
-          </form>
+          </div>
           <ul class="word-history" id="forgeHistory" aria-label="Accepted words"></ul>
         </div>
       </div>
