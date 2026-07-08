@@ -10,6 +10,7 @@ Progress:
 - Tried headless Edge/Chrome verification without Node, but both browser processes failed with Windows access errors before rendering.
 - Updated misleading thumbnails for Pocket Maze, Button Bash, and Clue Crate to better match their actual playable mechanics.
 - Verified Switchback Tiles and Comet Catch are polished and production-ready.
+- Four-Letter Forge COMPLETE: full dictionary (2,252 words), 18 verified levels with unique paths, Hint + Restart buttons, icon-only UI.
 
 TODO:
 - Manual in-browser playtest recommended from the already-open file URL.
