@@ -31,7 +31,8 @@ const gameStarters = {
   forge: startFourLetterForge,
   maze: startPocketMaze,
   bash: startButtonBash,
-  clue: startClueCrate
+  clue: startClueCrate,
+  toybox: startToybox
 };
 
 filters.forEach((button) => {
@@ -1253,6 +1254,9 @@ function startPocketMaze() {
   }
 
   function keydown(event) {
+    if (document.activeElement && (document.activeElement.tagName === "INPUT" || document.activeElement.tagName === "TEXTAREA")) {
+      return;
+    }
     const movesByKey = {
       ArrowUp: [0, -1],
       w: [0, -1],
@@ -1397,7 +1401,10 @@ function startPocketMaze() {
 
   function closeCheatPopup() {
     const popup = document.querySelector("#mazeCheatPopup");
-    if (popup) popup.classList.remove("open");
+    if (popup) {
+      popup.classList.remove("open");
+      document.activeElement.blur();
+    }
   }
 
   function tryCheatCode(input) {
@@ -1672,4 +1679,545 @@ function drawGrid(ctx, width, height) {
     ctx.lineTo(width, y);
     ctx.stroke();
   }
+}
+
+function startToybox() {
+  openGame(
+    "Toybox",
+    "Arcade",
+    `
+      <div class="game-layout">
+        <p class="game-message">Press, pop, spin, pour, squish, and toggle. Everything here is meant to feel good.</p>
+        <div class="toybox-grid" id="toyboxGrid"></div>
+      </div>
+    `
+  );
+
+  const grid = document.querySelector("#toyboxGrid");
+  const cleanups = [];
+
+  function addCleanup(fn) {
+    cleanups.push(fn);
+  }
+
+  /* ── Push Button ── */
+  (function initPushButton() {
+    let count = 0;
+    const toy = document.createElement("div");
+    toy.className = "toybox-toy";
+    toy.innerHTML = `
+      <span class="toybox-toy-label">Push me</span>
+      <button class="toybox-push-btn" type="button" aria-label="Push button"></button>
+      <span class="toybox-push-count" id="toyboxPushCount">0</span>
+    `;
+    grid.append(toy);
+    const btn = toy.querySelector(".toybox-push-btn");
+    const countEl = toy.querySelector("#toyboxPushCount");
+    btn.addEventListener("click", () => {
+      count += 1;
+      countEl.textContent = count;
+      countEl.style.transform = "scale(1.3)";
+      setTimeout(() => { countEl.style.transform = "scale(1)"; }, 100);
+    });
+  })();
+
+  /* ── Fidget Spinner ── */
+  (function initSpinner() {
+    const toy = document.createElement("div");
+    toy.className = "toybox-toy";
+    toy.innerHTML = `
+      <span class="toybox-toy-label">Fidget spinner</span>
+      <div class="toybox-spinner-wrap" id="spinnerWrap">
+        <svg class="toybox-spinner" id="spinnerSvg" viewBox="0 0 100 100">
+          <circle cx="50" cy="50" r="8" fill="var(--line)"/>
+          <circle cx="50" cy="18" r="12" fill="var(--coral)" stroke="var(--line)" stroke-width="2"/>
+          <circle cx="77" cy="65" r="12" fill="var(--mint)" stroke="var(--line)" stroke-width="2"/>
+          <circle cx="23" cy="65" r="12" fill="var(--gold)" stroke="var(--line)" stroke-width="2"/>
+          <line x1="50" y1="50" x2="50" y2="18" stroke="var(--line)" stroke-width="4" stroke-linecap="round"/>
+          <line x1="50" y1="50" x2="77" y2="65" stroke="var(--line)" stroke-width="4" stroke-linecap="round"/>
+          <line x1="50" y1="50" x2="23" y2="65" stroke="var(--line)" stroke-width="4" stroke-linecap="round"/>
+        </svg>
+      </div>
+    `;
+    grid.append(toy);
+    const svg = toy.querySelector("#spinnerSvg");
+    const wrap = toy.querySelector("#spinnerWrap");
+    let angle = 0;
+    let velocity = 0;
+    let spinning = false;
+    let lastAngle = 0;
+    let dragging = false;
+    let dragStart = 0;
+
+    function getAngle(e) {
+      const rect = wrap.getBoundingClientRect();
+      const cx = rect.left + rect.width / 2;
+      const cy = rect.top + rect.height / 2;
+      const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+      const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+      return Math.atan2(clientY - cy, clientX - cx);
+    }
+
+    function onDown(e) {
+      e.preventDefault();
+      dragging = true;
+      spinStart = getAngle(e);
+      lastAngle = angle;
+      velocity = 0;
+    }
+
+    function onMove(e) {
+      if (!dragging) return;
+      e.preventDefault();
+      const current = getAngle(e);
+      let delta = current - spinStart;
+      if (delta > Math.PI) delta -= 2 * Math.PI;
+      if (delta < -Math.PI) delta += 2 * Math.PI;
+      angle = lastAngle + delta;
+      velocity = delta * 0.3;
+      svg.style.transform = "rotate(" + (angle * 180 / Math.PI) + "deg)";
+    }
+
+    function onUp() {
+      if (dragging) {
+        dragging = false;
+        if (!spinning) {
+          spinning = true;
+          animate();
+        }
+      }
+    }
+
+    let spinStart = 0;
+
+    function animate() {
+      if (Math.abs(velocity) < 0.0005) {
+        spinning = false;
+        return;
+      }
+      angle += velocity;
+      velocity *= 0.985;
+      svg.style.transform = "rotate(" + (angle * 180 / Math.PI) + "deg)";
+      requestAnimationFrame(animate);
+    }
+
+    wrap.addEventListener("mousedown", onDown);
+    wrap.addEventListener("touchstart", onDown, { passive: false });
+    document.addEventListener("mousemove", onMove);
+    document.addEventListener("touchmove", onMove, { passive: false });
+    document.addEventListener("mouseup", onUp);
+    document.addEventListener("touchend", onUp);
+
+    addCleanup(() => {
+      document.removeEventListener("mousemove", onMove);
+      document.removeEventListener("touchmove", onMove);
+      document.removeEventListener("mouseup", onUp);
+      document.removeEventListener("touchend", onUp);
+    });
+  })();
+
+  /* ── Bubble Popper ── */
+  (function initBubbles() {
+    const toy = document.createElement("div");
+    toy.className = "toybox-toy";
+    toy.innerHTML = `
+      <span class="toybox-toy-label">Pop bubbles</span>
+      <canvas class="toybox-bubbles-canvas" id="bubblesCanvas"></canvas>
+    `;
+    grid.append(toy);
+    const canvas = toy.querySelector("#bubblesCanvas");
+    const ctx = canvas.getContext("2d");
+    let bubbles = [];
+    let particles = [];
+    let raf;
+    let w, h;
+
+    function resize() {
+      const rect = canvas.getBoundingClientRect();
+      w = canvas.width = rect.width;
+      h = canvas.height = rect.height;
+    }
+    resize();
+
+    function spawnBubble() {
+      const r = 10 + Math.random() * 18;
+      return {
+        x: r + Math.random() * (w - 2 * r),
+        y: h + r,
+        r,
+        speed: 0.3 + Math.random() * 0.6,
+        wobble: Math.random() * Math.PI * 2,
+        wobbleSpeed: 0.02 + Math.random() * 0.02,
+        hue: 160 + Math.random() * 60
+      };
+    }
+
+    for (let i = 0; i < 8; i++) {
+      const b = spawnBubble();
+      b.y = Math.random() * h;
+      bubbles.push(b);
+    }
+
+    function spawnParticles(x, y, hue) {
+      for (let i = 0; i < 8; i++) {
+        const angle = (Math.PI * 2 / 8) * i + Math.random() * 0.5;
+        particles.push({
+          x, y,
+          vx: Math.cos(angle) * (2 + Math.random() * 2),
+          vy: Math.sin(angle) * (2 + Math.random() * 2),
+          life: 1,
+          r: 2 + Math.random() * 3,
+          hue
+        });
+      }
+    }
+
+    function animate() {
+      ctx.clearRect(0, 0, w, h);
+      bubbles.forEach((b) => {
+        b.y -= b.speed;
+        b.wobble += b.wobbleSpeed;
+        const wx = Math.sin(b.wobble) * 8;
+        if (b.y < -b.r * 2) {
+          Object.assign(b, spawnBubble());
+        }
+        ctx.beginPath();
+        ctx.arc(b.x + wx, b.y, b.r, 0, Math.PI * 2);
+        ctx.fillStyle = "hsla(" + b.hue + ", 70%, 80%, 0.45)";
+        ctx.fill();
+        ctx.strokeStyle = "hsla(" + b.hue + ", 60%, 60%, 0.7)";
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.arc(b.x + wx - b.r * 0.3, b.y - b.r * 0.3, b.r * 0.25, 0, Math.PI * 2);
+        ctx.fillStyle = "rgba(255,255,255,0.6)";
+        ctx.fill();
+      });
+      particles = particles.filter((p) => p.life > 0);
+      particles.forEach((p) => {
+        p.x += p.vx;
+        p.y += p.vy;
+        p.vy += 0.08;
+        p.life -= 0.03;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.r * p.life, 0, Math.PI * 2);
+        ctx.fillStyle = "hsla(" + p.hue + ", 70%, 65%, " + p.life + ")";
+        ctx.fill();
+      });
+      raf = requestAnimationFrame(animate);
+    }
+    animate();
+
+    canvas.addEventListener("click", (e) => {
+      const rect = canvas.getBoundingClientRect();
+      const mx = (e.clientX - rect.left) * (w / rect.width);
+      const my = (e.clientY - rect.top) * (h / rect.height);
+      for (let i = bubbles.length - 1; i >= 0; i--) {
+        const b = bubbles[i];
+        const wx = Math.sin(b.wobble) * 8;
+        if (Math.hypot(mx - (b.x + wx), my - b.y) < b.r) {
+          spawnParticles(b.x + wx, b.y, b.hue);
+          bubbles.splice(i, 1);
+          bubbles.push(spawnBubble());
+          break;
+        }
+      }
+    });
+
+    addCleanup(() => cancelAnimationFrame(raf));
+  })();
+
+  /* ── Sand Pour ── */
+  (function initSand() {
+    const toy = document.createElement("div");
+    toy.className = "toybox-toy";
+    toy.innerHTML = `
+      <span class="toybox-toy-label">Sand pour</span>
+      <canvas class="toybox-sand-canvas" id="sandCanvas"></canvas>
+    `;
+    grid.append(toy);
+    const canvas = toy.querySelector("#sandCanvas");
+    const ctx = canvas.getContext("2d");
+    let w, h;
+    let grains = [];
+    let pouring = false;
+    let mouseX = 0;
+    let mouseY = 0;
+    let raf;
+    const CELL = 4;
+    let cols, rows, grid;
+
+    function resize() {
+      const rect = canvas.getBoundingClientRect();
+      w = canvas.width = rect.width;
+      h = canvas.height = rect.height;
+      cols = Math.ceil(w / CELL);
+      rows = Math.ceil(h / CELL);
+      grid = new Uint8Array(cols * rows);
+    }
+    resize();
+
+    function setCell(cx, cy, val) {
+      if (cx >= 0 && cx < cols && cy >= 0 && cy < rows) {
+        grid[cy * cols + cx] = val;
+      }
+    }
+
+    function getCell(cx, cy) {
+      if (cx < 0 || cx >= cols || cy < 0 || cy >= rows) return 1;
+      return grid[cy * cols + cx];
+    }
+
+    function spawnGrain(x, y) {
+      grains.push({ x, y, vx: (Math.random() - 0.5) * 1.5, vy: Math.random() * 2 + 1, life: 200 + Math.random() * 100 });
+    }
+
+    function stepSand() {
+      for (let y = rows - 1; y >= 0; y--) {
+        for (let x = 0; x < cols; x++) {
+          if (!getCell(x, y)) continue;
+          if (getCell(x, y + 1) === 0) {
+            setCell(x, y, 0);
+            setCell(x, y + 1, 1);
+          } else if (getCell(x - 1, y + 1) === 0 && getCell(x + 1, y + 1) === 0) {
+            const dir = Math.random() < 0.5 ? -1 : 1;
+            setCell(x, y, 0);
+            setCell(x + dir, y + 1, 1);
+          } else if (getCell(x - 1, y + 1) === 0) {
+            setCell(x, y, 0);
+            setCell(x - 1, y + 1, 1);
+          } else if (getCell(x + 1, y + 1) === 0) {
+            setCell(x, y, 0);
+            setCell(x + 1, y + 1, 1);
+          }
+        }
+      }
+    }
+
+    function render() {
+      ctx.fillStyle = "#f5edd6";
+      ctx.fillRect(0, 0, w, h);
+      const colors = ["#d4a574", "#c9956a", "#deb887", "#c8956e"];
+      for (let y = 0; y < rows; y++) {
+        for (let x = 0; x < cols; x++) {
+          if (getCell(x, y)) {
+            ctx.fillStyle = colors[(x + y) % colors.length];
+            ctx.fillRect(x * CELL, y * CELL, CELL, CELL);
+          }
+        }
+      }
+    }
+
+    function animate() {
+      if (pouring) {
+        const cx = Math.floor(mouseX / CELL);
+        const cy = Math.floor(mouseY / CELL);
+        for (let i = 0; i < 3; i++) {
+          const ox = Math.floor((Math.random() - 0.5) * 6);
+          setCell(cx + ox, cy, 1);
+        }
+      }
+      stepSand();
+      render();
+      raf = requestAnimationFrame(animate);
+    }
+    animate();
+
+    canvas.addEventListener("mousedown", (e) => {
+      pouring = true;
+      const rect = canvas.getBoundingClientRect();
+      mouseX = (e.clientX - rect.left) * (w / rect.width);
+      mouseY = (e.clientY - rect.top) * (h / rect.height);
+    });
+    canvas.addEventListener("mousemove", (e) => {
+      const rect = canvas.getBoundingClientRect();
+      mouseX = (e.clientX - rect.left) * (w / rect.width);
+      mouseY = (e.clientY - rect.top) * (h / rect.height);
+    });
+    canvas.addEventListener("mouseup", () => { pouring = false; });
+    canvas.addEventListener("mouseleave", () => { pouring = false; });
+    canvas.addEventListener("touchstart", (e) => {
+      e.preventDefault();
+      pouring = true;
+      const rect = canvas.getBoundingClientRect();
+      mouseX = (e.touches[0].clientX - rect.left) * (w / rect.width);
+      mouseY = (e.touches[0].clientY - rect.top) * (h / rect.height);
+    }, { passive: false });
+    canvas.addEventListener("touchmove", (e) => {
+      e.preventDefault();
+      const rect = canvas.getBoundingClientRect();
+      mouseX = (e.touches[0].clientX - rect.left) * (w / rect.width);
+      mouseY = (e.touches[0].clientY - rect.top) * (h / rect.height);
+    }, { passive: false });
+    canvas.addEventListener("touchend", () => { pouring = false; });
+
+    addCleanup(() => cancelAnimationFrame(raf));
+  })();
+
+  /* ── Jelly Ball ── */
+  (function initJelly() {
+    const toy = document.createElement("div");
+    toy.className = "toybox-toy";
+    toy.innerHTML = `
+      <span class="toybox-toy-label">Squish me</span>
+      <div class="toybox-jelly-area" id="jellyArea">
+        <div class="toybox-jelly" id="jellyBall"></div>
+      </div>
+    `;
+    grid.append(toy);
+    const area = toy.querySelector("#jellyArea");
+    const ball = toy.querySelector("#jellyBall");
+    let bx = 50, by = 25;
+    let vx = 0, vy = 0;
+    let dragging = false;
+    let dragOffX = 0, dragOffY = 0;
+    let raf;
+
+    function animate() {
+      if (!dragging) {
+        vy += 0.3;
+        bx += vx;
+        by += vy;
+        vx *= 0.97;
+        const rect = area.getBoundingClientRect();
+        const maxX = rect.width - 50;
+        const maxY = rect.height - 50;
+        if (bx < 0) { bx = 0; vx *= -0.6; }
+        if (bx > maxX) { bx = maxX; vx *= -0.6; }
+        if (by > maxY) { by = maxY; vy *= -0.5; vx *= 0.95; }
+        if (by < 0) { by = 0; vy *= -0.6; }
+        const speed = Math.hypot(vx, vy);
+        if (speed > 1) {
+          if (Math.abs(vx) > Math.abs(vy)) {
+            ball.className = "toybox-jelly " + (vx > 0 ? "squish-left" : "squish-right");
+          } else {
+            ball.className = "toybox-jelly " + (vy > 0 ? "squish-top" : "squish-bottom");
+          }
+        } else {
+          ball.className = "toybox-jelly";
+        }
+      }
+      ball.style.left = bx + "px";
+      ball.style.top = by + "px";
+      raf = requestAnimationFrame(animate);
+    }
+    animate();
+
+    area.addEventListener("mousedown", (e) => {
+      dragging = true;
+      const rect = area.getBoundingClientRect();
+      dragOffX = e.clientX - rect.left - bx;
+      dragOffY = e.clientY - rect.top - by;
+      vx = 0;
+      vy = 0;
+    });
+    document.addEventListener("mousemove", (e) => {
+      if (!dragging) return;
+      const rect = area.getBoundingClientRect();
+      bx = e.clientX - rect.left - dragOffX;
+      by = e.clientY - rect.top - dragOffY;
+    });
+    document.addEventListener("mouseup", () => {
+      if (dragging) {
+        dragging = false;
+        vx = (Math.random() - 0.5) * 6;
+        vy = -2 - Math.random() * 3;
+      }
+    });
+    area.addEventListener("touchstart", (e) => {
+      e.preventDefault();
+      dragging = true;
+      const rect = area.getBoundingClientRect();
+      dragOffX = e.touches[0].clientX - rect.left - bx;
+      dragOffY = e.touches[0].clientY - rect.top - by;
+      vx = 0;
+      vy = 0;
+    }, { passive: false });
+    document.addEventListener("touchmove", (e) => {
+      if (!dragging) return;
+      const rect = area.getBoundingClientRect();
+      bx = e.touches[0].clientX - rect.left - dragOffX;
+      by = e.touches[0].clientY - rect.top - dragOffY;
+    }, { passive: false });
+    document.addEventListener("touchend", () => {
+      if (dragging) {
+        dragging = false;
+        vx = (Math.random() - 0.5) * 6;
+        vy = -2 - Math.random() * 3;
+      }
+    });
+
+    addCleanup(() => {
+      cancelAnimationFrame(raf);
+      document.removeEventListener("mousemove", () => {});
+      document.removeEventListener("mouseup", () => {});
+      document.removeEventListener("touchmove", () => {});
+      document.removeEventListener("touchend", () => {});
+    });
+  })();
+
+  /* ── Gradient Mixer ── */
+  (function initGradient() {
+    let r = 255, g = 107, b = 107;
+    const toy = document.createElement("div");
+    toy.className = "toybox-toy";
+    toy.style.gridColumn = "span 2";
+    toy.innerHTML = `
+      <span class="toybox-toy-label">Gradient mixer</span>
+      <div class="toybox-gradient-box" id="gradBox"></div>
+      <div class="toybox-sliders">
+        <input type="range" class="toybox-slider r" min="0" max="255" value="255" id="sliderR"/>
+        <input type="range" class="toybox-slider g" min="0" max="255" value="107" id="sliderG"/>
+        <input type="range" class="toybox-slider b" min="0" max="255" value="107" id="sliderB"/>
+      </div>
+    `;
+    grid.append(toy);
+    const box = toy.querySelector("#gradBox");
+    const sR = toy.querySelector("#sliderR");
+    const sG = toy.querySelector("#sliderG");
+    const sB = toy.querySelector("#sliderB");
+
+    function update() {
+      r = +sR.value;
+      g = +sG.value;
+      b = +sB.value;
+      const r2 = 255 - r, g2 = 255 - g, b2 = 255 - b;
+      box.style.background = "linear-gradient(135deg, rgb(" + r + "," + g + "," + b + "), rgb(" + r2 + "," + g2 + "," + b2 + "))";
+    }
+    sR.addEventListener("input", update);
+    sG.addEventListener("input", update);
+    sB.addEventListener("input", update);
+    update();
+  })();
+
+  /* ── Toggle Parade ── */
+  (function initToggles() {
+    const toy = document.createElement("div");
+    toy.className = "toybox-toy";
+    toy.style.gridColumn = "span 2";
+    const toggleCount = 7;
+    let togglesHTML = '<span class="toybox-toy-label">Toggle parade</span><div class="toybox-toggles">';
+    for (let i = 0; i < toggleCount; i++) {
+      togglesHTML += '<div class="toybox-toggle" data-index="' + i + '"><div class="toybox-toggle-knob"></div></div>';
+    }
+    togglesHTML += "</div>";
+    toy.innerHTML = togglesHTML;
+    grid.append(toy);
+
+    toy.querySelectorAll(".toybox-toggle").forEach((toggle) => {
+      toggle.addEventListener("click", () => {
+        toggle.classList.toggle("on");
+      });
+    });
+  })();
+
+  setSnapshot({
+    mode: "playing",
+    game: "Toybox",
+    toys: ["push", "spinner", "bubbles", "sand", "jelly", "gradient", "toggles"]
+  });
+
+  activeCleanup = () => {
+    cleanups.forEach((fn) => fn());
+  };
 }
