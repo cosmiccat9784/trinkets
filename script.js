@@ -830,7 +830,7 @@ function startFourLetterForge() {
   ];
   const levels = shuffleArray([...allLevels]);
   let dictionary = new Set(levels.flatMap((level) => [level.start, level.target, ...level.path]));
-  fetch("four_letter_words.txt")
+  fetch("assets/fourletterforge/words.txt")
     .then((r) => r.text())
     .then((text) => {
       text.split("\n").forEach((w) => { if (w.trim()) dictionary.add(w.trim().toUpperCase()); });
