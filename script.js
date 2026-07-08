@@ -798,6 +798,7 @@ function startFourLetterForge() {
             <input class="game-input" id="forgeInput" maxlength="4" autocomplete="off" placeholder="Type a 4-letter word" />
             <button class="game-action" type="submit">Forge</button>
             <button class="game-action" id="forgeHint" type="button">Hint</button>
+            <button class="game-action" id="forgeRestart" type="button">Restart</button>
           </form>
           <ul class="word-history" id="forgeHistory" aria-label="Accepted words"></ul>
         </div>
@@ -900,6 +901,15 @@ function startFourLetterForge() {
     const level = levels[levelIndex];
     const next = level.path.find((word) => !history.includes(word));
     message.textContent = next ? `Try ${next}.` : "You are right at the target.";
+  });
+
+  document.querySelector("#forgeRestart").addEventListener("click", () => {
+    const level = levels[levelIndex];
+    current = level.start;
+    steps = 0;
+    history = [current];
+    message.textContent = "Restarted. Change one letter at a time.";
+    render();
   });
 
   render();
