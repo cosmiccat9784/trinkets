@@ -419,7 +419,16 @@ footer {
   left: 55%;
   transform: translate(-50%, -50%);
   z-index: 1;
-  animation: glow-pulse 4s ease-in-out infinite;
+  animation: glow-pulse 5s ease-in-out infinite;
+}
+
+.comet-flyer {
+  position: absolute;
+  top: 50%;
+  left: 55%;
+  transform: translate(-50%, -50%);
+  z-index: 3;
+  animation: comet-fly 5s ease-in-out infinite;
 }
 
 .comet-body {
@@ -430,11 +439,9 @@ footer {
   border: 3px solid var(--line);
   border-radius: 50%;
   top: 50%;
-  left: 55%;
+  left: 50%;
   transform: translate(-50%, -50%);
   box-shadow: 4px 4px 0 var(--line), 0 0 12px var(--gold);
-  z-index: 3;
-  animation: comet-fly 5s ease-in-out infinite;
 }
 
 .comet-trail {
@@ -443,12 +450,10 @@ footer {
   height: 8px;
   background: linear-gradient(to left, var(--gold), rgba(246, 196, 69, 0.4), transparent);
   top: 50%;
-  left: 55%;
-  transform: translate(-100%, -50%) rotate(-18deg);
+  right: 100%;
+  transform: translateY(-50%) rotate(-18deg);
   border-radius: 4px;
   opacity: 0.8;
-  z-index: 2;
-  animation: trail-fly 5s ease-in-out infinite;
 }
 
 .comet-trail.trail-2 {
@@ -456,10 +461,9 @@ footer {
   height: 5px;
   background: linear-gradient(to left, rgba(246, 196, 69, 0.5), transparent);
   top: calc(50% + 5px);
-  left: 55%;
-  transform: translate(-85%, -50%) rotate(-22deg);
+  right: 100%;
+  transform: translateY(-50%) rotate(-22deg);
   opacity: 0.5;
-  animation-delay: 0.1s;
 }
 
 .word-art {
@@ -1367,14 +1371,6 @@ footer {
   50% { transform: translate(-50%, -50%) translate(0, -6px); }
   75% { transform: translate(-50%, -50%) translate(-10px, 4px); }
   100% { transform: translate(-50%, -50%) translate(0, 0); }
-}
-
-@keyframes trail-fly {
-  0% { transform: translate(-100%, -50%) rotate(-18deg) scaleX(1); opacity: 0.8; }
-  25% { transform: translate(-100%, -50%) rotate(-24deg) scaleX(1.15) translate(14px, -10px); opacity: 1; }
-  50% { transform: translate(-100%, -50%) rotate(-16deg) scaleX(0.9) translate(0, -6px); opacity: 0.7; }
-  75% { transform: translate(-100%, -50%) rotate(-12deg) scaleX(1.1) translate(-10px, 4px); opacity: 0.9; }
-  100% { transform: translate(-100%, -50%) rotate(-18deg) scaleX(1); opacity: 0.8; }
 }
 
 @keyframes letter-wave {
