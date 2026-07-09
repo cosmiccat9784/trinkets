@@ -450,7 +450,7 @@ footer {
   height: 8px;
   background: linear-gradient(to left, var(--gold), rgba(246, 196, 69, 0.4), transparent);
   top: 50%;
-  right: 100%;
+  left: -45px;
   transform: translateY(-50%) rotate(-18deg);
   border-radius: 4px;
   opacity: 0.8;
@@ -461,7 +461,7 @@ footer {
   height: 5px;
   background: linear-gradient(to left, rgba(246, 196, 69, 0.5), transparent);
   top: calc(50% + 5px);
-  right: 100%;
+  left: -25px;
   transform: translateY(-50%) rotate(-22deg);
   opacity: 0.5;
 }
