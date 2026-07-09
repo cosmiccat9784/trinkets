@@ -1280,7 +1280,8 @@ footer {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 10px;
-  max-width: min(560px, 100%);
+  width: min(calc(100vh - 220px), 560px);
+  aspect-ratio: 1;
   margin: 0 auto;
   padding: 14px;
   background: #bbada0;
