@@ -2211,10 +2211,359 @@ function startToybox() {
     });
   })();
 
+  /* ── Bubble Wrap ── */
+  (function initBubbleWrap() {
+    const toy = document.createElement("div");
+    toy.className = "toybox-toy";
+    toy.style.gridColumn = "span 2";
+    const cols = 8;
+    const rows = 5;
+    let html = '<span class="toybox-toy-label">Bubble wrap</span><div class="toybox-wrap-grid">';
+    for (let i = 0; i < cols * rows; i++) {
+      html += '<div class="toybox-bubble-cell" data-i="' + i + '"></div>';
+    }
+    html += "</div>";
+    toy.innerHTML = html;
+    grid.append(toy);
+
+    let popped = 0;
+    const cells = toy.querySelectorAll(".toybox-bubble-cell");
+    cells.forEach((cell) => {
+      cell.addEventListener("click", () => {
+        if (cell.classList.contains("popped")) return;
+        cell.classList.add("popped");
+        popped += 1;
+        if (popped === cols * rows) {
+          setTimeout(() => {
+            cells.forEach((c) => c.classList.remove("popped"));
+            popped = 0;
+          }, 600);
+        }
+      });
+    });
+  })();
+
+  /* ── Newton's Cradle ── */
+  (function initNewtonsCradle() {
+    const toy = document.createElement("div");
+    toy.className = "toybox-toy";
+    toy.innerHTML = `
+      <span class="toybox-toy-label">Newton's cradle</span>
+      <canvas class="toybox-cradle-canvas" id="cradleCanvas" width="200" height="130"></canvas>
+      <p class="toybox-cradle-hint">Click a ball to push it</p>
+    `;
+    grid.append(toy);
+    const canvas = toy.querySelector("#cradleCanvas");
+    const ctx = canvas.getContext("2d");
+    const W = 200, H = 130;
+    const numBalls = 5;
+    const ballR = 12;
+    const spacing = ballR * 2 + 1;
+    const anchorY = 15;
+    const stringLen = 70;
+    const balls = [];
+    for (let i = 0; i < numBalls; i++) {
+      balls.push({
+        angle: 0,
+        angVel: 0,
+        x: W / 2 + (i - (numBalls - 1) / 2) * spacing,
+        resting: true
+      });
+    }
+    let dragging = -1;
+    let raf;
+
+    function getBallAt(mx, my) {
+      for (let i = 0; i < numBalls; i++) {
+        const bx = balls[i].x + Math.sin(balls[i].angle) * stringLen;
+        const by = anchorY + Math.cos(balls[i].angle) * stringLen;
+        if (Math.hypot(mx - bx, my - by) < ballR + 4) return i;
+      }
+      return -1;
+    }
+
+    function physics() {
+      const g = 0.0015;
+      const damping = 0.999;
+      for (let i = 0; i < numBalls; i++) {
+        if (dragging === i) continue;
+        const acc = -g * Math.sin(balls[i].angle);
+        balls[i].angVel += acc;
+        balls[i].angVel *= damping;
+        balls[i].angle += balls[i].angVel;
+      }
+      for (let i = 0; i < numBalls - 1; i++) {
+        const a1 = balls[i], a2 = balls[i + 1];
+        if (a1.angVel > 0.0001 && a2.angVel < -0.0001) {
+          const swap = a1.angVel;
+          a1.angVel = a2.angVel * 0.95;
+          a2.angVel = swap * 0.95;
+        }
+      }
+    }
+
+    function draw() {
+      ctx.clearRect(0, 0, W, H);
+      ctx.fillStyle = "#394354";
+      ctx.fillRect(W / 2 - (numBalls * spacing) / 2 - 10, anchorY - 6, numBalls * spacing + 20, 6);
+      for (let i = 0; i < numBalls; i++) {
+        const bx = balls[i].x + Math.sin(balls[i].angle) * stringLen;
+        const by = anchorY + Math.cos(balls[i].angle) * stringLen;
+        ctx.beginPath();
+        ctx.moveTo(balls[i].x, anchorY);
+        ctx.lineTo(bx, by);
+        ctx.strokeStyle = "#999";
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.arc(bx, by, ballR, 0, Math.PI * 2);
+        const grad = ctx.createRadialGradient(bx - 3, by - 3, 2, bx, by, ballR);
+        grad.addColorStop(0, "#ddd");
+        grad.addColorStop(1, "#888");
+        ctx.fillStyle = grad;
+        ctx.fill();
+        ctx.strokeStyle = "#555";
+        ctx.lineWidth = 1;
+        ctx.stroke();
+      }
+    }
+
+    function animate() {
+      physics();
+      draw();
+      raf = requestAnimationFrame(animate);
+    }
+    animate();
+
+    canvas.addEventListener("mousedown", (e) => {
+      const rect = canvas.getBoundingClientRect();
+      const mx = (e.clientX - rect.left) * (W / rect.width);
+      const my = (e.clientY - rect.top) * (H / rect.height);
+      dragging = getBallAt(mx, my);
+    });
+    canvas.addEventListener("mousemove", (e) => {
+      if (dragging < 0) return;
+      const rect = canvas.getBoundingClientRect();
+      const mx = (e.clientX - rect.left) * (W / rect.width);
+      const my = (e.clientY - rect.top) * (H / rect.height);
+      balls[dragging].angle = Math.atan2(mx - balls[dragging].x, my - anchorY);
+      balls[dragging].angle = Math.max(-0.8, Math.min(0.8, balls[dragging].angle));
+      balls[dragging].angVel = 0;
+    });
+    canvas.addEventListener("mouseup", () => {
+      dragging = -1;
+    });
+
+    addCleanup(() => cancelAnimationFrame(raf));
+  })();
+
+  /* ── Pop Tubes ── */
+  (function initPopTubes() {
+    const toy = document.createElement("div");
+    toy.className = "toybox-toy";
+    const tubeCount = 5;
+    let html = '<span class="toybox-toy-label">Pop tubes</span><div class="toybox-tubes">';
+    for (let i = 0; i < tubeCount; i++) {
+      html += '<div class="toybox-tube" data-i="' + i + '"><div class="toybox-tube-inner"></div></div>';
+    }
+    html += "</div>";
+    toy.innerHTML = html;
+    grid.append(toy);
+
+    const tubes = toy.querySelectorAll(".toybox-tube");
+    tubes.forEach((tube) => {
+      let expanded = false;
+      tube.addEventListener("click", () => {
+        expanded = !expanded;
+        tube.classList.toggle("expanded", expanded);
+        tube.querySelector(".toybox-tube-inner").style.height = expanded ? "60px" : "24px";
+      });
+    });
+  })();
+
+  /* ── Water Ripples ── */
+  (function initRipples() {
+    const toy = document.createElement("div");
+    toy.className = "toybox-toy";
+    toy.style.gridColumn = "span 2";
+    toy.innerHTML = `
+      <span class="toybox-toy-label">Water ripples</span>
+      <canvas class="toybox-ripple-canvas" id="rippleCanvas"></canvas>
+    `;
+    grid.append(toy);
+    const canvas = toy.querySelector("#rippleCanvas");
+    const ctx = canvas.getContext("2d");
+    let w, h;
+    const ripples = [];
+    let raf;
+
+    function resize() {
+      const rect = canvas.getBoundingClientRect();
+      w = canvas.width = rect.width;
+      h = canvas.height = 140;
+    }
+    resize();
+
+    function addRipple(x, y) {
+      ripples.push({ x, y, r: 0, maxR: 50 + Math.random() * 30, life: 1, speed: 1.2 + Math.random() * 0.5 });
+    }
+
+    function animate() {
+      ctx.fillStyle = "rgba(200, 230, 255, 0.15)";
+      ctx.fillRect(0, 0, w, h);
+      for (let i = ripples.length - 1; i >= 0; i--) {
+        const rp = ripples[i];
+        rp.r += rp.speed;
+        rp.life -= 0.012;
+        if (rp.life <= 0) {
+          ripples.splice(i, 1);
+          continue;
+        }
+        ctx.beginPath();
+        ctx.arc(rp.x, rp.y, rp.r, 0, Math.PI * 2);
+        ctx.strokeStyle = "rgba(79, 143, 207, " + rp.life * 0.6 + ")";
+        ctx.lineWidth = 2;
+        ctx.stroke();
+        if (rp.r > 10) {
+          ctx.beginPath();
+          ctx.arc(rp.x, rp.y, rp.r * 0.6, 0, Math.PI * 2);
+          ctx.strokeStyle = "rgba(79, 143, 207, " + rp.life * 0.3 + ")";
+          ctx.lineWidth = 1;
+          ctx.stroke();
+        }
+      }
+      raf = requestAnimationFrame(animate);
+    }
+    animate();
+
+    canvas.addEventListener("click", (e) => {
+      const rect = canvas.getBoundingClientRect();
+      addRipple((e.clientX - rect.left) * (w / rect.width), (e.clientY - rect.top) * (h / rect.height));
+    });
+    canvas.addEventListener("touchstart", (e) => {
+      e.preventDefault();
+      const rect = canvas.getBoundingClientRect();
+      addRipple((e.touches[0].clientX - rect.left) * (w / rect.width), (e.touches[0].clientY - rect.top) * (h / rect.height));
+    }, { passive: false });
+
+    addCleanup(() => cancelAnimationFrame(raf));
+  })();
+
+  /* ── Falling Dominoes ── */
+  (function initDominos() {
+    const toy = document.createElement("div");
+    toy.className = "toybox-toy";
+    toy.style.gridColumn = "span 2";
+    toy.innerHTML = `
+      <span class="toybox-toy-label">Domino chain</span>
+      <canvas class="toybox-domino-canvas" id="dominoCanvas"></canvas>
+      <div class="toybox-domino-actions">
+        <button class="game-action toybox-domino-reset" id="dominoReset" type="button">Reset</button>
+      </div>
+    `;
+    grid.append(toy);
+    const canvas = toy.querySelector("#dominoCanvas");
+    const ctx = canvas.getContext("2d");
+    let w, h;
+    const dominos = [];
+    let raf;
+
+    function resize() {
+      const rect = canvas.getBoundingClientRect();
+      w = canvas.width = rect.width;
+      h = canvas.height = 100;
+    }
+    resize();
+
+    function buildChain() {
+      dominos.length = 0;
+      const count = Math.floor(w / 28);
+      const startX = 15;
+      for (let i = 0; i < count; i++) {
+        dominos.push({
+          x: startX + i * 26,
+          angle: 0,
+          angVel: 0,
+          falling: false,
+          fallen: false
+        });
+      }
+    }
+    buildChain();
+
+    function physics() {
+      for (let i = 0; i < dominos.length; i++) {
+        const d = dominos[i];
+        if (d.falling && !d.fallen) {
+          d.angVel += 0.008;
+          d.angle += d.angVel;
+          if (d.angle >= Math.PI / 2.2) {
+            d.angle = Math.PI / 2.2;
+            d.fallen = true;
+            d.falling = false;
+            if (i + 1 < dominos.length && !dominos[i + 1].fallen) {
+              dominos[i + 1].falling = true;
+              dominos[i + 1].angVel = 0.02;
+            }
+          }
+        }
+      }
+    }
+
+    function draw() {
+      ctx.clearRect(0, 0, w, h);
+      const dominoH = 40;
+      const dominoW = 10;
+      dominos.forEach((d) => {
+        ctx.save();
+        ctx.translate(d.x, h - 5);
+        ctx.rotate(d.angle);
+        const grad = ctx.createLinearGradient(-dominoW / 2, 0, dominoW / 2, 0);
+        grad.addColorStop(0, d.fallen ? "#e88" : "#fff");
+        grad.addColorStop(1, d.fallen ? "#c66" : "#eee");
+        ctx.fillStyle = grad;
+        ctx.fillRect(-dominoW / 2, -dominoH, dominoW, dominoH);
+        ctx.strokeStyle = "#394354";
+        ctx.lineWidth = 1.5;
+        ctx.strokeRect(-dominoW / 2, -dominoH, dominoW, dominoH);
+        ctx.beginPath();
+        ctx.arc(0, -dominoH / 2, 2, 0, Math.PI * 2);
+        ctx.fillStyle = "#394354";
+        ctx.fill();
+        ctx.restore();
+      });
+    }
+
+    function animate() {
+      physics();
+      draw();
+      raf = requestAnimationFrame(animate);
+    }
+    animate();
+
+    canvas.addEventListener("click", (e) => {
+      const rect = canvas.getBoundingClientRect();
+      const mx = (e.clientX - rect.left) * (w / rect.width);
+      for (let i = 0; i < dominos.length; i++) {
+        if (!dominos[i].fallen && Math.abs(dominos[i].x - mx) < 20) {
+          dominos[i].falling = true;
+          dominos[i].angVel = 0.03;
+          break;
+        }
+      }
+    });
+
+    toy.querySelector("#dominoReset").addEventListener("click", () => {
+      buildChain();
+    });
+
+    addCleanup(() => cancelAnimationFrame(raf));
+  })();
+
   setSnapshot({
     mode: "playing",
     game: "Toybox",
-    toys: ["push", "spinner", "bubbles", "sand", "jelly", "gradient", "toggles"]
+    toys: ["push", "spinner", "bubbles", "sand", "jelly", "gradient", "toggles", "wrap", "cradle", "tubes", "ripples", "dominos"]
   });
 
   activeCleanup = () => {
