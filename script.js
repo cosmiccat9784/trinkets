@@ -2712,8 +2712,8 @@ function start2048() {
           cell.textContent = val;
           cell.style.background = colors[val] || "#3c3a32";
           cell.style.color = val <= 4 ? "#776e65" : "white";
-          if (val >= 100) cell.style.fontSize = "1.1rem";
-          if (val >= 1000) cell.style.fontSize = "0.85rem";
+          if (val >= 100) cell.style.fontSize = "1.3rem";
+          if (val >= 1000) cell.style.fontSize = "1rem";
         }
         board.append(cell);
       }
