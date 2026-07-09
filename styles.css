@@ -1276,10 +1276,8 @@ footer {
   text-align: right;
 }
 
-.t-board {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 10px;
+.t-board-wrap {
+  position: relative;
   width: min(calc(100vh - 220px), 560px);
   aspect-ratio: 1;
   margin: 0 auto;
@@ -1289,8 +1287,28 @@ footer {
   border-radius: 8px;
 }
 
-.t-cell {
-  aspect-ratio: 1;
+.t-bg,
+.t-tiles {
+  position: absolute;
+  top: 14px;
+  left: 14px;
+  right: 14px;
+  bottom: 14px;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  grid-template-rows: repeat(4, 1fr);
+  gap: 10px;
+}
+
+.t-bg-cell {
+  background: rgba(238, 228, 218, 0.35);
+  border-radius: 6px;
+}
+
+.t-tile {
+  position: absolute;
+  width: 25%;
+  height: 25%;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1298,8 +1316,27 @@ footer {
   font-weight: 900;
   font-size: 1.6rem;
   color: #776e65;
-  background: #cdc1b4;
-  transition: background 0.15s ease;
+  transition: left 120ms ease, top 120ms ease;
+  z-index: 2;
+}
+
+.t-merged {
+  animation: t-pop 200ms ease 120ms;
+}
+
+.t-new {
+  animation: t-fade 200ms ease;
+}
+
+@keyframes t-pop {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.2); }
+  100% { transform: scale(1); }
+}
+
+@keyframes t-fade {
+  0% { opacity: 0; transform: scale(0.5); }
+  100% { opacity: 1; transform: scale(1); }
 }
 
 .toybox-art {
