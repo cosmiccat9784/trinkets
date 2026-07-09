@@ -1835,8 +1835,8 @@ function startToybox() {
 
     function resize() {
       const rect = canvas.getBoundingClientRect();
-      w = canvas.width = rect.width;
-      h = canvas.height = rect.height;
+      w = canvas.width = rect.width || 260;
+      h = canvas.height = rect.height || 120;
     }
     resize();
 
@@ -1946,27 +1946,27 @@ function startToybox() {
     let mouseY = 0;
     let raf;
     const CELL = 4;
-    let cols, rows, grid;
+    let cols, rows, sandGrid;
 
     function resize() {
       const rect = canvas.getBoundingClientRect();
-      w = canvas.width = rect.width;
-      h = canvas.height = rect.height;
+      w = canvas.width = rect.width || 260;
+      h = canvas.height = rect.height || 120;
       cols = Math.ceil(w / CELL);
       rows = Math.ceil(h / CELL);
-      grid = new Uint8Array(cols * rows);
+      sandGrid = new Uint8Array(cols * rows);
     }
     resize();
 
     function setCell(cx, cy, val) {
       if (cx >= 0 && cx < cols && cy >= 0 && cy < rows) {
-        grid[cy * cols + cx] = val;
+        sandGrid[cy * cols + cx] = val;
       }
     }
 
     function getCell(cx, cy) {
       if (cx < 0 || cx >= cols || cy < 0 || cy >= rows) return 1;
-      return grid[cy * cols + cx];
+      return sandGrid[cy * cols + cx];
     }
 
     function spawnGrain(x, y) {
@@ -2400,7 +2400,7 @@ function startToybox() {
 
     function resize() {
       const rect = canvas.getBoundingClientRect();
-      w = canvas.width = rect.width;
+      w = canvas.width = rect.width || 360;
       h = canvas.height = 140;
     }
     resize();
@@ -2471,7 +2471,7 @@ function startToybox() {
 
     function resize() {
       const rect = canvas.getBoundingClientRect();
-      w = canvas.width = rect.width;
+      w = canvas.width = rect.width || 360;
       h = canvas.height = 100;
     }
     resize();
