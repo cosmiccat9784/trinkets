@@ -365,16 +365,16 @@ footer {
   box-shadow: 2px 2px 0 var(--line);
 }
 
-.ta-s { background: var(--gold); animation: tile-glow 2s ease-in-out infinite; }
-.ta-e { background: var(--gold); animation: tile-glow 2s ease-in-out infinite 0.6s; }
-.ta-p { background: white; animation: tile-pop 2s ease-in-out infinite; }
-.ta-p:nth-child(2) { animation-delay: 0.15s; }
-.ta-p:nth-child(3) { animation-delay: 0.3s; }
-.ta-p:nth-child(4) { animation-delay: 0.45s; }
-.ta-p:nth-child(5) { animation-delay: 0.6s; }
-.ta-p:nth-child(6) { animation-delay: 0.75s; }
-.ta-p:nth-child(7) { animation-delay: 0.9s; }
-.ta-p:nth-child(8) { animation-delay: 1.05s; }
+.ta-s { background: var(--gold); animation: tile-sweep 3s ease-in-out infinite; }
+.ta-e { background: var(--gold); animation: tile-sweep 3s ease-in-out infinite 1.5s; }
+.ta-p { background: white; animation: tile-wave 3s ease-in-out infinite; }
+.ta-p:nth-child(2) { animation-delay: 0.2s; }
+.ta-p:nth-child(3) { animation-delay: 0.4s; }
+.ta-p:nth-child(4) { animation-delay: 0.6s; }
+.ta-p:nth-child(5) { animation-delay: 0.8s; }
+.ta-p:nth-child(6) { animation-delay: 1s; }
+.ta-p:nth-child(7) { animation-delay: 1.2s; }
+.ta-p:nth-child(8) { animation-delay: 1.4s; }
 
 .comet-art {
   background: #0f1729;
@@ -1334,14 +1334,16 @@ footer {
   to { transform: rotate(360deg); }
 }
 
-@keyframes tile-glow {
-  0%, 100% { box-shadow: 2px 2px 0 var(--line); }
-  50% { box-shadow: 2px 2px 0 var(--line), 0 0 10px var(--gold); transform: scale(1.08); }
+@keyframes tile-sweep {
+  0%, 100% { box-shadow: 2px 2px 0 var(--line); transform: scale(1); }
+  30% { box-shadow: 2px 2px 0 var(--line), 0 0 14px var(--gold), 0 0 28px rgba(246, 196, 69, 0.4); transform: scale(1.12); }
+  60% { box-shadow: 2px 2px 0 var(--line); transform: scale(1); }
 }
 
-@keyframes tile-pop {
-  0%, 100% { transform: scale(1); }
-  50% { transform: scale(1.06); }
+@keyframes tile-wave {
+  0%, 100% { transform: scale(1); background: white; }
+  40% { transform: scale(1.1) translateY(-3px); background: #e8f4fd; box-shadow: 2px 2px 0 var(--line), 0 0 8px rgba(67, 198, 172, 0.3); }
+  70% { transform: scale(1); background: white; }
 }
 
 @keyframes twinkle {
