@@ -1276,6 +1276,31 @@ footer {
   text-align: right;
 }
 
+.t-board {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  max-width: 360px;
+  margin: 0 auto;
+  padding: 12px;
+  background: #bbada0;
+  border: 3px solid var(--line);
+  border-radius: 8px;
+}
+
+.t-cell {
+  aspect-ratio: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  font-weight: 900;
+  font-size: 1.1rem;
+  color: #776e65;
+  background: #cdc1b4;
+  transition: background 0.15s ease;
+}
+
 .toybox-art {
   position: relative;
   overflow: hidden;
@@ -1339,6 +1364,45 @@ footer {
 @keyframes toybox-spin {
   from { transform: rotate(0deg); }
   to { transform: rotate(360deg); }
+}
+
+.thousand-art {
+  display: grid;
+  grid-template-columns: repeat(4, 32px);
+  grid-template-rows: repeat(4, 32px);
+  gap: 4px;
+  padding: 16px;
+  background: #faf3e0;
+  justify-content: center;
+  align-content: center;
+}
+
+.thousand-tile {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  font-weight: 900;
+  font-size: 0.7rem;
+  color: #776e65;
+  border: 2px solid var(--line);
+  box-shadow: 2px 2px 0 var(--line);
+  animation: tile-pop 3s ease-in-out infinite;
+}
+
+.thousand-tile.t2   { background: #eee4da; animation-delay: 0s; }
+.thousand-tile.t4   { background: #ede0c8; animation-delay: 0.2s; }
+.thousand-tile.t8   { background: #f2b179; color: white; animation-delay: 0.4s; }
+.thousand-tile.t16  { background: #f59563; color: white; animation-delay: 0.6s; }
+.thousand-tile.t32  { background: #f67c5f; color: white; animation-delay: 0.8s; }
+.thousand-tile.t64  { background: #f65e3b; color: white; animation-delay: 1s; }
+.thousand-tile.t128 { background: #edcf72; color: white; font-size: 0.6rem; animation-delay: 1.2s; }
+.thousand-tile.t256 { background: #edcc61; color: white; font-size: 0.6rem; animation-delay: 1.4s; }
+.thousand-tile.t512 { background: #edc850; color: white; font-size: 0.6rem; animation-delay: 1.6s; }
+
+@keyframes tile-pop {
+  0%, 100% { transform: scale(1); box-shadow: 2px 2px 0 var(--line); }
+  50% { transform: scale(1.08); box-shadow: 2px 2px 0 var(--line), 0 0 8px rgba(237, 207, 114, 0.5); }
 }
 
 @keyframes tile-sweep {

@@ -32,7 +32,8 @@ const gameStarters = {
   maze: startPocketMaze,
   bash: startButtonBash,
   clue: startClueCrate,
-  toybox: startToybox
+  toybox: startToybox,
+  thousand: start2048
 };
 
 filters.forEach((button) => {
@@ -2569,4 +2570,197 @@ function startToybox() {
   activeCleanup = () => {
     cleanups.forEach((fn) => fn());
   };
+}
+
+function start2048() {
+  openGame(
+    "2048",
+    "Puzzle",
+    `
+      <div class="game-layout">
+        <div class="game-topline">
+          <span class="game-stat" id="tScore">Score: 0</span>
+          <span class="game-stat" id="tBest">Best: 0</span>
+        </div>
+        <p class="game-message" id="tMessage">Use arrow keys or swipe to merge tiles.</p>
+        <div class="t-board" id="tBoard" aria-label="2048 game board"></div>
+        <div class="game-actions">
+          <button class="game-action" id="tUndo" type="button">Undo</button>
+          <button class="game-action" id="tRestart" type="button">Restart</button>
+        </div>
+      </div>
+    `
+  );
+
+  const board = document.querySelector("#tBoard");
+  const msg = document.querySelector("#tMessage");
+  const scoreLabel = document.querySelector("#tScore");
+  const bestLabel = document.querySelector("#tBest");
+
+  let grid, score, best, prev, won, over;
+
+  function init() {
+    grid = Array.from({ length: 4 }, () => [0, 0, 0, 0]);
+    score = 0;
+    won = false;
+    over = false;
+    prev = null;
+    addRandom();
+    addRandom();
+    render();
+  }
+
+  function addRandom() {
+    const empty = [];
+    for (let r = 0; r < 4; r++)
+      for (let c = 0; c < 4; c++)
+        if (grid[r][c] === 0) empty.push([r, c]);
+    if (empty.length === 0) return;
+    const [r, c] = empty[Math.floor(Math.random() * empty.length)];
+    grid[r][c] = Math.random() < 0.9 ? 2 : 4;
+  }
+
+  function slide(row) {
+    let arr = row.filter((v) => v !== 0);
+    let merged = false;
+    for (let i = 0; i < arr.length - 1; i++) {
+      if (arr[i] === arr[i + 1]) {
+        arr[i] *= 2;
+        score += arr[i];
+        if (arr[i] === 2048 && !won) won = true;
+        arr.splice(i + 1, 1);
+        merged = true;
+      }
+    }
+    while (arr.length < 4) arr.push(0);
+    return arr;
+  }
+
+  function move(dir) {
+    prev = { grid: grid.map((r) => [...r]), score };
+    let moved = false;
+    if (dir === "left" || dir === "right") {
+      for (let r = 0; r < 4; r++) {
+        let row = [...grid[r]];
+        if (dir === "right") row.reverse();
+        const sl = slide(row);
+        if (dir === "right") sl.reverse();
+        if (sl.some((v, i) => v !== grid[r][i])) moved = true;
+        grid[r] = sl;
+      }
+    } else {
+      for (let c = 0; c < 4; c++) {
+        let col = [grid[0][c], grid[1][c], grid[2][c], grid[3][c]];
+        if (dir === "down") col.reverse();
+        const sl = slide(col);
+        if (dir === "down") sl.reverse();
+        if (sl.some((v, i) => v !== grid[i][c])) moved = true;
+        for (let r = 0; r < 4; r++) grid[r][c] = sl[r];
+      }
+    }
+    if (!moved) {
+      prev = null;
+      return;
+    }
+    addRandom();
+    if (won) {
+      msg.textContent = "You reached 2048! Keep going or restart.";
+    } else if (isGameOver()) {
+      over = true;
+      msg.textContent = "Game over. Try again?";
+    } else {
+      msg.textContent = "Use arrow keys or swipe to merge tiles.";
+    }
+    render();
+  }
+
+  function isGameOver() {
+    for (let r = 0; r < 4; r++)
+      for (let c = 0; c < 4; c++) {
+        if (grid[r][c] === 0) return false;
+        if (c < 3 && grid[r][c] === grid[r][c + 1]) return false;
+        if (r < 3 && grid[r][c] === grid[r + 1][c]) return false;
+      }
+    return true;
+  }
+
+  function undo() {
+    if (!prev) return;
+    grid = prev.grid;
+    score = prev.score;
+    prev = null;
+    over = false;
+    won = false;
+    msg.textContent = "Use arrow keys or swipe to merge tiles.";
+    render();
+  }
+
+  function render() {
+    best = Math.max(best || 0, score);
+    board.innerHTML = "";
+    const colors = {
+      0: "#cdc1b4", 2: "#eee4da", 4: "#ede0c8", 8: "#f2b179",
+      16: "#f59563", 32: "#f67c5f", 64: "#f65e3b", 128: "#edcf72",
+      256: "#edcc61", 512: "#edc850", 1024: "#edc53f", 2048: "#edc22e"
+    };
+    for (let r = 0; r < 4; r++) {
+      for (let c = 0; c < 4; c++) {
+        const val = grid[r][c];
+        const cell = document.createElement("div");
+        cell.className = "t-cell";
+        if (val) {
+          cell.textContent = val;
+          cell.style.background = colors[val] || "#3c3a32";
+          cell.style.color = val <= 4 ? "#776e65" : "white";
+          if (val >= 100) cell.style.fontSize = "0.85rem";
+          if (val >= 1000) cell.style.fontSize = "0.7rem";
+        }
+        board.append(cell);
+      }
+    }
+    scoreLabel.textContent = `Score: ${score}`;
+    bestLabel.textContent = `Best: ${best}`;
+    setSnapshot({
+      mode: over ? "lost" : won ? "won" : "playing",
+      game: "2048",
+      score,
+      best,
+      maxTile: Math.max(...grid.flat()),
+      moves: 0
+    });
+  }
+
+  function keydown(e) {
+    if (over && e.key !== "z") return;
+    const map = { ArrowLeft: "left", ArrowRight: "right", ArrowUp: "up", ArrowDown: "down" };
+    if (map[e.key]) {
+      e.preventDefault();
+      move(map[e.key]);
+    } else if (e.key === "z" && (e.ctrlKey || e.metaKey)) {
+      e.preventDefault();
+      undo();
+    }
+  }
+
+  let tx, ty;
+  board.addEventListener("touchstart", (e) => {
+    tx = e.touches[0].clientX;
+    ty = e.touches[0].clientY;
+  }, { passive: true });
+  board.addEventListener("touchend", (e) => {
+    const dx = e.changedTouches[0].clientX - tx;
+    const dy = e.changedTouches[0].clientY - ty;
+    const ax = Math.abs(dx), ay = Math.abs(dy);
+    if (Math.max(ax, ay) < 20) return;
+    if (ax > ay) move(dx > 0 ? "right" : "left");
+    else move(dy > 0 ? "down" : "up");
+  }, { passive: true });
+
+  document.addEventListener("keydown", keydown);
+  document.querySelector("#tRestart").addEventListener("click", init);
+  document.querySelector("#tUndo").addEventListener("click", undo);
+  activeCleanup = () => {
+    document.removeEventListener("keydown", keydown);
+  };
+  init();
 }
