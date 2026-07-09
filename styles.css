@@ -365,14 +365,34 @@ footer {
   box-shadow: 2px 2px 0 var(--line);
 }
 
-.ta-s { background: var(--gold); }
-.ta-e { background: var(--gold); }
-.ta-p { background: white; }
+.ta-s { background: var(--gold); animation: tile-glow 2s ease-in-out infinite; }
+.ta-e { background: var(--gold); animation: tile-glow 2s ease-in-out infinite 0.6s; }
+.ta-p { background: white; animation: tile-pop 2s ease-in-out infinite; }
+.ta-p:nth-child(2) { animation-delay: 0.15s; }
+.ta-p:nth-child(3) { animation-delay: 0.3s; }
+.ta-p:nth-child(4) { animation-delay: 0.45s; }
+.ta-p:nth-child(5) { animation-delay: 0.6s; }
+.ta-p:nth-child(6) { animation-delay: 0.75s; }
+.ta-p:nth-child(7) { animation-delay: 0.9s; }
+.ta-p:nth-child(8) { animation-delay: 1.05s; }
 
 .comet-art {
   background: #0f1729;
   overflow: hidden;
 }
+
+.comet-star {
+  position: absolute;
+  width: 4px;
+  height: 4px;
+  background: white;
+  border-radius: 50%;
+  animation: twinkle 2s ease-in-out infinite;
+}
+.comet-star:nth-child(2) { animation-delay: 0.5s; }
+.comet-star:nth-child(3) { animation-delay: 1s; }
+.comet-star:nth-child(4) { animation-delay: 1.5s; }
+.comet-star:nth-child(5) { animation-delay: 0.8s; }
 
 .comet-body {
   position: absolute;
@@ -386,6 +406,7 @@ footer {
   transform: translate(-50%, -50%);
   box-shadow: 4px 4px 0 var(--line), 0 0 12px var(--gold);
   z-index: 2;
+  animation: comet-drift 4s ease-in-out infinite;
 }
 
 .comet-trail {
@@ -399,6 +420,7 @@ footer {
   border-radius: 4px;
   opacity: 0.7;
   z-index: 1;
+  animation: trail-pulse 4s ease-in-out infinite;
 }
 
 .word-art {
@@ -417,7 +439,12 @@ footer {
   border: 3px solid var(--line);
   box-shadow: 4px 4px 0 var(--line);
   font-weight: 900;
+  animation: letter-wave 2.5s ease-in-out infinite;
 }
+.word-art span:nth-child(1) { animation-delay: 0s; }
+.word-art span:nth-child(2) { animation-delay: 0.2s; }
+.word-art span:nth-child(3) { animation-delay: 0.4s; }
+.word-art span:nth-child(4) { animation-delay: 0.6s; }
 
 .maze-art {
   display: grid;
@@ -445,12 +472,14 @@ footer {
   background: var(--coral);
   color: white;
   font-size: 1.2rem;
+  animation: player-pulse 1.5s ease-in-out infinite;
 }
 
 .maze-art .maze-thumb-key-cell {
   background: var(--gold);
   color: var(--ink);
   font-size: 1.2rem;
+  animation: key-wobble 2s ease-in-out infinite;
 }
 
 .maze-art .maze-thumb-exit-cell {
@@ -482,12 +511,17 @@ footer {
   border: 3px solid var(--line);
   box-shadow: 4px 4px 0 var(--line);
   font-weight: 900;
+  animation: btn-light 3s ease-in-out infinite;
 }
-
-.paddle-art span:nth-child(5) {
-  background: var(--coral);
-  transform: translate(-2px, -2px);
-}
+.paddle-art span:nth-child(1) { animation-delay: 0s; }
+.paddle-art span:nth-child(2) { animation-delay: 0.3s; }
+.paddle-art span:nth-child(3) { animation-delay: 0.6s; }
+.paddle-art span:nth-child(4) { animation-delay: 0.9s; }
+.paddle-art span:nth-child(5) { animation-delay: 1.2s; }
+.paddle-art span:nth-child(6) { animation-delay: 1.5s; }
+.paddle-art span:nth-child(7) { animation-delay: 1.8s; }
+.paddle-art span:nth-child(8) { animation-delay: 2.1s; }
+.paddle-art span:nth-child(9) { animation-delay: 2.4s; }
 
 .clue-art {
   display: grid;
@@ -507,6 +541,8 @@ footer {
   top: 44px;
   background: var(--gold);
   transform: rotate(-3deg);
+  transform-origin: left center;
+  animation: lid-bob 3s ease-in-out infinite;
 }
 
 .clue-art .crate-body {
@@ -521,6 +557,7 @@ footer {
   color: white;
   font-size: 2.7rem;
   font-weight: 900;
+  animation: crate-glow 3s ease-in-out infinite;
 }
 
 .clue-art .crate-lock {
@@ -528,6 +565,7 @@ footer {
   height: 28px;
   top: 120px;
   background: var(--mint);
+  animation: lock-wiggle 2s ease-in-out infinite;
 }
 
 .game-content {
@@ -1255,6 +1293,70 @@ footer {
 @keyframes toybox-spin {
   from { transform: rotate(0deg); }
   to { transform: rotate(360deg); }
+}
+
+@keyframes tile-glow {
+  0%, 100% { box-shadow: 2px 2px 0 var(--line); }
+  50% { box-shadow: 2px 2px 0 var(--line), 0 0 10px var(--gold); transform: scale(1.08); }
+}
+
+@keyframes tile-pop {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.06); }
+}
+
+@keyframes twinkle {
+  0%, 100% { opacity: 0.3; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.5); }
+}
+
+@keyframes comet-drift {
+  0%, 100% { transform: translate(-50%, -50%) translateX(0); }
+  50% { transform: translate(-50%, -50%) translateX(12px) translateY(-4px); }
+}
+
+@keyframes trail-pulse {
+  0%, 100% { opacity: 0.7; width: 80px; }
+  50% { opacity: 1; width: 95px; }
+}
+
+@keyframes letter-wave {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-6px); }
+}
+
+@keyframes player-pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.15); }
+}
+
+@keyframes key-wobble {
+  0%, 100% { transform: rotate(0deg); }
+  25% { transform: rotate(8deg); }
+  75% { transform: rotate(-8deg); }
+}
+
+@keyframes btn-light {
+  0%, 100% { background: white; }
+  50% { background: var(--coral); color: white; }
+}
+
+@keyframes lid-bob {
+  0%, 100% { transform: rotate(-3deg) translateY(0); }
+  50% { transform: rotate(-1deg) translateY(-4px); }
+}
+
+@keyframes crate-glow {
+  0%, 100% { box-shadow: 5px 5px 0 var(--line); }
+  50% { box-shadow: 5px 5px 0 var(--line), 0 0 14px rgba(255, 107, 107, 0.4); }
+}
+
+@keyframes lock-wiggle {
+  0%, 100% { transform: rotate(0deg); }
+  20% { transform: rotate(6deg); }
+  40% { transform: rotate(-6deg); }
+  60% { transform: rotate(4deg); }
+  80% { transform: rotate(-4deg); }
 }
 
 .toybox-grid {
