@@ -378,3 +378,5 @@ function startPowderSim() {
     cancelAnimationFrame(raf);
   };
 }
+
+gameStarters.powder = startPowderSim;

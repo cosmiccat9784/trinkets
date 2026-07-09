@@ -33,8 +33,7 @@ const gameStarters = {
   bash: startButtonBash,
   clue: startClueCrate,
   toybox: startToybox,
-  thousand: start2048,
-  powder: startPowderSim
+  thousand: start2048
 };
 
 filters.forEach((button) => {
