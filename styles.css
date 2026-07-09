@@ -430,7 +430,6 @@ footer {
   height: 28px;
   transform: translate(-50%, -50%);
   z-index: 3;
-  animation: comet-fly 5s ease-in-out infinite;
 }
 
 .comet-body {
@@ -1367,14 +1366,6 @@ footer {
 @keyframes glow-pulse {
   0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 0.6; }
   50% { transform: translate(-50%, -50%) scale(1.3); opacity: 1; }
-}
-
-@keyframes comet-fly {
-  0% { transform: translate(-50%, -50%) translate(0, 0); }
-  25% { transform: translate(-50%, -50%) translate(14px, -10px); }
-  50% { transform: translate(-50%, -50%) translate(0, -6px); }
-  75% { transform: translate(-50%, -50%) translate(-10px, 4px); }
-  100% { transform: translate(-50%, -50%) translate(0, 0); }
 }
 
 @keyframes letter-wave {
