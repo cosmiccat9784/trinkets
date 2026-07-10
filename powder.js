@@ -36,7 +36,7 @@ function startPowderSim() {
   const canvas = document.querySelector("#powderCanvas");
   const ctx = canvas.getContext("2d");
   let w, h, cols, rows;
-  let grid, nextGrid, life;
+  let grid, nextGrid, life, targeted;
   let selectedElement = 1;
   let brushSize = 3;
   let painting = false;
@@ -57,17 +57,16 @@ function startPowderSim() {
   };
 
   function resize() {
-    const sidebar = canvas.parentElement.querySelector(".powder-sidebar");
-    const sidebarW = sidebar ? sidebar.offsetWidth : 0;
-    const availW = canvas.parentElement.offsetWidth - sidebarW - 14;
-    const availH = Math.min(window.innerHeight - 220, 500);
-    w = canvas.width = Math.max(200, availW);
-    h = canvas.height = Math.max(150, availH);
+    const availW = Math.min(canvas.parentElement.offsetWidth - 10, window.innerWidth - 140);
+    const availH = Math.min(window.innerHeight - 200, 520);
+    w = canvas.width = Math.max(300, availW);
+    h = canvas.height = Math.max(200, availH);
     cols = Math.ceil(w / CELL);
     rows = Math.ceil(h / CELL);
     grid = new Uint8Array(cols * rows);
     nextGrid = new Uint8Array(cols * rows);
     life = new Int16Array(cols * rows);
+    targeted = new Uint8Array(cols * rows);
   }
 
   function idx(x, y) { return y * cols + x; }
@@ -75,30 +74,12 @@ function startPowderSim() {
     if (x < 0 || x >= cols || y < 0 || y >= rows) return STONE;
     return grid[idx(x, y)];
   }
-  function setCell(x, y, val) {
-    if (x < 0 || x >= cols || y < 0 || y >= rows) return;
-    grid[idx(x, y)] = val;
-  }
-  function setNext(x, y, val) {
-    if (x < 0 || x >= cols || y < 0 || y >= rows) return;
-    nextGrid[idx(x, y)] = val;
-  }
   function setLife(x, y, v) {
     if (x >= 0 && x < cols && y >= 0 && y < rows) life[idx(x, y)] = v;
   }
   function getLife(x, y) {
     if (x < 0 || x >= cols || y < 0 || y >= rows) return 0;
     return life[idx(x, y)];
-  }
-  function isEmpty(x, y) { return getCell(x, y) === 0; }
-  function isType(x, y, t) { return getCell(x, y) === t; }
-  function swapCells(x1, y1, x2, y2) {
-    const a = grid[idx(x1, y1)];
-    setNext(x1, y1, grid[idx(x2, y2)]);
-    setNext(x2, y2, a);
-    const la = life[idx(x1, y1)];
-    life[idx(x1, y1)] = life[idx(x2, y2)];
-    life[idx(x2, y2)] = la;
   }
 
   function density(type) {
@@ -116,14 +97,20 @@ function startPowderSim() {
 
   function tryMove(x1, y1, x2, y2) {
     if (x2 < 0 || x2 >= cols || y2 < 0 || y2 >= rows) return false;
-    const a = getCell(x1, y1);
-    const b = getCell(x2, y2);
+    if (targeted[idx(x2, y2)]) return false;
+    const a = grid[idx(x1, y1)];
+    const b = grid[idx(x2, y2)];
     if (a === b) return false;
     if (b === STONE) return false;
     if (isLiquid(a) && b !== 0 && !isLiquid(b)) return false;
-    if (isLiquid(b) && a !== 0 && !isLiquid(a) && density(a) >= density(b)) return false;
     if (b === 0 || (isLiquid(a) && isLiquid(b) && density(a) > density(b))) {
-      swapCells(x1, y1, x2, y2);
+      targeted[idx(x2, y2)] = 1;
+      targeted[idx(x1, y1)] = 1;
+      nextGrid[idx(x2, y2)] = a;
+      nextGrid[idx(x1, y1)] = b;
+      const la = life[idx(x1, y1)];
+      life[idx(x1, y1)] = life[idx(x2, y2)];
+      life[idx(x2, y2)] = la;
       return true;
     }
     return false;
@@ -131,9 +118,10 @@ function startPowderSim() {
 
   function step() {
     nextGrid.set(grid);
+    targeted.fill(0);
     for (let y = rows - 1; y >= 0; y--) {
       for (let x = 0; x < cols; x++) {
-        const type = getCell(x, y);
+        const type = grid[idx(x, y)];
         if (type === 0 || type === STONE) continue;
         if (type === SAND) stepSand(x, y);
         else if (type === WATER) stepLiquid(x, y, WATER);
@@ -161,19 +149,14 @@ function startPowderSim() {
     const dir = Math.random() < 0.5 ? -1 : 1;
     if (tryMove(x, y, x + dir, y + 1)) return;
     if (tryMove(x, y, x - dir, y + 1)) return;
-    const spread = type === OIL ? 3 : 5;
-    if (Math.random() < 0.3) {
+    if (Math.random() < 0.35) {
       if (tryMove(x, y, x + dir, y)) return;
-      for (let s = 2; s <= spread; s++) {
-        if (tryMove(x, y, x + dir * s, y)) return;
-        if (getCell(x + dir * s, y) !== 0) break;
-      }
     }
   }
 
   function stepFire(x, y) {
     let l = getLife(x, y);
-    if (l <= 0) { setNext(x, y, SMOKE); setLife(x, y, 20 + Math.random() * 30 | 0); return; }
+    if (l <= 0) { setNextFire(x, y, SMOKE, 20 + Math.random() * 30 | 0); return; }
     setLife(x, y, l - 1);
     const dirs = [[0, -1], [0, 1], [-1, 0], [1, 0], [-1, -1], [1, -1]];
     for (const [dx, dy] of dirs) {
@@ -181,26 +164,34 @@ function startPowderSim() {
       const nb = getCell(nx, ny);
       if (nb === OIL || nb === PLANT) {
         if (Math.random() < 0.15) {
-          setNext(nx, ny, FIRE);
-          setLife(nx, ny, 30 + Math.random() * 40 | 0);
+          const i = idx(nx, ny);
+          nextGrid[i] = FIRE;
+          life[i] = 30 + Math.random() * 40 | 0;
+          targeted[i] = 1;
         }
       } else if (nb === WATER) {
-        setNext(x, y, SMOKE);
-        setLife(x, y, 10);
+        setNextFire(x, y, SMOKE, 10);
         return;
       }
     }
-    if (Math.random() < 0.03) { setNext(x, y, SMOKE); setLife(x, y, 15 + Math.random() * 20 | 0); return; }
+    if (Math.random() < 0.03) { setNextFire(x, y, SMOKE, 15 + Math.random() * 20 | 0); return; }
     if (isEmpty(x, y - 1) || (getCell(x, y - 1) === SMOKE && Math.random() < 0.5)) {
       tryMove(x, y, x, y - 1);
     }
   }
 
+  function setNextFire(x, y, type, lifeVal) {
+    const i = idx(x, y);
+    nextGrid[i] = type;
+    life[i] = lifeVal;
+    targeted[i] = 1;
+  }
+
   function stepSmoke(x, y) {
     let l = getLife(x, y);
-    if (l <= 0) { setNext(x, y, 0); return; }
+    if (l <= 0) { nextGrid[idx(x, y)] = 0; targeted[idx(x, y)] = 1; return; }
     setLife(x, y, l - 1);
-    if (Math.random() < 0.05) { setNext(x, y, 0); return; }
+    if (Math.random() < 0.05) { nextGrid[idx(x, y)] = 0; targeted[idx(x, y)] = 1; return; }
     if (tryMove(x, y, x, y - 1)) return;
     const dir = Math.random() < 0.5 ? -1 : 1;
     if (tryMove(x, y, x + dir, y - 1)) return;
@@ -211,22 +202,30 @@ function startPowderSim() {
     const dirs = [[0, -1], [0, 1], [-1, 0], [1, 0]];
     for (const [dx, dy] of dirs) {
       if (isType(x + dx, y + dy, WATER)) {
-        setNext(x + dx, y + dy, 0);
+        nextGrid[idx(x + dx, y + dy)] = 0;
+        targeted[idx(x + dx, y + dy)] = 1;
         if (Math.random() < 0.08) {
           const gd = dirs[Math.random() * 4 | 0];
           const gx = x + gd[0], gy = y + gd[1];
-          if (isEmpty(gx, gy)) setNext(gx, gy, PLANT);
+          if (gx >= 0 && gx < cols && gy >= 0 && gy < rows && grid[idx(gx, gy)] === 0) {
+            nextGrid[idx(gx, gy)] = PLANT;
+            targeted[idx(gx, gy)] = 1;
+          }
         }
         return;
       }
     }
     for (const [dx, dy] of dirs) {
       if (isType(x + dx, y + dy, ACID)) {
-        setNext(x, y, 0);
+        nextGrid[idx(x, y)] = 0;
+        targeted[idx(x, y)] = 1;
         return;
       }
     }
   }
+
+  function isEmpty(x, y) { return getCell(x, y) === 0; }
+  function isType(x, y, t) { return getCell(x, y) === t; }
 
   function paint(cx, cy) {
     const r = brushSize;
@@ -235,14 +234,15 @@ function startPowderSim() {
         if (dx * dx + dy * dy > r * r + r) continue;
         const x = cx + dx, y = cy + dy;
         if (x < 0 || x >= cols || y < 0 || y >= rows) continue;
+        const i = idx(x, y);
         if (selectedElement === 0) {
-          grid[idx(x, y)] = 0;
-          life[idx(x, y)] = 0;
-        } else if (grid[idx(x, y)] === 0 || grid[idx(x, y)] === selectedElement) {
-          grid[idx(x, y)] = selectedElement;
-          if (selectedElement === FIRE) life[idx(x, y)] = 30 + Math.random() * 40 | 0;
-          else if (selectedElement === SMOKE) life[idx(x, y)] = 30 + Math.random() * 30 | 0;
-          else life[idx(x, y)] = 0;
+          grid[i] = 0;
+          life[i] = 0;
+        } else if (grid[i] === 0 || grid[i] === selectedElement) {
+          grid[i] = selectedElement;
+          if (selectedElement === FIRE) life[i] = 30 + Math.random() * 40 | 0;
+          else if (selectedElement === SMOKE) life[i] = 30 + Math.random() * 30 | 0;
+          else life[i] = 0;
         }
       }
     }
@@ -281,15 +281,17 @@ function startPowderSim() {
       step();
       for (let y = 0; y < rows; y++) {
         for (let x = 0; x < cols; x++) {
-          const t = grid[idx(x, y)];
-          if (t !== 0 && t !== STONE) {
-            if (t === ACID) {
-              const dirs = [[0, 1], [0, -1], [-1, 0], [1, 0]];
-              for (const [dx, dy] of dirs) {
-                const nb = getCell(x + dx, y + dy);
-                if (nb !== 0 && nb !== STONE && nb !== ACID && Math.random() < 0.05) {
-                  grid[idx(x + dx, y + dy)] = 0;
-                  life[idx(x + dx, y + dy)] = 0;
+          const i = idx(x, y);
+          if (grid[i] === ACID) {
+            const dirs = [[0, 1], [0, -1], [-1, 0], [1, 0]];
+            for (const [dx, dy] of dirs) {
+              const nx = x + dx, ny = y + dy;
+              if (nx >= 0 && nx < cols && ny >= 0 && ny < rows) {
+                const ni = idx(nx, ny);
+                const nb = grid[ni];
+                if (nb !== 0 && nb !== STONE && nb !== ACID && Math.random() < 0.04) {
+                  grid[ni] = 0;
+                  life[ni] = 0;
                 }
               }
             }
