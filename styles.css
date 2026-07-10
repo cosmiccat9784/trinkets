@@ -1832,12 +1832,6 @@ footer {
   100% { transform: translateY(180px); opacity: 0; }
 }
 
-.powder-toolbar {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-}
-
 .powder-tool {
   min-height: 34px;
   padding: 0 10px;
@@ -1848,10 +1842,6 @@ footer {
   font-weight: 800;
   cursor: pointer;
   transition: background 0.1s;
-}
-
-.powder-tool:hover {
-  background: #eee;
 }
 
 .powder-tool.active {
@@ -1868,25 +1858,56 @@ footer {
   color: white;
 }
 
-.powder-brush-row {
+.powder-canvas {
+  flex: 1;
+  min-height: 340px;
+  border-radius: 10px;
+  border: 3px solid var(--line);
+  cursor: crosshair;
+  display: block;
+}
+
+.powder-layout {
   display: flex;
-  align-items: center;
-  gap: 10px;
+  gap: 12px;
+  min-height: 400px;
+}
+
+.powder-sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 90px;
+  flex-shrink: 0;
+}
+
+.powder-sidebar .powder-tool {
+  width: 100%;
+  text-align: left;
+  padding: 0 8px;
+  font-size: 0.72rem;
+  min-height: 30px;
+}
+
+.powder-brush-col {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 6px;
 }
 
 .powder-brush-label {
-  font-size: 0.8rem;
+  font-size: 0.7rem;
   font-weight: 800;
   color: var(--muted);
-  white-space: nowrap;
 }
 
 .powder-brush-slider {
-  flex: 1;
+  width: 100%;
   -webkit-appearance: none;
   appearance: none;
-  height: 8px;
-  border-radius: 4px;
+  height: 6px;
+  border-radius: 3px;
   background: linear-gradient(90deg, #ccc, var(--ink));
   outline: none;
 }
@@ -1894,22 +1915,35 @@ footer {
 .powder-brush-slider::-webkit-slider-thumb {
   -webkit-appearance: none;
   appearance: none;
-  width: 18px;
-  height: 18px;
+  width: 16px;
+  height: 16px;
   border-radius: 50%;
   background: white;
-  border: 3px solid var(--line);
-  box-shadow: 2px 2px 0 var(--line);
+  border: 2px solid var(--line);
   cursor: pointer;
 }
 
-.powder-canvas {
+.powder-sidebar-stats {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 0.65rem;
+  font-weight: 800;
+  color: var(--muted);
+  margin-top: auto;
+}
+
+.powder-sidebar-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.powder-sidebar-actions .game-action {
   width: 100%;
-  height: 340px;
-  border-radius: 10px;
-  border: 3px solid var(--line);
-  cursor: crosshair;
-  display: block;
+  min-height: 28px;
+  font-size: 0.72rem;
+  padding: 0 6px;
 }
 
 footer {

@@ -3,13 +3,9 @@ function startPowderSim() {
     "Powder Sim",
     "Arcade",
     `
-      <div class="game-layout">
-        <div class="game-topline">
-          <span class="game-stat" id="powderElement">Element: Sand</span>
-          <span class="game-stat" id="powderCount">Particles: 0</span>
-        </div>
-        <p class="game-message">Pick an element, then click or drag on the canvas to draw. Watch the physics unfold.</p>
-        <div class="powder-toolbar" id="powderToolbar">
+      <div class="powder-layout">
+        <div class="powder-sidebar">
+          <p class="toybox-toy-label">Elements</p>
           <button class="powder-tool active" data-element="1" type="button" title="Sand">Sand</button>
           <button class="powder-tool" data-element="2" type="button" title="Water">Water</button>
           <button class="powder-tool" data-element="3" type="button" title="Stone">Stone</button>
@@ -18,21 +14,25 @@ function startPowderSim() {
           <button class="powder-tool" data-element="7" type="button" title="Acid">Acid</button>
           <button class="powder-tool" data-element="8" type="button" title="Plant">Plant</button>
           <button class="powder-tool powder-tool-erase" data-element="0" type="button" title="Eraser">Erase</button>
-        </div>
-        <div class="powder-brush-row">
-          <label class="powder-brush-label">Brush: <span id="powderBrushVal">3</span></label>
-          <input type="range" class="powder-brush-slider" id="powderBrush" min="1" max="8" value="3"/>
+          <div class="powder-brush-col">
+            <label class="powder-brush-label">Brush: <span id="powderBrushVal">3</span></label>
+            <input type="range" class="powder-brush-slider" id="powderBrush" min="1" max="12" value="3"/>
+          </div>
+          <div class="powder-sidebar-stats">
+            <span id="powderElement">Sand</span>
+            <span id="powderCount">0</span>
+          </div>
+          <div class="powder-sidebar-actions">
+            <button class="game-action" id="powderClear" type="button">Clear</button>
+            <button class="game-action" id="powderPause" type="button">Pause</button>
+          </div>
         </div>
         <canvas class="powder-canvas" id="powderCanvas"></canvas>
-        <div class="game-actions">
-          <button class="game-action" id="powderClear" type="button">Clear all</button>
-          <button class="game-action" id="powderPause" type="button">Pause</button>
-        </div>
       </div>
     `
   );
 
-  const CELL = 4;
+  const CELL = 3;
   const canvas = document.querySelector("#powderCanvas");
   const ctx = canvas.getContext("2d");
   let w, h, cols, rows;
@@ -41,10 +41,10 @@ function startPowderSim() {
   let brushSize = 3;
   let painting = false;
   let paused = false;
-  let mouseX = 0, mouseY = 0;
   let raf;
 
-  const NAMES = ["", "Sand", "Water", "Stone", "Fire", "Smoke", "Oil", "Acid", "Plant"];
+  const SAND = 1, WATER = 2, STONE = 3, FIRE = 4, SMOKE = 5, OIL = 6, ACID = 7, PLANT = 8;
+
   const COLORS = {
     1: ["#d4a574", "#c9956a", "#deb887", "#c8956e"],
     2: ["#4f8fcf", "#5a9fd8", "#3d7dbf", "#6aafef"],
@@ -56,26 +56,30 @@ function startPowderSim() {
     8: ["#166534", "#15803d", "#14532d", "#19782e"]
   };
 
-  const SAND = 1, WATER = 2, STONE = 3, FIRE = 4, SMOKE = 5, OIL = 6, ACID = 7, PLANT = 8;
-
   function resize() {
-    const rect = canvas.getBoundingClientRect();
-    w = canvas.width = rect.width || 480;
-    h = canvas.height = rect.height || 340;
+    const sidebar = canvas.parentElement.querySelector(".powder-sidebar");
+    const sidebarW = sidebar ? sidebar.offsetWidth : 0;
+    const availW = canvas.parentElement.offsetWidth - sidebarW - 14;
+    const availH = Math.min(window.innerHeight - 220, 500);
+    w = canvas.width = Math.max(200, availW);
+    h = canvas.height = Math.max(150, availH);
     cols = Math.ceil(w / CELL);
     rows = Math.ceil(h / CELL);
     grid = new Uint8Array(cols * rows);
     nextGrid = new Uint8Array(cols * rows);
     life = new Int16Array(cols * rows);
   }
-  resize();
 
   function idx(x, y) { return y * cols + x; }
-  function get(x, y) {
+  function getCell(x, y) {
     if (x < 0 || x >= cols || y < 0 || y >= rows) return STONE;
     return grid[idx(x, y)];
   }
-  function set(x, y, val) {
+  function setCell(x, y, val) {
+    if (x < 0 || x >= cols || y < 0 || y >= rows) return;
+    grid[idx(x, y)] = val;
+  }
+  function setNext(x, y, val) {
     if (x < 0 || x >= cols || y < 0 || y >= rows) return;
     nextGrid[idx(x, y)] = val;
   }
@@ -86,34 +90,50 @@ function startPowderSim() {
     if (x < 0 || x >= cols || y < 0 || y >= rows) return 0;
     return life[idx(x, y)];
   }
-  function isEmpty(x, y) { return get(x, y) === 0; }
-  function isType(x, y, t) { return get(x, y) === t; }
-  function swap(x1, y1, x2, y2) {
-    const a = get(x1, y1);
-    set(x1, y1, get(x2, y2));
-    set(x2, y2, a);
-    const la = getLife(x1, y1);
-    setLife(x1, y1, getLife(x2, y2));
-    setLife(x2, y2, la);
+  function isEmpty(x, y) { return getCell(x, y) === 0; }
+  function isType(x, y, t) { return getCell(x, y) === t; }
+  function swapCells(x1, y1, x2, y2) {
+    const a = grid[idx(x1, y1)];
+    setNext(x1, y1, grid[idx(x2, y2)]);
+    setNext(x2, y2, a);
+    const la = life[idx(x1, y1)];
+    life[idx(x1, y1)] = life[idx(x2, y2)];
+    life[idx(x2, y2)] = la;
   }
 
   function density(type) {
     if (type === 0) return 0;
     if (type === SMOKE) return 1;
     if (type === FIRE) return 2;
-    if (type === WATER) return 5;
     if (type === OIL) return 4;
+    if (type === WATER) return 5;
     if (type === ACID) return 5;
     if (type === SAND) return 8;
     return 99;
   }
 
+  function isLiquid(t) { return t === WATER || t === OIL || t === ACID; }
+
+  function tryMove(x1, y1, x2, y2) {
+    if (x2 < 0 || x2 >= cols || y2 < 0 || y2 >= rows) return false;
+    const a = getCell(x1, y1);
+    const b = getCell(x2, y2);
+    if (a === b) return false;
+    if (b === STONE) return false;
+    if (isLiquid(a) && b !== 0 && !isLiquid(b)) return false;
+    if (isLiquid(b) && a !== 0 && !isLiquid(a) && density(a) >= density(b)) return false;
+    if (b === 0 || (isLiquid(a) && isLiquid(b) && density(a) > density(b))) {
+      swapCells(x1, y1, x2, y2);
+      return true;
+    }
+    return false;
+  }
+
   function step() {
     nextGrid.set(grid);
-    for (let y = 0; y < rows; y++) {
+    for (let y = rows - 1; y >= 0; y--) {
       for (let x = 0; x < cols; x++) {
-        const i = idx(x, y);
-        const type = grid[i];
+        const type = getCell(x, y);
         if (type === 0 || type === STONE) continue;
         if (type === SAND) stepSand(x, y);
         else if (type === WATER) stepLiquid(x, y, WATER);
@@ -136,23 +156,6 @@ function startPowderSim() {
     if (tryMove(x, y, x - dir, y + 1)) return;
   }
 
-  function tryMove(x1, y1, x2, y2) {
-    if (x2 < 0 || x2 >= cols || y2 < 0 || y2 >= rows) return false;
-    const a = get(x1, y1);
-    const b = get(x2, y2);
-    if (a === b) return false;
-    if (b === STONE) return false;
-    if (isLiquid(a) && b !== 0 && !isLiquid(b)) return false;
-    if (isLiquid(b) && a !== 0 && !isLiquid(a) && density(a) >= density(b)) return false;
-    if (b === 0 || (isLiquid(a) && isLiquid(b) && density(a) > density(b))) {
-      swap(x1, y1, x2, y2);
-      return true;
-    }
-    return false;
-  }
-
-  function isLiquid(t) { return t === WATER || t === OIL || t === ACID; }
-
   function stepLiquid(x, y, type) {
     if (tryMove(x, y, x, y + 1)) return;
     const dir = Math.random() < 0.5 ? -1 : 1;
@@ -163,41 +166,41 @@ function startPowderSim() {
       if (tryMove(x, y, x + dir, y)) return;
       for (let s = 2; s <= spread; s++) {
         if (tryMove(x, y, x + dir * s, y)) return;
-        if (get(x + dir * s, y) !== 0) break;
+        if (getCell(x + dir * s, y) !== 0) break;
       }
     }
   }
 
   function stepFire(x, y) {
     let l = getLife(x, y);
-    if (l <= 0) { set(x, y, SMOKE); setLife(x, y, 20 + Math.random() * 30 | 0); return; }
+    if (l <= 0) { setNext(x, y, SMOKE); setLife(x, y, 20 + Math.random() * 30 | 0); return; }
     setLife(x, y, l - 1);
     const dirs = [[0, -1], [0, 1], [-1, 0], [1, 0], [-1, -1], [1, -1]];
     for (const [dx, dy] of dirs) {
       const nx = x + dx, ny = y + dy;
-      const nb = get(nx, ny);
+      const nb = getCell(nx, ny);
       if (nb === OIL || nb === PLANT) {
         if (Math.random() < 0.15) {
-          set(nx, ny, FIRE);
+          setNext(nx, ny, FIRE);
           setLife(nx, ny, 30 + Math.random() * 40 | 0);
         }
       } else if (nb === WATER) {
-        set(x, y, SMOKE);
+        setNext(x, y, SMOKE);
         setLife(x, y, 10);
         return;
       }
     }
-    if (Math.random() < 0.03) { set(x, y, SMOKE); setLife(x, y, 15 + Math.random() * 20 | 0); return; }
-    if (isEmpty(x, y - 1) || (get(x, y - 1) === SMOKE && Math.random() < 0.5)) {
-      if (tryMove(x, y, x, y - 1)) return;
+    if (Math.random() < 0.03) { setNext(x, y, SMOKE); setLife(x, y, 15 + Math.random() * 20 | 0); return; }
+    if (isEmpty(x, y - 1) || (getCell(x, y - 1) === SMOKE && Math.random() < 0.5)) {
+      tryMove(x, y, x, y - 1);
     }
   }
 
   function stepSmoke(x, y) {
     let l = getLife(x, y);
-    if (l <= 0) { set(x, y, 0); return; }
+    if (l <= 0) { setNext(x, y, 0); return; }
     setLife(x, y, l - 1);
-    if (Math.random() < 0.05) { set(x, y, 0); return; }
+    if (Math.random() < 0.05) { setNext(x, y, 0); return; }
     if (tryMove(x, y, x, y - 1)) return;
     const dir = Math.random() < 0.5 ? -1 : 1;
     if (tryMove(x, y, x + dir, y - 1)) return;
@@ -208,31 +211,19 @@ function startPowderSim() {
     const dirs = [[0, -1], [0, 1], [-1, 0], [1, 0]];
     for (const [dx, dy] of dirs) {
       if (isType(x + dx, y + dy, WATER)) {
-        set(x + dx, y + dy, 0);
+        setNext(x + dx, y + dy, 0);
         if (Math.random() < 0.08) {
           const gd = dirs[Math.random() * 4 | 0];
           const gx = x + gd[0], gy = y + gd[1];
-          if (isEmpty(gx, gy)) { set(gx, gy, PLANT); }
+          if (isEmpty(gx, gy)) setNext(gx, gy, PLANT);
         }
         return;
       }
     }
     for (const [dx, dy] of dirs) {
       if (isType(x + dx, y + dy, ACID)) {
-        set(x, y, 0);
+        setNext(x, y, 0);
         return;
-      }
-    }
-  }
-
-  function interactions(x, y) {
-    const type = get(x, y);
-    const dirs = [[0, 1], [0, -1], [-1, 0], [1, 0]];
-    for (const [dx, dy] of dirs) {
-      const nx = x + dx, ny = y + dy;
-      const nb = get(nx, ny);
-      if (type === ACID && nb !== 0 && nb !== STONE && nb !== ACID) {
-        if (Math.random() < 0.05) { set(nx, ny, 0); setLife(nx, ny, 0); }
       }
     }
   }
@@ -245,13 +236,13 @@ function startPowderSim() {
         const x = cx + dx, y = cy + dy;
         if (x < 0 || x >= cols || y < 0 || y >= rows) continue;
         if (selectedElement === 0) {
-          set(x, y, 0);
-          setLife(x, y, 0);
-        } else if (get(x, y) === 0 || get(x, y) === selectedElement) {
-          set(x, y, selectedElement);
-          if (selectedElement === FIRE) setLife(x, y, 30 + Math.random() * 40 | 0);
-          else if (selectedElement === SMOKE) setLife(x, y, 30 + Math.random() * 30 | 0);
-          else setLife(x, y, 0);
+          grid[idx(x, y)] = 0;
+          life[idx(x, y)] = 0;
+        } else if (grid[idx(x, y)] === 0 || grid[idx(x, y)] === selectedElement) {
+          grid[idx(x, y)] = selectedElement;
+          if (selectedElement === FIRE) life[idx(x, y)] = 30 + Math.random() * 40 | 0;
+          else if (selectedElement === SMOKE) life[idx(x, y)] = 30 + Math.random() * 30 | 0;
+          else life[idx(x, y)] = 0;
         }
       }
     }
@@ -268,13 +259,11 @@ function startPowderSim() {
         if (!colors) continue;
         let c;
         if (type === FIRE) {
-          const l = getLife(x, y);
-          const fi = l > 30 ? 0 : l > 15 ? 1 : 2;
-          c = colors[fi] || colors[0];
+          const l = life[idx(x, y)];
+          c = colors[l > 30 ? 0 : l > 15 ? 1 : 2] || colors[0];
         } else if (type === SMOKE) {
-          const l = getLife(x, y);
-          const fi = l > 25 ? 0 : l > 10 ? 1 : 2;
-          c = colors[fi] || colors[0];
+          const l = life[idx(x, y)];
+          c = colors[l > 25 ? 0 : l > 10 ? 1 : 2] || colors[0];
         } else {
           c = colors[(x + y * 3) % colors.length];
         }
@@ -284,7 +273,7 @@ function startPowderSim() {
     }
     let count = 0;
     for (let i = 0; i < grid.length; i++) { if (grid[i] !== 0) count++; }
-    document.querySelector("#powderCount").textContent = "Particles: " + count;
+    document.querySelector("#powderCount").textContent = count + " particles";
   }
 
   function animate() {
@@ -292,50 +281,55 @@ function startPowderSim() {
       step();
       for (let y = 0; y < rows; y++) {
         for (let x = 0; x < cols; x++) {
-          if (grid[idx(x, y)] !== 0 && grid[idx(x, y)] !== STONE) interactions(x, y);
+          const t = grid[idx(x, y)];
+          if (t !== 0 && t !== STONE) {
+            if (t === ACID) {
+              const dirs = [[0, 1], [0, -1], [-1, 0], [1, 0]];
+              for (const [dx, dy] of dirs) {
+                const nb = getCell(x + dx, y + dy);
+                if (nb !== 0 && nb !== STONE && nb !== ACID && Math.random() < 0.05) {
+                  grid[idx(x + dx, y + dy)] = 0;
+                  life[idx(x + dx, y + dy)] = 0;
+                }
+              }
+            }
+          }
         }
       }
     }
     render();
     raf = requestAnimationFrame(animate);
   }
-  animate();
 
   function canvasCoords(e) {
     const rect = canvas.getBoundingClientRect();
+    const scaleX = w / rect.width;
+    const scaleY = h / rect.height;
     const clientX = e.touches ? e.touches[0].clientX : e.clientX;
     const clientY = e.touches ? e.touches[0].clientY : e.clientY;
     return {
-      x: Math.floor((clientX - rect.left) / (rect.width / cols)),
-      y: Math.floor((clientY - rect.top) / (rect.height / rows))
+      x: Math.floor((clientX - rect.left) * scaleX / CELL),
+      y: Math.floor((clientY - rect.top) * scaleY / CELL)
     };
   }
 
   canvas.addEventListener("mousedown", (e) => {
     painting = true;
-    const p = canvasCoords(e);
-    mouseX = p.x; mouseY = p.y;
-    paint(p.x, p.y);
+    paint(canvasCoords(e).x, canvasCoords(e).y);
   });
   canvas.addEventListener("mousemove", (e) => {
-    const p = canvasCoords(e);
-    mouseX = p.x; mouseY = p.y;
-    if (painting) paint(p.x, p.y);
+    if (painting) paint(canvasCoords(e).x, canvasCoords(e).y);
   });
   canvas.addEventListener("mouseup", () => { painting = false; });
   canvas.addEventListener("mouseleave", () => { painting = false; });
   canvas.addEventListener("touchstart", (e) => {
     e.preventDefault();
     painting = true;
-    const p = canvasCoords(e);
-    mouseX = p.x; mouseY = p.y;
-    paint(p.x, p.y);
+    paint(canvasCoords(e).x, canvasCoords(e).y);
   }, { passive: false });
   canvas.addEventListener("touchmove", (e) => {
     e.preventDefault();
-    const p = canvasCoords(e);
-    mouseX = p.x; mouseY = p.y;
-    if (painting) paint(p.x, p.y);
+    if (painting) paint(canvasCoords(e).x, canvasCoords(e).y);
   }, { passive: false });
   canvas.addEventListener("touchend", () => { painting = false; });
 
@@ -344,7 +338,8 @@ function startPowderSim() {
       document.querySelectorAll(".powder-tool").forEach((b) => b.classList.remove("active"));
       btn.classList.add("active");
       selectedElement = Number(btn.dataset.element);
-      document.querySelector("#powderElement").textContent = "Element: " + NAMES[selectedElement];
+      document.querySelector("#powderElement").textContent =
+        selectedElement === 0 ? "Eraser" : ["", "Sand", "Water", "Stone", "Fire", "Smoke", "Oil", "Acid", "Plant"][selectedElement];
     });
   });
 
@@ -366,12 +361,12 @@ function startPowderSim() {
     document.querySelector("#powderPause").textContent = paused ? "Play" : "Pause";
   });
 
+  resize();
+  animate();
+
   setSnapshot({
     mode: "playing",
-    game: "Powder Sim",
-    selectedElement: NAMES[selectedElement],
-    brushSize,
-    paused
+    game: "Powder Sim"
   });
 
   activeCleanup = () => {
