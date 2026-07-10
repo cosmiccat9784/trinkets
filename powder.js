@@ -42,6 +42,7 @@ function startPowderSim() {
   let painting = false;
   let paused = false;
   let raf;
+  let frameSkip = 0;
 
   const SAND = 1, WATER = 2, STONE = 3, FIRE = 4, SMOKE = 5, OIL = 6, ACID = 7, PLANT = 8;
 
@@ -162,7 +163,7 @@ function startPowderSim() {
     if (tryMove(x, y, x + dir, y + 1)) return;
     if (tryMove(x, y, x - dir, y + 1)) return;
     const spread = type === OIL ? 3 : 5;
-    if (Math.random() < 0.6) {
+    if (Math.random() < 0.3) {
       if (tryMove(x, y, x + dir, y)) return;
       for (let s = 2; s <= spread; s++) {
         if (tryMove(x, y, x + dir * s, y)) return;
@@ -278,18 +279,22 @@ function startPowderSim() {
 
   function animate() {
     if (!paused) {
-      step();
-      for (let y = 0; y < rows; y++) {
-        for (let x = 0; x < cols; x++) {
-          const t = grid[idx(x, y)];
-          if (t !== 0 && t !== STONE) {
-            if (t === ACID) {
-              const dirs = [[0, 1], [0, -1], [-1, 0], [1, 0]];
-              for (const [dx, dy] of dirs) {
-                const nb = getCell(x + dx, y + dy);
-                if (nb !== 0 && nb !== STONE && nb !== ACID && Math.random() < 0.05) {
-                  grid[idx(x + dx, y + dy)] = 0;
-                  life[idx(x + dx, y + dy)] = 0;
+      frameSkip++;
+      if (frameSkip >= 3) {
+        frameSkip = 0;
+        step();
+        for (let y = 0; y < rows; y++) {
+          for (let x = 0; x < cols; x++) {
+            const t = grid[idx(x, y)];
+            if (t !== 0 && t !== STONE) {
+              if (t === ACID) {
+                const dirs = [[0, 1], [0, -1], [-1, 0], [1, 0]];
+                for (const [dx, dy] of dirs) {
+                  const nb = getCell(x + dx, y + dy);
+                  if (nb !== 0 && nb !== STONE && nb !== ACID && Math.random() < 0.05) {
+                    grid[idx(x + dx, y + dy)] = 0;
+                    life[idx(x + dx, y + dy)] = 0;
+                  }
                 }
               }
             }
