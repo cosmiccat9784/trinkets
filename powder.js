@@ -13,6 +13,7 @@ function startPowderSim() {
           <button class="powder-tool" data-element="6" type="button" title="Oil">Oil</button>
           <button class="powder-tool" data-element="7" type="button" title="Acid">Acid</button>
           <button class="powder-tool" data-element="8" type="button" title="Plant">Plant</button>
+          <button class="powder-tool" data-element="9" type="button" title="Dynamite">TNT</button>
           <button class="powder-tool powder-tool-erase" data-element="0" type="button" title="Eraser">Erase</button>
           <div class="powder-brush-col">
             <label class="powder-brush-label">Brush: <span id="powderBrushVal">3</span></label>
@@ -43,7 +44,7 @@ function startPowderSim() {
   let paused = false;
   let raf;
 
-  const SAND = 1, WATER = 2, STONE = 3, FIRE = 4, SMOKE = 5, OIL = 6, ACID = 7, PLANT = 8;
+  const SAND = 1, WATER = 2, STONE = 3, FIRE = 4, SMOKE = 5, OIL = 6, ACID = 7, PLANT = 8, TNT = 9;
 
   const COLORS = {
     1: ["#d4a574", "#c9956a", "#deb887", "#c8956e"],
@@ -53,7 +54,8 @@ function startPowderSim() {
     5: ["#9ca3af", "#b0b8c4", "#8892a0", "#c0c8d4"],
     6: ["#a0845c", "#b0946c", "#90744c", "#c0a47c"],
     7: ["#22c55e", "#16a34a", "#34d058", "#4ade80"],
-    8: ["#166534", "#15803d", "#14532d", "#19782e"]
+    8: ["#166534", "#15803d", "#14532d", "#19782e"],
+    9: ["#dc2626", "#ef4444", "#b91c1c", "#f87171"]
   };
 
   function resize() {
@@ -130,6 +132,7 @@ function startPowderSim() {
         else if (type === FIRE) stepFire(x, y);
         else if (type === SMOKE) stepSmoke(x, y);
         else if (type === PLANT) stepPlant(x, y);
+        else if (type === TNT) stepTNT(x, y);
       }
     }
     const tmp = grid;
@@ -162,7 +165,7 @@ function startPowderSim() {
     for (const [dx, dy] of dirs) {
       const nx = x + dx, ny = y + dy;
       const nb = getCell(nx, ny);
-      if (nb === OIL || nb === PLANT) {
+      if (nb === OIL || nb === PLANT || nb === TNT) {
         if (Math.random() < 0.15) {
           const i = idx(nx, ny);
           nextGrid[i] = FIRE;
@@ -220,6 +223,57 @@ function startPowderSim() {
         nextGrid[idx(x, y)] = 0;
         targeted[idx(x, y)] = 1;
         return;
+      }
+    }
+  }
+
+  function stepTNT(x, y) {
+    const i = idx(x, y);
+    const l = life[i];
+    if (l > 0) {
+      if (l <= 1) {
+        explode(x, y);
+        return;
+      }
+      life[i] = l - 1;
+      return;
+    }
+    const dirs = [[0, 1], [0, -1], [-1, 0], [1, 0], [-1, -1], [1, -1], [-1, 1], [1, 1]];
+    for (const [dx, dy] of dirs) {
+      const nb = getCell(x + dx, y + dy);
+      if (nb === FIRE || nb === ACID) {
+        life[i] = 40 + Math.random() * 30 | 0;
+        return;
+      }
+    }
+  }
+
+  function explode(cx, cy) {
+    const radius = 18 + Math.random() * 10 | 0;
+    for (let dy = -radius; dy <= radius; dy++) {
+      for (let dx = -radius; dx <= radius; dx++) {
+        if (dx * dx + dy * dy > radius * radius) continue;
+        const x = cx + dx, y = cy + dy;
+        if (x < 0 || x >= cols || y < 0 || y >= rows) continue;
+        const i = idx(x, y);
+        const t = grid[i];
+        if (t === STONE) {
+          if (Math.random() < 0.3) { grid[i] = 0; life[i] = 0; }
+          continue;
+        }
+        if (t === TNT && life[i] === 0) {
+          life[i] = 10 + Math.random() * 20 | 0;
+          continue;
+        }
+        grid[i] = 0;
+        life[i] = 0;
+        if (Math.random() < 0.25) {
+          grid[i] = FIRE;
+          life[i] = 20 + Math.random() * 40 | 0;
+        } else if (Math.random() < 0.15) {
+          grid[i] = SMOKE;
+          life[i] = 20 + Math.random() * 30 | 0;
+        }
       }
     }
   }
@@ -341,7 +395,7 @@ function startPowderSim() {
       btn.classList.add("active");
       selectedElement = Number(btn.dataset.element);
       document.querySelector("#powderElement").textContent =
-        selectedElement === 0 ? "Eraser" : ["", "Sand", "Water", "Stone", "Fire", "Smoke", "Oil", "Acid", "Plant"][selectedElement];
+        selectedElement === 0 ? "Eraser" : ["", "Sand", "Water", "Stone", "Fire", "Smoke", "Oil", "Acid", "Plant", "Dynamite"][selectedElement];
     });
   });
 
