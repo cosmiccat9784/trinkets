@@ -13,7 +13,8 @@ function startPowderSim() {
           <button class="powder-tool" data-element="6" type="button" title="Oil">Oil</button>
           <button class="powder-tool" data-element="7" type="button" title="Acid">Acid</button>
           <button class="powder-tool" data-element="8" type="button" title="Plant">Plant</button>
-          <button class="powder-tool" data-element="9" type="button" title="Dynamite">TNT</button>
+          <button class="powder-tool" data-element="9" type="button" title="TNT">TNT</button>
+          <button class="powder-tool" data-element="10" type="button" title="Dynamite">Dyna</button>
           <button class="powder-tool powder-tool-erase" data-element="0" type="button" title="Eraser">Erase</button>
           <div class="powder-brush-col">
             <label class="powder-brush-label">Brush: <span id="powderBrushVal">3</span></label>
@@ -44,7 +45,7 @@ function startPowderSim() {
   let paused = false;
   let raf;
 
-  const SAND = 1, WATER = 2, STONE = 3, FIRE = 4, SMOKE = 5, OIL = 6, ACID = 7, PLANT = 8, TNT = 9;
+  const SAND = 1, WATER = 2, STONE = 3, FIRE = 4, SMOKE = 5, OIL = 6, ACID = 7, PLANT = 8, TNT = 9, DYNA = 10;
 
   const COLORS = {
     1: ["#d4a574", "#c9956a", "#deb887", "#c8956e"],
@@ -55,7 +56,8 @@ function startPowderSim() {
     6: ["#a0845c", "#b0946c", "#90744c", "#c0a47c"],
     7: ["#22c55e", "#16a34a", "#34d058", "#4ade80"],
     8: ["#166534", "#15803d", "#14532d", "#19782e"],
-    9: ["#dc2626", "#ef4444", "#b91c1c", "#f87171"]
+    9: ["#dc2626", "#ef4444", "#b91c1c", "#f87171"],
+    10: ["#ea580c", "#f97316", "#c2410c", "#fb923c"]
   };
 
   function resize() {
@@ -133,6 +135,7 @@ function startPowderSim() {
         else if (type === SMOKE) stepSmoke(x, y);
         else if (type === PLANT) stepPlant(x, y);
         else if (type === TNT) stepTNT(x, y);
+        else if (type === DYNA) stepDyna(x, y);
       }
     }
     const tmp = grid;
@@ -165,7 +168,7 @@ function startPowderSim() {
     for (const [dx, dy] of dirs) {
       const nx = x + dx, ny = y + dy;
       const nb = getCell(nx, ny);
-      if (nb === OIL || nb === PLANT || nb === TNT) {
+      if (nb === OIL || nb === PLANT || nb === TNT || nb === DYNA) {
         if (Math.random() < 0.15) {
           const i = idx(nx, ny);
           nextGrid[i] = FIRE;
@@ -248,6 +251,31 @@ function startPowderSim() {
     }
   }
 
+  function stepDyna(x, y) {
+    const i = idx(x, y);
+    const l = life[i];
+    if (l > 0) {
+      if (l <= 1) {
+        explode(x, y);
+        return;
+      }
+      life[i] = l - 1;
+      return;
+    }
+    const dirs8 = [[0, 1], [0, -1], [-1, 0], [1, 0], [-1, -1], [1, -1], [-1, 1], [1, 1]];
+    for (const [dx, dy] of dirs8) {
+      const nb = getCell(x + dx, y + dy);
+      if (nb === FIRE || nb === ACID) {
+        life[i] = 30 + Math.random() * 25 | 0;
+        return;
+      }
+    }
+    if (tryMove(x, y, x, y + 1)) return;
+    const dir = Math.random() < 0.5 ? -1 : 1;
+    if (tryMove(x, y, x + dir, y + 1)) return;
+    if (tryMove(x, y, x - dir, y + 1)) return;
+  }
+
   function explode(cx, cy) {
     const radius = 18 + Math.random() * 10 | 0;
     for (let dy = -radius; dy <= radius; dy++) {
@@ -261,7 +289,7 @@ function startPowderSim() {
           if (Math.random() < 0.3) { grid[i] = 0; life[i] = 0; }
           continue;
         }
-        if (t === TNT && life[i] === 0) {
+        if ((t === TNT || t === DYNA) && life[i] === 0) {
           life[i] = 10 + Math.random() * 20 | 0;
           continue;
         }
@@ -395,7 +423,7 @@ function startPowderSim() {
       btn.classList.add("active");
       selectedElement = Number(btn.dataset.element);
       document.querySelector("#powderElement").textContent =
-        selectedElement === 0 ? "Eraser" : ["", "Sand", "Water", "Stone", "Fire", "Smoke", "Oil", "Acid", "Plant", "Dynamite"][selectedElement];
+        selectedElement === 0 ? "Eraser" : ["", "Sand", "Water", "Stone", "Fire", "Smoke", "Oil", "Acid", "Plant", "TNT", "Dynamite"][selectedElement];
     });
   });
 
