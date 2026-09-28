@@ -197,7 +197,6 @@ function startSwitchbackTiles() {
         <div class="game-actions">
           <button class="game-action" id="switchReset" type="button">Reset puzzle</button>
           <button class="game-action" id="switchNext" type="button">Next puzzle</button>
-          <button class="game-action" id="switchRandom" type="button">Random puzzle</button>
         </div>
       </div>
     `
@@ -222,8 +221,15 @@ function startSwitchbackTiles() {
     ["corner", 1], ["tee", 0], ["line", 1], ["corner", 2], ["line", 0],
     ["corner", 2], ["line", 0], ["tee", 1], ["corner", 0], ["line", 1]
   ];
-  const paths = shuffleArray([...allPaths]);
-  let puzzles = paths.map((path, pathIndex) => buildSwitchbackPuzzle(path, pathIndex));
+  let puzzles = [];
+  let randomCount = 0;
+
+  function newRandomPuzzle() {
+    puzzles.push(buildSwitchbackPuzzle(randomSwitchPath(), puzzles.length));
+    puzzleIndex = puzzles.length - 1;
+    randomCount += 1;
+    reset();
+  }
   const grid = document.querySelector("#pipeGrid");
   const message = document.querySelector("#switchMessage");
   const moveLabel = document.querySelector("#switchMoves");
@@ -401,9 +407,7 @@ function startSwitchbackTiles() {
       grid.append(button);
     });
     moveLabel.textContent = `Moves: ${moves}`;
-    puzzleLabel.textContent = puzzleIndex < paths.length
-      ? `Puzzle: ${puzzleIndex + 1}/${paths.length}`
-      : "Puzzle: Random";
+    puzzleLabel.textContent = `Puzzle #${randomCount}`;
     message.textContent = solved ? "Connected. The switchback path is open." : "Click tiles to rotate them. Pipes must meet on both sides.";
     setSnapshot({
       mode: solved ? "won" : "playing",
@@ -417,16 +421,8 @@ function startSwitchbackTiles() {
   }
 
   document.querySelector("#switchReset").addEventListener("click", reset);
-  document.querySelector("#switchNext").addEventListener("click", () => {
-    puzzleIndex = (puzzleIndex + 1) % puzzles.length;
-    reset();
-  });
-  document.querySelector("#switchRandom").addEventListener("click", () => {
-    puzzles.push(buildSwitchbackPuzzle(randomSwitchPath(), puzzles.length));
-    puzzleIndex = puzzles.length - 1;
-    reset();
-  });
-  reset();
+  document.querySelector("#switchNext").addEventListener("click", newRandomPuzzle);
+  newRandomPuzzle();
 }
 
 function startCometCatch() {

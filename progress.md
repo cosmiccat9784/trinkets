@@ -18,6 +18,7 @@ Progress:
 - Toybox overhaul: Pop Bubbles rewritten frame-rate independent, Squish Me rebuilt on pointer events with real fling velocity, Gradient Mixer uses harmonious HSL colors plus hex readout, Toggle Parade layout fixed with live counter, removed Bubble Wrap grid (standalone game), Newton's Cradle rewritten with real momentum transfer, Pop Tubes now 6 tubes x 4 color stages with counter and collapse, Dominos rebuilt with dt physics, palette colors, down-counter, and Tip First button.
 - Powder Sim moved to top toolbar layout with full-width responsive canvas; Zen swatches bigger with ring active state; 2048 gained d-pad, gap-correct tiles, 4096/8192 colors, no-scroll swipe; Clue Crate expanded to 28 riddles; Switchback Tiles gained a Random puzzle procedural generator.
 - Switchback counter now reads Puzzle: Random for generated puzzles; Useless Facts Machine converted from page section into a modal card game (nav Facts opens it, Surprise Me includes it).
+- Switchback Tiles deals a fresh procedural puzzle on open and on every Next (Puzzle #n counter); Random button removed.
 
 TODO:
 - Manual in-browser playtest recommended from the already-open file URL.
