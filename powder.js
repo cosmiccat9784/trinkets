@@ -61,7 +61,7 @@ function startPowderSim() {
     const wrap = canvas.parentElement;
     const availW = Math.min(wrap.clientWidth || 600, window.innerWidth - 40);
     w = canvas.width = Math.max(300, availW);
-    h = canvas.height = Math.max(280, Math.min(440, Math.round(w * 0.7)));
+    h = canvas.height = Math.max(280, Math.min(440, Math.round(w * 0.7), window.innerHeight - 480));
     cols = Math.ceil(w / CELL);
     rows = Math.ceil(h / CELL);
     grid = new Uint8Array(cols * rows);

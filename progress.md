@@ -20,6 +20,7 @@ Progress:
 - Switchback counter now reads Puzzle: Random for generated puzzles; Useless Facts Machine converted from page section into a modal card game (nav Facts opens it, Surprise Me includes it).
 - Switchback Tiles deals a fresh procedural puzzle on open and on every Next (Puzzle #n counter); Random button removed.
 - Mobile pass: theme-color meta, dvh hero, wrapping hero actions, fluid pipe/bash/maze grids that shrink instead of overflowing, scaling maze icons, touch-action none on cradle canvas, manipulation on buttons, overscroll containment in modals, touch wording in Comet Catch, proportional Powder canvas, compact phone modal spacing, 44px+ touch targets on coarse pointers.
+- No-scroll law: added RULES.md; viewport-capped widths on every play widget, JS viewport caps for maze and powder, universal fitGameShell zoom backstop on open/resize/page-flip, maze overlays reparented to modal panel, Toybox paginated (4 per page, 2 on narrow screens).
 
 TODO:
 - Manual in-browser playtest recommended from the already-open file URL.

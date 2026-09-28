@@ -813,7 +813,7 @@ body.modal-open {
 
 .pipe-grid {
   grid-template-columns: repeat(5, minmax(0, 1fr));
-  width: min(100%, 412px);
+  width: min(100%, 412px, calc(100dvh - 420px));
   margin: 0 auto;
 }
 
@@ -876,7 +876,7 @@ body.modal-open {
 .arcade-canvas {
   display: block;
   touch-action: none;
-  width: min(100%, 720px);
+  width: min(100%, 720px, calc((100dvh - 380px) * 4 / 3));
   aspect-ratio: 4 / 3;
   margin: 0 auto;
   background: #fff8ea;
@@ -1310,7 +1310,7 @@ body.modal-open {
 
 .t-board-wrap {
   position: relative;
-  width: min(calc(100vh - 220px), 560px);
+  width: min(100%, 560px, calc(100dvh - 560px));
   aspect-ratio: 1;
   margin: 0 auto;
   padding: 14px;
@@ -1911,6 +1911,23 @@ body.modal-open {
   font-size: 0.8rem;
 }
 
+.toybox-hidden {
+  display: none;
+}
+
+.toybox-pager {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+}
+
+.toybox-page-label {
+  font-size: 0.85rem;
+  font-weight: 800;
+  color: var(--muted);
+}
+
 .powder-art {
   position: relative;
   overflow: hidden;
@@ -2068,7 +2085,7 @@ body.modal-open {
   display: grid;
   grid-template-columns: repeat(var(--bw-cols), 1fr);
   gap: 6px;
-  width: min(100%, 640px);
+  width: min(100%, 640px, calc((100dvh - 380px) * 1.75));
   margin: 0 auto;
   padding: 14px;
   background: #fdeef0;
@@ -2115,7 +2132,7 @@ body.modal-open {
 
 .zen-stage {
   position: relative;
-  width: min(100%, 720px);
+  width: min(100%, 720px, calc((100dvh - 360px) * 12 / 7));
   margin: 0 auto;
   border: 3px solid var(--line);
   border-radius: 12px;
@@ -2167,7 +2184,7 @@ body.modal-open {
 
 .grav-canvas {
   display: block;
-  width: min(100%, 720px);
+  width: min(100%, 720px, calc((100dvh - 380px) * 3 / 2));
   aspect-ratio: 3 / 2;
   margin: 0 auto;
   border: 3px solid var(--line);
@@ -2180,7 +2197,7 @@ body.modal-open {
 
 .spiro-canvas {
   display: block;
-  width: min(100%, 520px);
+  width: min(100%, 520px, calc(100dvh - 460px));
   aspect-ratio: 1;
   margin: 0 auto;
   border: 3px solid var(--line);

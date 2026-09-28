@@ -150,6 +150,7 @@ function openGame(title, kicker, html) {
   activeSnapshot = { mode: "playing", game: title };
   activeAdvance = null;
   closeGame.focus();
+  requestAnimationFrame(() => requestAnimationFrame(fitGameShell));
 }
 
 function closeActiveGame() {
@@ -158,6 +159,7 @@ function closeActiveGame() {
   gameModal.setAttribute("aria-hidden", "true");
   document.body.classList.remove("modal-open");
   gameShell.innerHTML = "";
+  document.querySelectorAll("#mazeLevelPicker,#mazeCheatPopup").forEach((el) => el.remove());
   activeSnapshot = { mode: "shelf" };
   activeAdvance = null;
 }
@@ -168,6 +170,27 @@ function closeCurrentGameOnly() {
     activeCleanup = null;
   }
 }
+
+function fitGameShell() {
+  if (!gameModal.classList.contains("open")) return;
+  const panel = document.querySelector(".modal-panel");
+  const header = panel ? panel.querySelector(".modal-header") : null;
+  const layout = gameShell.querySelector(".game-layout");
+  if (!panel || !header || !layout) return;
+  layout.style.zoom = "";
+  const availH = panel.clientHeight - header.offsetHeight - 44;
+  const availW = panel.clientWidth - 50;
+  if (availH <= 0 || availW <= 0) return;
+  const needH = layout.scrollHeight;
+  const needW = layout.scrollWidth;
+  let z = 1;
+  if (needH > availH) z = Math.min(z, availH / needH);
+  if (needW > availW) z = Math.min(z, availW / needW);
+  z = Math.max(0.35, z);
+  if (z < 1) layout.style.zoom = z.toFixed(3);
+}
+
+window.addEventListener("resize", fitGameShell);
 
 function setSnapshot(payload) {
   activeSnapshot = payload;
@@ -1298,7 +1321,7 @@ function startPocketMaze() {
     const grid = document.querySelector("#mazeGrid");
     grid.innerHTML = "";
     grid.style.gridTemplateColumns = `repeat(${maze[0].length}, minmax(0, 1fr))`;
-    grid.style.maxWidth = (maze[0].length * 52) + "px";
+    grid.style.maxWidth = Math.min(maze[0].length * 52, window.innerHeight - 500) + "px";
     const icons = {
       P: '<span class="material-symbols-outlined maze-icon maze-icon-player">person</span>',
       K: '<span class="material-symbols-outlined maze-icon maze-icon-key">key</span>',
@@ -1422,7 +1445,7 @@ function startPocketMaze() {
         </div>
         <div class="maze-level-picker-grid"></div>
       </div>`;
-      document.querySelector(".game-layout").appendChild(overlay);
+      document.querySelector(".modal-panel").appendChild(overlay);
       overlay.querySelector(".maze-level-picker-close").addEventListener("click", closeLevelPicker);
       overlay.addEventListener("click", (e) => { if (e.target === overlay) closeLevelPicker(); });
     }
@@ -1482,7 +1505,7 @@ function startPocketMaze() {
         </div>
         <p class="maze-cheat-feedback"></p>
       </div>`;
-      document.querySelector(".game-layout").appendChild(popup);
+      document.querySelector(".modal-panel").appendChild(popup);
       popup.querySelector(".maze-cheat-close").addEventListener("click", closeCheatPopup);
       popup.addEventListener("click", (ev) => { if (ev.target === popup) closeCheatPopup(); });
       const input = popup.querySelector(".maze-cheat-input");
@@ -2624,6 +2647,31 @@ function startToybox() {
 
     addCleanup(() => cancelAnimationFrame(raf));
   })();
+
+  const allToys = [...grid.children];
+  const toysPerPage = grid.clientWidth < 560 ? 2 : 4;
+  let toyPage = 0;
+  const toyPageCount = Math.max(1, Math.ceil(allToys.length / toysPerPage));
+  const pager = document.createElement("div");
+  pager.className = "toybox-pager";
+  pager.innerHTML = `<button class="game-action toybox-mini" id="toyPrev" type="button">‹ Prev</button><span class="toybox-page-label" id="toyPageLabel"></span><button class="game-action toybox-mini" id="toyNext" type="button">Next ›</button>`;
+  grid.after(pager);
+  const prevBtn = pager.querySelector("#toyPrev");
+  const nextBtn = pager.querySelector("#toyNext");
+  const pageLabel = pager.querySelector("#toyPageLabel");
+  function showToyPage(n) {
+    toyPage = Math.max(0, Math.min(toyPageCount - 1, n));
+    allToys.forEach((toy, i) => {
+      toy.classList.toggle("toybox-hidden", Math.floor(i / toysPerPage) !== toyPage);
+    });
+    pageLabel.textContent = `Page ${toyPage + 1} of ${toyPageCount}`;
+    prevBtn.disabled = toyPage === 0;
+    nextBtn.disabled = toyPage === toyPageCount - 1;
+    fitGameShell();
+  }
+  prevBtn.addEventListener("click", () => showToyPage(toyPage - 1));
+  nextBtn.addEventListener("click", () => showToyPage(toyPage + 1));
+  showToyPage(0);
 
   setSnapshot({
     mode: "playing",
