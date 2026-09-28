@@ -11,6 +11,10 @@ Progress:
 - Updated misleading thumbnails for Pocket Maze, Button Bash, and Clue Crate to better match their actual playable mechanics.
 - Verified Switchback Tiles and Comet Catch are polished and production-ready.
 - Four-Letter Forge COMPLETE: full dictionary (2,252 words), 18 verified levels with unique paths, Hint + Restart buttons, icon-only UI.
+- Researched the useless-web genre (BoredButton, The Useless Web, neal.fun, im-bored.cool, pointlesssites) into research.md and implemented the findings.
+- Added four sensory toys in toys.js: Bubble Wrap, Zen Sand, Gravity Balls, Spirograph; added Toys filter and recategorized Toybox/Powder Sim.
+- Added Surprise Me deck-shuffle button (no-repeat localStorage queue, TUW-style) and the Useless Facts Machine with ~140 original facts in facts.js.
+- Bug fixes: defined missing --cream var, fixed dead #puzzles nav anchor (now applies the puzzle filter), dynamic stat counts, persisted save picks to localStorage, fixed jelly toy document-listener leak, Bash start-button disabled mid-round with Play again label, Forge words.txt fetch catch, body scroll lock while modal open, touch-action none on game canvases/sheets, [hidden] guard, prefers-reduced-motion support.
 
 TODO:
 - Manual in-browser playtest recommended from the already-open file URL.

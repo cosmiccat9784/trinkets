@@ -23,8 +23,9 @@
         <span>Trinkets Arcade</span>
       </a>
       <nav aria-label="Primary navigation">
-        <a href="#games">Games</a>
-        <a href="#puzzles">Puzzles</a>
+        <a href="#games" data-nav-filter="all">Games</a>
+        <a href="#games" data-nav-filter="puzzle">Puzzles</a>
+        <a href="#facts">Facts</a>
         <a href="#scores">Scores</a>
       </nav>
     </header>
@@ -40,6 +41,7 @@
           </p>
           <div class="hero-actions">
             <a class="primary-button" href="#games">Browse games</a>
+            <button class="secondary-button" id="surpriseBtn" type="button">Surprise me</button>
           </div>
         </div>
         <img
@@ -51,12 +53,12 @@
 
       <section class="quick-stats" id="scores" aria-label="Arcade stats">
         <div>
-          <strong>19</strong>
+          <strong id="statGames">13</strong>
           <span>tiny games</span>
         </div>
         <div>
-          <strong>7</strong>
-          <span>daily puzzles</span>
+          <strong id="statPuzzles">5</strong>
+          <span>brain teasers</span>
         </div>
         <div>
           <strong id="favoriteCount">0</strong>
@@ -79,6 +81,7 @@
             <button class="filter" type="button" data-filter="puzzle" aria-pressed="false">Puzzle</button>
             <button class="filter" type="button" data-filter="arcade" aria-pressed="false">Arcade</button>
             <button class="filter" type="button" data-filter="word" aria-pressed="false">Word</button>
+            <button class="filter" type="button" data-filter="toys" aria-pressed="false">Toys</button>
           </div>
         </div>
 
@@ -196,7 +199,7 @@
             </div>
           </article>
 
-          <article class="game-card" data-category="arcade" data-game="toybox">
+          <article class="game-card" data-category="toys" data-game="toybox">
             <div class="game-art toybox-art" aria-hidden="true">
               <span class="toybox-btn"></span>
               <span class="toybox-bubble"></span>
@@ -204,7 +207,7 @@
               <span class="toybox-star"></span>
             </div>
             <div class="game-content">
-              <p class="tag">Arcade</p>
+              <p class="tag">Toy</p>
               <h3>Toybox</h3>
               <p>A sandbox of satisfying things to press, pop, spin, and squish.</p>
               <div class="card-actions">
@@ -244,7 +247,7 @@
             </div>
           </article>
 
-          <article class="game-card" data-category="arcade" data-game="powder">
+          <article class="game-card" data-category="toys" data-game="powder">
             <div class="game-art powder-art" aria-hidden="true">
               <span class="powder-grain pg1"></span>
               <span class="powder-grain pg2"></span>
@@ -254,9 +257,79 @@
               <span class="powder-grain pg6"></span>
             </div>
             <div class="game-content">
-              <p class="tag">Arcade</p>
+              <p class="tag">Toy</p>
               <h3>Powder Sim</h3>
               <p>Draw with sand, water, fire, acid, and more. Watch the physics unfold.</p>
+              <div class="card-actions">
+                <button class="play-button" type="button">Play</button>
+                <button class="save-button" type="button">Save pick</button>
+              </div>
+            </div>
+          </article>
+
+          <article class="game-card" data-category="toys" data-game="wrap">
+            <div class="game-art wrap-art" aria-hidden="true">
+              <span class="wrap-dot"></span><span class="wrap-dot"></span><span class="wrap-dot"></span><span class="wrap-dot"></span><span class="wrap-dot flat"></span><span class="wrap-dot"></span>
+              <span class="wrap-dot"></span><span class="wrap-dot"></span><span class="wrap-dot flat"></span><span class="wrap-dot"></span><span class="wrap-dot"></span><span class="wrap-dot"></span>
+              <span class="wrap-dot"></span><span class="wrap-dot flat"></span><span class="wrap-dot"></span><span class="wrap-dot"></span><span class="wrap-dot"></span><span class="wrap-dot"></span>
+            </div>
+            <div class="game-content">
+              <p class="tag">Toy</p>
+              <h3>Bubble Wrap</h3>
+              <p>An endless sheet of bubbles. Click, drag, repeat. That is the whole thing.</p>
+              <div class="card-actions">
+                <button class="play-button" type="button">Play</button>
+                <button class="save-button" type="button">Save pick</button>
+              </div>
+            </div>
+          </article>
+
+          <article class="game-card" data-category="toys" data-game="zen">
+            <div class="game-art zen-art" aria-hidden="true">
+              <span class="zen-line zl1"></span>
+              <span class="zen-line zl2"></span>
+              <span class="zen-line zl3"></span>
+            </div>
+            <div class="game-content">
+              <p class="tag">Toy</p>
+              <h3>Zen Sand</h3>
+              <p>Draw slow, glowing grooves in virtual sand. No score. No rush.</p>
+              <div class="card-actions">
+                <button class="play-button" type="button">Play</button>
+                <button class="save-button" type="button">Save pick</button>
+              </div>
+            </div>
+          </article>
+
+          <article class="game-card" data-category="arcade" data-game="gravity">
+            <div class="game-art gravity-art" aria-hidden="true">
+              <span class="grav-ball gb1"></span>
+              <span class="grav-ball gb2"></span>
+              <span class="grav-ball gb3"></span>
+              <span class="grav-ball gb4"></span>
+            </div>
+            <div class="game-content">
+              <p class="tag">Arcade</p>
+              <h3>Gravity Balls</h3>
+              <p>Drop bouncy balls into a box. Grab them, fling them, slow down time.</p>
+              <div class="card-actions">
+                <button class="play-button" type="button">Play</button>
+                <button class="save-button" type="button">Save pick</button>
+              </div>
+            </div>
+          </article>
+
+          <article class="game-card" data-category="toys" data-game="spiro">
+            <div class="game-art spiro-art" aria-hidden="true">
+              <span class="spiro-ring sr1"></span>
+              <span class="spiro-ring sr2"></span>
+              <span class="spiro-ring sr3"></span>
+              <span class="spiro-core"></span>
+            </div>
+            <div class="game-content">
+              <p class="tag">Toy</p>
+              <h3>Spirograph</h3>
+              <p>Watch perfect geometric flowers draw themselves. Then ask for another.</p>
               <div class="card-actions">
                 <button class="play-button" type="button">Play</button>
                 <button class="save-button" type="button">Save pick</button>
@@ -268,14 +341,30 @@
 
 
 
+      <section class="facts-machine" id="facts" aria-labelledby="facts-title">
+        <div class="facts-panel">
+          <div>
+            <p class="eyebrow">Useless facts</p>
+            <h2 id="facts-title">The Useless Facts Machine</h2>
+          </div>
+          <p class="fact-text" id="factText">Pull the lever. Receive a fact that changes nothing.</p>
+          <div class="facts-actions">
+            <button class="primary-button" id="factButton" type="button">Tell me a fact</button>
+            <button class="game-action facts-reset" id="factReset" type="button" hidden>Start over</button>
+            <span class="fact-count" id="factCount"></span>
+          </div>
+        </div>
+      </section>
+
       <section class="how-to-play" aria-labelledby="how-title">
         <div>
           <p class="eyebrow">Now playable</p>
           <h2 id="how-title">Every card opens a real mini-game</h2>
         </div>
         <p>
-          Puzzle tiles, comet catching, word chains, mazes, reaction rounds, and
-          riddle crates all run in the browser with no install.
+          Puzzle tiles, comet catching, word chains, mazes, reaction rounds,
+          riddle crates, sensory toys, and one machine that dispenses facts
+          you will never need, all running in the browser with no install.
         </p>
       </section>
     </main>
@@ -299,5 +388,7 @@
 
     <script src="script.js"></script>
     <script src="powder.js"></script>
+    <script src="toys.js"></script>
+    <script src="facts.js"></script>
   </body>
 </html>

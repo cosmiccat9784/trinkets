@@ -15,7 +15,7 @@ let savedPicks = 0;
 let activeCleanup = null;
 let activeSnapshot = { mode: "shelf" };
 let activeAdvance = null;
-const colors = ["coral", "mint", "gold", "ink"];
+const SAVE_KEY = "trinkets-saved-picks";
 
 function shuffleArray(array) {
   for (let i = array.length - 1; i > 0; i--) {
@@ -52,12 +52,65 @@ filters.forEach((button) => {
   });
 });
 
+function readSavedIds() {
+  let saved = [];
+  try {
+    const parsed = JSON.parse(localStorage.getItem(SAVE_KEY));
+    if (Array.isArray(parsed)) saved = parsed;
+  } catch (err) {
+    saved = [];
+  }
+  return saved.filter((id) => cards.some((card) => card.dataset.game === id));
+}
+
+function writeSavedIds(ids) {
+  try {
+    localStorage.setItem(SAVE_KEY, JSON.stringify(ids));
+  } catch (err) {}
+}
+
+function syncSavedFromStorage() {
+  const saved = readSavedIds();
+  cards.forEach((card) => {
+    const button = card.querySelector(".save-button");
+    const isSaved = saved.includes(card.dataset.game);
+    button.classList.toggle("saved", isSaved);
+    button.textContent = isSaved ? "Saved" : "Save pick";
+  });
+  savedPicks = saved.length;
+  favoriteCount.textContent = savedPicks;
+}
+
+syncSavedFromStorage();
+
 saveButtons.forEach((button) => {
   button.addEventListener("click", () => {
+    const card = button.closest(".game-card");
+    const id = card.dataset.game;
     const isSaved = button.classList.toggle("saved");
     button.textContent = isSaved ? "Saved" : "Save pick";
-    savedPicks += isSaved ? 1 : -1;
+    const saved = readSavedIds();
+    const next = saved.filter((entry) => entry !== id);
+    if (isSaved) next.push(id);
+    writeSavedIds(next);
+    savedPicks = next.length;
     favoriteCount.textContent = savedPicks;
+  });
+});
+
+const statGames = document.querySelector("#statGames");
+const statPuzzles = document.querySelector("#statPuzzles");
+if (statGames) statGames.textContent = String(cards.length);
+if (statPuzzles) {
+  statPuzzles.textContent = String(
+    cards.filter((card) => ["puzzle", "word"].includes(card.dataset.category)).length
+  );
+}
+
+document.querySelectorAll("[data-nav-filter]").forEach((link) => {
+  link.addEventListener("click", () => {
+    const target = document.querySelector(`.filter[data-filter="${link.dataset.navFilter}"]`);
+    if (target && !target.classList.contains("active")) target.click();
   });
 });
 
@@ -92,6 +145,8 @@ function openGame(title, kicker, html) {
   gameShell.innerHTML = html;
   gameModal.classList.add("open");
   gameModal.setAttribute("aria-hidden", "false");
+  document.body.classList.add("modal-open");
+  gameModal.scrollTop = 0;
   activeSnapshot = { mode: "playing", game: title };
   activeAdvance = null;
   closeGame.focus();
@@ -101,6 +156,7 @@ function closeActiveGame() {
   closeCurrentGameOnly();
   gameModal.classList.remove("open");
   gameModal.setAttribute("aria-hidden", "true");
+  document.body.classList.remove("modal-open");
   gameShell.innerHTML = "";
   activeSnapshot = { mode: "shelf" };
   activeAdvance = null;
@@ -834,7 +890,8 @@ function startFourLetterForge() {
     .then((r) => r.text())
     .then((text) => {
       text.split("\n").forEach((w) => { if (w.trim()) dictionary.add(w.trim().toUpperCase()); });
-    });
+    })
+    .catch(() => {});
   let levelIndex = 0;
   let current = levels[0].start;
   let steps = 0;
@@ -1481,10 +1538,12 @@ function startButtonBash() {
 
   function start() {
     clearInterval(timer);
+    const startButton = document.querySelector("#bashStart");
     score = 0;
     streak = 0;
     time = 20;
     running = true;
+    startButton.disabled = true;
     document.querySelector("#bashMessage").textContent = "Go.";
     chooseTarget();
     timer = setInterval(() => {
@@ -1493,6 +1552,8 @@ function startButtonBash() {
         running = false;
         clearInterval(timer);
         target = -1;
+        startButton.disabled = false;
+        startButton.textContent = "Play again";
         document.querySelector("#bashMessage").textContent = `Round over. Score: ${score}.`;
       }
       render();
@@ -1977,28 +2038,28 @@ function startToybox() {
     }
     animate();
 
-    area.addEventListener("mousedown", (e) => {
+    function onAreaMouseDown(e) {
       dragging = true;
       const rect = area.getBoundingClientRect();
       dragOffX = e.clientX - rect.left - bx;
       dragOffY = e.clientY - rect.top - by;
       vx = 0;
       vy = 0;
-    });
-    document.addEventListener("mousemove", (e) => {
+    }
+    function onDocMouseMove(e) {
       if (!dragging) return;
       const rect = area.getBoundingClientRect();
       bx = e.clientX - rect.left - dragOffX;
       by = e.clientY - rect.top - dragOffY;
-    });
-    document.addEventListener("mouseup", () => {
+    }
+    function release() {
       if (dragging) {
         dragging = false;
         vx = (Math.random() - 0.5) * 6;
         vy = -2 - Math.random() * 3;
       }
-    });
-    area.addEventListener("touchstart", (e) => {
+    }
+    function onAreaTouchStart(e) {
       e.preventDefault();
       dragging = true;
       const rect = area.getBoundingClientRect();
@@ -2006,27 +2067,26 @@ function startToybox() {
       dragOffY = e.touches[0].clientY - rect.top - by;
       vx = 0;
       vy = 0;
-    }, { passive: false });
-    document.addEventListener("touchmove", (e) => {
+    }
+    function onDocTouchMove(e) {
       if (!dragging) return;
       const rect = area.getBoundingClientRect();
       bx = e.touches[0].clientX - rect.left - dragOffX;
       by = e.touches[0].clientY - rect.top - dragOffY;
-    }, { passive: false });
-    document.addEventListener("touchend", () => {
-      if (dragging) {
-        dragging = false;
-        vx = (Math.random() - 0.5) * 6;
-        vy = -2 - Math.random() * 3;
-      }
-    });
+    }
+    area.addEventListener("mousedown", onAreaMouseDown);
+    document.addEventListener("mousemove", onDocMouseMove);
+    document.addEventListener("mouseup", release);
+    area.addEventListener("touchstart", onAreaTouchStart, { passive: false });
+    document.addEventListener("touchmove", onDocTouchMove, { passive: false });
+    document.addEventListener("touchend", release);
 
     addCleanup(() => {
       cancelAnimationFrame(raf);
-      document.removeEventListener("mousemove", () => {});
-      document.removeEventListener("mouseup", () => {});
-      document.removeEventListener("touchmove", () => {});
-      document.removeEventListener("touchend", () => {});
+      document.removeEventListener("mousemove", onDocMouseMove);
+      document.removeEventListener("mouseup", release);
+      document.removeEventListener("touchmove", onDocTouchMove);
+      document.removeEventListener("touchend", release);
     });
   })();
 
