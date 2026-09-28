@@ -81,6 +81,7 @@ function startBubbleWrap() {
   sheet.addEventListener("pointerup", stopPopping);
   sheet.addEventListener("pointercancel", stopPopping);
   sheet.addEventListener("pointerleave", stopPopping);
+  sheet.addEventListener("contextmenu", (e) => e.preventDefault());
 
   document.querySelector("#bwFresh").addEventListener("click", () => {
     if (!refilling) {
@@ -127,7 +128,8 @@ function startZenSand() {
   let color = palette[0];
   let drawing = false;
   let lastPt = null;
-  let prevMid = null;
+  let renderPt = null;
+  let curW = 9;
   let movedDist = 0;
   let ripples = [];
   let raf = 0;
@@ -161,32 +163,51 @@ function startZenSand() {
     };
   }
 
-  function strokeTo(pt) {
-    const dist = Math.hypot(pt.x - lastPt.x, pt.y - lastPt.y);
-    const w = Math.max(3, Math.min(16, 18 - dist * 0.35));
-    const mid = { x: (lastPt.x + pt.x) / 2, y: (lastPt.y + pt.y) / 2 };
+  function groove(from, to, w) {
     bctx.save();
     bctx.lineCap = "round";
-    bctx.lineJoin = "round";
     bctx.beginPath();
-    bctx.moveTo(prevMid.x, prevMid.y);
-    bctx.quadraticCurveTo(lastPt.x, lastPt.y, mid.x, mid.y);
+    bctx.moveTo(from.x, from.y);
+    bctx.lineTo(to.x, to.y);
     bctx.strokeStyle = color;
     bctx.lineWidth = w;
     bctx.globalAlpha = 0.9;
     bctx.stroke();
     bctx.translate(1.5, 1.5);
     bctx.strokeStyle = "rgba(0,0,0,0.14)";
-    bctx.lineWidth = w * 0.5;
+    bctx.lineWidth = Math.max(1, w * 0.5);
     bctx.stroke();
     bctx.translate(-3, -3);
     bctx.strokeStyle = "rgba(255,255,255,0.35)";
-    bctx.lineWidth = w * 0.3;
+    bctx.lineWidth = Math.max(1, w * 0.3);
     bctx.stroke();
     bctx.restore();
+  }
+
+  function dot(pt, w) {
+    bctx.save();
+    bctx.globalAlpha = 0.9;
+    bctx.fillStyle = color;
+    bctx.beginPath();
+    bctx.arc(pt.x, pt.y, w / 2, 0, Math.PI * 2);
+    bctx.fill();
+    bctx.restore();
+  }
+
+  function strokeTo(pt) {
+    const dist = Math.hypot(pt.x - lastPt.x, pt.y - lastPt.y);
+    if (dist === 0) return;
+    const targetW = Math.max(3, Math.min(16, 18 - dist * 0.35));
+    const steps = Math.max(1, Math.ceil(dist / 5));
+    for (let i = 1; i <= steps; i++) {
+      const t = i / steps;
+      const next = { x: lastPt.x + (pt.x - lastPt.x) * t, y: lastPt.y + (pt.y - lastPt.y) * t };
+      curW += (targetW - curW) * 0.35;
+      groove(renderPt, next, curW);
+      renderPt = next;
+    }
     movedDist += dist;
     lastPt = pt;
-    prevMid = mid;
   }
 
   base.addEventListener("pointerdown", (e) => {
@@ -196,11 +217,14 @@ function startZenSand() {
     drawing = true;
     movedDist = 0;
     lastPt = p;
-    prevMid = p;
+    renderPt = p;
+    curW = 9;
+    dot(p, curW);
   });
   base.addEventListener("pointermove", (e) => {
     if (!drawing) return;
-    strokeTo(toCanvas(e));
+    const events = e.getCoalescedEvents ? e.getCoalescedEvents() : [e];
+    for (const ev of events) strokeTo(toCanvas(ev));
   });
   const stopDraw = () => { drawing = false; };
   base.addEventListener("pointerup", stopDraw);
@@ -433,6 +457,12 @@ function startSpirograph() {
           <span class="game-stat" id="spiroState">Drawing…</span>
         </div>
         <canvas class="spiro-canvas" id="spiroCanvas" width="520" height="520"></canvas>
+        <div class="spiro-sliders">
+          <label class="spiro-slider">R <input type="range" id="spiroR" min="3" max="12" step="1" value="8"><span id="spiroRv">8</span></label>
+          <label class="spiro-slider">r <input type="range" id="spiroRr" min="2" max="11" step="1" value="3"><span id="spiroRrv">3</span></label>
+          <label class="spiro-slider">d <input type="range" id="spiroD" min="0.5" max="10" step="0.1" value="2.4"><span id="spiroDv">2.4</span></label>
+          <label class="spiro-slider">Speed <input type="range" id="spiroSpeed" min="0.5" max="3" step="0.1" value="1"><span id="spiroSpeedv">1.0x</span></label>
+        </div>
         <div class="game-actions spiro-actions">
           <button class="game-action" id="spiroNew" type="button">New pattern</button>
           <button class="game-action" id="spiroPause" type="button">Pause</button>
@@ -450,25 +480,55 @@ function startSpirograph() {
   let R, r, d, hue, theta, period, scale, lastPt;
   let paused = false;
   let finished = false;
+  let speed = 1;
   let raf = 0;
   let last = performance.now();
 
-  function setup() {
+  function syncSliders() {
+    document.querySelector("#spiroR").value = R;
+    document.querySelector("#spiroRv").textContent = R;
+    document.querySelector("#spiroRr").value = r;
+    document.querySelector("#spiroRrv").textContent = r;
+    document.querySelector("#spiroD").value = d;
+    document.querySelector("#spiroDv").textContent = d;
+  }
+
+  function applyParams() {
     ctx.fillStyle = "#0f1320";
     ctx.fillRect(0, 0, W, H);
-    R = 5 + Math.floor(Math.random() * 8);
-    r = 2 + Math.floor(Math.random() * (R - 2));
-    d = Math.round(r * (0.4 + Math.random() * 1.1) * 10) / 10;
-    hue = Math.random() * 360;
     theta = 0;
     period = 2 * Math.PI * r / gcd(R, r);
     scale = (W / 2 - 20) / ((R - r) + d);
     lastPt = null;
     finished = false;
-    paused = false;
-    document.querySelector("#spiroPause").textContent = "Pause";
     document.querySelector("#spiroInfo").textContent = `R ${R} · r ${r} · d ${d}`;
     document.querySelector("#spiroState").textContent = "Drawing…";
+    document.querySelector("#spiroNew").classList.remove("finish-pulse");
+  }
+
+  function setup() {
+    R = 5 + Math.floor(Math.random() * 8);
+    r = 2 + Math.floor(Math.random() * (R - 2));
+    d = Math.round(r * (0.4 + Math.random() * 1.1) * 10) / 10;
+    hue = Math.random() * 360;
+    paused = false;
+    document.querySelector("#spiroPause").textContent = "Pause";
+    syncSliders();
+    applyParams();
+  }
+
+  function readSliders() {
+    R = Number(document.querySelector("#spiroR").value);
+    r = Number(document.querySelector("#spiroRr").value);
+    d = Number(document.querySelector("#spiroD").value);
+    if (r >= R) {
+      r = R - 1;
+      document.querySelector("#spiroRr").value = r;
+    }
+    document.querySelector("#spiroRv").textContent = R;
+    document.querySelector("#spiroRrv").textContent = r;
+    document.querySelector("#spiroDv").textContent = d;
+    applyParams();
   }
 
   function point(t) {
@@ -485,7 +545,7 @@ function startSpirograph() {
     if (!paused && !finished) {
       const steps = 4;
       for (let i = 0; i < steps; i++) {
-        theta += (dt * 2.2) / steps;
+        theta += (dt * 2.2 * speed) / steps;
         const p = point(theta);
         if (lastPt) {
           ctx.beginPath();
@@ -511,6 +571,13 @@ function startSpirograph() {
   document.querySelector("#spiroNew").addEventListener("click", (e) => {
     e.currentTarget.classList.remove("finish-pulse");
     setup();
+  });
+  ["#spiroR", "#spiroRr", "#spiroD"].forEach((sel) => {
+    document.querySelector(sel).addEventListener("input", readSliders);
+  });
+  document.querySelector("#spiroSpeed").addEventListener("input", (e) => {
+    speed = Number(e.currentTarget.value);
+    document.querySelector("#spiroSpeedv").textContent = `${speed.toFixed(1)}x`;
   });
   document.querySelector("#spiroPause").addEventListener("click", (e) => {
     paused = !paused;
