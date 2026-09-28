@@ -4,32 +4,29 @@ function startPowderSim() {
     "Arcade",
     `
       <div class="powder-layout">
-        <div class="powder-sidebar">
-          <p class="toybox-toy-label">Elements</p>
-          <button class="powder-tool active" data-element="1" type="button" title="Sand">Sand</button>
-          <button class="powder-tool" data-element="2" type="button" title="Water">Water</button>
-          <button class="powder-tool" data-element="3" type="button" title="Stone">Stone</button>
-          <button class="powder-tool" data-element="4" type="button" title="Fire">Fire</button>
-          <button class="powder-tool" data-element="6" type="button" title="Oil">Oil</button>
-          <button class="powder-tool" data-element="7" type="button" title="Acid">Acid</button>
-          <button class="powder-tool" data-element="8" type="button" title="Plant">Plant</button>
-          <button class="powder-tool" data-element="9" type="button" title="TNT">TNT</button>
-          <button class="powder-tool" data-element="10" type="button" title="Dynamite">Dyna</button>
-          <button class="powder-tool powder-tool-erase" data-element="0" type="button" title="Eraser">Erase</button>
-          <div class="powder-brush-col">
-            <label class="powder-brush-label">Brush: <span id="powderBrushVal">3</span></label>
-            <input type="range" class="powder-brush-slider" id="powderBrush" min="1" max="12" value="3"/>
+        <div class="powder-toolbar">
+          <div class="powder-tools" role="group" aria-label="Elements">
+            <button class="powder-tool active" data-element="1" type="button" title="Sand">Sand</button>
+            <button class="powder-tool" data-element="2" type="button" title="Water">Water</button>
+            <button class="powder-tool" data-element="3" type="button" title="Stone">Stone</button>
+            <button class="powder-tool" data-element="4" type="button" title="Fire">Fire</button>
+            <button class="powder-tool" data-element="6" type="button" title="Oil">Oil</button>
+            <button class="powder-tool" data-element="7" type="button" title="Acid">Acid</button>
+            <button class="powder-tool" data-element="8" type="button" title="Plant">Plant</button>
+            <button class="powder-tool" data-element="9" type="button" title="TNT">TNT</button>
+            <button class="powder-tool" data-element="10" type="button" title="Dynamite">Dyna</button>
+            <button class="powder-tool powder-tool-erase" data-element="0" type="button" title="Eraser">Erase</button>
           </div>
-          <div class="powder-sidebar-stats">
-            <span id="powderElement">Sand</span>
-            <span id="powderCount">0</span>
-          </div>
-          <div class="powder-sidebar-actions">
-            <button class="game-action" id="powderClear" type="button">Clear</button>
-            <button class="game-action" id="powderPause" type="button">Pause</button>
+          <div class="powder-controls">
+            <label class="powder-brush-label">Brush <input type="range" class="powder-brush-slider" id="powderBrush" min="1" max="12" value="3"/><span id="powderBrushVal">3</span></label>
+            <span class="powder-meta"><span id="powderElement">Sand</span> · <span id="powderCount">0 particles</span></span>
+            <div class="powder-actions">
+              <button class="game-action powder-mini" id="powderClear" type="button">Clear</button>
+              <button class="game-action powder-mini" id="powderPause" type="button">Pause</button>
+            </div>
           </div>
         </div>
-        <canvas class="powder-canvas" id="powderCanvas"></canvas>
+        <div class="powder-canvas-wrap"><canvas class="powder-canvas" id="powderCanvas"></canvas></div>
       </div>
     `
   );
@@ -61,10 +58,10 @@ function startPowderSim() {
   };
 
   function resize() {
-    const availW = Math.min(canvas.parentElement.offsetWidth - 10, window.innerWidth - 140);
-    const availH = Math.min(window.innerHeight - 200, 520);
+    const wrap = canvas.parentElement;
+    const availW = Math.min(wrap.clientWidth || 600, window.innerWidth - 40);
     w = canvas.width = Math.max(300, availW);
-    h = canvas.height = Math.max(200, availH);
+    h = canvas.height = 440;
     cols = Math.ceil(w / CELL);
     rows = Math.ceil(h / CELL);
     grid = new Uint8Array(cols * rows);

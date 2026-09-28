@@ -197,6 +197,7 @@ function startSwitchbackTiles() {
         <div class="game-actions">
           <button class="game-action" id="switchReset" type="button">Reset puzzle</button>
           <button class="game-action" id="switchNext" type="button">Next puzzle</button>
+          <button class="game-action" id="switchRandom" type="button">Random puzzle</button>
         </div>
       </div>
     `
@@ -222,7 +223,7 @@ function startSwitchbackTiles() {
     ["corner", 2], ["line", 0], ["tee", 1], ["corner", 0], ["line", 1]
   ];
   const paths = shuffleArray([...allPaths]);
-  const puzzles = paths.map((path, pathIndex) => buildSwitchbackPuzzle(path, pathIndex));
+  let puzzles = paths.map((path, pathIndex) => buildSwitchbackPuzzle(path, pathIndex));
   const grid = document.querySelector("#pipeGrid");
   const message = document.querySelector("#switchMessage");
   const moveLabel = document.querySelector("#switchMoves");
@@ -289,6 +290,38 @@ function startSwitchbackTiles() {
   function fillerTile(index, pathIndex) {
     const [type, rotation] = fillerTiles[(index + pathIndex * 3) % fillerTiles.length];
     return { type, rotation };
+  }
+
+  function randomSwitchPath() {
+    for (let attempt = 0; attempt < 400; attempt += 1) {
+      const visited = new Set([0]);
+      const path = [0];
+      let current = 0;
+      let guard = 0;
+      while (current !== 24 && guard < 60) {
+        guard += 1;
+        const x = current % 5;
+        const y = Math.floor(current / 5);
+        const options = [];
+        if (x > 0 && !visited.has(current - 1)) options.push(current - 1);
+        if (x < 4 && !visited.has(current + 1)) options.push(current + 1);
+        if (y > 0 && !visited.has(current - 5)) options.push(current - 5);
+        if (y < 4 && !visited.has(current + 5)) options.push(current + 5);
+        if (options.length === 0) break;
+        options.sort((a, b) => {
+          const da = Math.abs((a % 5) - 4) + Math.abs(Math.floor(a / 5) - 4);
+          const db = Math.abs((b % 5) - 4) + Math.abs(Math.floor(b / 5) - 4);
+          return da - db;
+        });
+        const pickFrom = Math.random() < 0.7 ? options.slice(0, 2) : options;
+        const next = pickFrom[Math.floor(Math.random() * pickFrom.length)];
+        visited.add(next);
+        path.push(next);
+        current = next;
+      }
+      if (current === 24 && path.length >= 9) return path;
+    }
+    return [...allPaths[Math.floor(Math.random() * allPaths.length)]];
   }
 
   function tileEdges(tile) {
@@ -384,6 +417,11 @@ function startSwitchbackTiles() {
   document.querySelector("#switchReset").addEventListener("click", reset);
   document.querySelector("#switchNext").addEventListener("click", () => {
     puzzleIndex = (puzzleIndex + 1) % puzzles.length;
+    reset();
+  });
+  document.querySelector("#switchRandom").addEventListener("click", () => {
+    puzzles.push(buildSwitchbackPuzzle(randomSwitchPath(), puzzles.length));
+    puzzleIndex = puzzles.length - 1;
     reset();
   });
   reset();
@@ -1656,7 +1694,23 @@ function startClueCrate() {
     { q: "I have a bed but I don't sleep. I have a mouth but I don't eat. I have a head but I don't think.", a: "river", h: "You can float down these." },
     { q: "I am always ahead, but never behind. I am always right, but never left.", a: "future", h: "You plan for these." },
     { q: "I have a face but cannot see. I have hands but cannot clap. I have a voice but cannot speak.", a: "telephone", h: "You use these to call people." },
-    { q: "I am lighter than air, but heavy to carry. If you drop me, you break me. If you break me, you win.", a: "egg", h: "You can eat these." }
+    { q: "I am lighter than air, but heavy to carry. If you drop me, you break me. If you break me, you win.", a: "egg", h: "You can eat these." },
+    { q: "I speak without a mouth and hear without ears. I have no body, but I come alive with wind.", a: "echo", h: "Shout into a canyon." },
+    { q: "The more of me you take, the more you leave behind.", a: "footsteps", h: "Think about walking away." },
+    { q: "I have cities but no houses, forests but no trees, rivers but no water.", a: "map", h: "You fold it." },
+    { q: "I have one eye but cannot see.", a: "needle", h: "You thread it." },
+    { q: "The more you take away from me, the bigger I get.", a: "hole", h: "Dig it." },
+    { q: "I am full of holes but still hold water.", a: "sponge", h: "It sits by the sink." },
+    { q: "I have a neck but no head.", a: "bottle", h: "It holds wine." },
+    { q: "The person who makes it doesn't need it. The buyer doesn't use it. The user never knows.", a: "coffin", h: "Think funerals." },
+    { q: "I come once in a minute, twice in a moment, but never in a thousand years.", a: "m", h: "It is a letter." },
+    { q: "I have thirteen hearts but no other organs.", a: "cards", h: "Think poker." },
+    { q: "You can catch me but never throw me.", a: "cold", h: "Bless you." },
+    { q: "I go up but never come down.", a: "age", h: "Happy birthday." },
+    { q: "I am tall when young and short when old.", a: "candle", h: "Make a wish." },
+    { q: "I have a thumb and four fingers but I am not alive.", a: "glove", h: "It keeps hands warm." },
+    { q: "I belong to you, but others use me more than you do.", a: "name", h: "Your parents picked it." },
+    { q: "I have many teeth but cannot bite.", a: "comb", h: "It fixes hair." }
   ]);
   let index = 0;
   let score = 0;
@@ -1749,7 +1803,7 @@ function startToybox() {
     "Arcade",
     `
       <div class="game-layout">
-        <p class="game-message">Press, pop, spin, pour, squish, and toggle. Everything here is meant to feel good.</p>
+        <p class="game-message">Press, pop, spin, squish, mix, and toggle. Everything here is meant to feel good.</p>
         <div class="toybox-grid" id="toyboxGrid"></div>
       </div>
     `
@@ -1893,6 +1947,7 @@ function startToybox() {
     let particles = [];
     let raf;
     let w, h;
+    let last = performance.now();
 
     function resize() {
       const rect = canvas.getBoundingClientRect();
@@ -1900,6 +1955,7 @@ function startToybox() {
       h = canvas.height = rect.height || 120;
     }
     resize();
+    window.addEventListener("resize", resize);
 
     function spawnBubble() {
       const r = 10 + Math.random() * 18;
@@ -1934,11 +1990,14 @@ function startToybox() {
       }
     }
 
-    function animate() {
+    function animate(now) {
+      const dt = Math.min(0.05, (now - last) / 1000);
+      last = now;
+      const step = dt * 60;
       ctx.clearRect(0, 0, w, h);
       bubbles.forEach((b) => {
-        b.y -= b.speed;
-        b.wobble += b.wobbleSpeed;
+        b.y -= b.speed * step;
+        b.wobble += b.wobbleSpeed * step;
         const wx = Math.sin(b.wobble) * 8;
         if (b.y < -b.r * 2) {
           Object.assign(b, spawnBubble());
@@ -1957,10 +2016,10 @@ function startToybox() {
       });
       particles = particles.filter((p) => p.life > 0);
       particles.forEach((p) => {
-        p.x += p.vx;
-        p.y += p.vy;
-        p.vy += 0.08;
-        p.life -= 0.03;
+        p.x += p.vx * step;
+        p.y += p.vy * step;
+        p.vy += 0.08 * step;
+        p.life -= 0.03 * step;
         ctx.beginPath();
         ctx.arc(p.x, p.y, p.r * p.life, 0, Math.PI * 2);
         ctx.fillStyle = "hsla(" + p.hue + ", 70%, 65%, " + p.life + ")";
@@ -1968,7 +2027,7 @@ function startToybox() {
       });
       raf = requestAnimationFrame(animate);
     }
-    animate();
+    raf = requestAnimationFrame(animate);
 
     canvas.addEventListener("click", (e) => {
       const rect = canvas.getBoundingClientRect();
@@ -1986,7 +2045,10 @@ function startToybox() {
       }
     });
 
-    addCleanup(() => cancelAnimationFrame(raf));
+    addCleanup(() => {
+      cancelAnimationFrame(raf);
+      window.removeEventListener("resize", resize);
+    });
   })();
 
   /* ── Jelly Ball ── */
@@ -2006,31 +2068,30 @@ function startToybox() {
     let vx = 0, vy = 0;
     let dragging = false;
     let dragOffX = 0, dragOffY = 0;
+    let lastTX = 0, lastTY = 0, lastTT = 0;
     let raf;
 
     function animate() {
+      const rect = area.getBoundingClientRect();
+      const maxX = Math.max(0, rect.width - 50);
+      const maxY = Math.max(0, rect.height - 50);
       if (!dragging) {
-        vy += 0.3;
+        vy += 0.35;
         bx += vx;
         by += vy;
-        vx *= 0.97;
-        const rect = area.getBoundingClientRect();
-        const maxX = rect.width - 50;
-        const maxY = rect.height - 50;
-        if (bx < 0) { bx = 0; vx *= -0.6; }
-        if (bx > maxX) { bx = maxX; vx *= -0.6; }
-        if (by > maxY) { by = maxY; vy *= -0.5; vx *= 0.95; }
-        if (by < 0) { by = 0; vy *= -0.6; }
+        vx *= 0.985;
+        if (bx < 0) { bx = 0; vx = Math.abs(vx) * 0.6; }
+        if (bx > maxX) { bx = maxX; vx = -Math.abs(vx) * 0.6; }
+        if (by > maxY) { by = maxY; vy = -Math.abs(vy) * 0.45; vx *= 0.94; if (Math.abs(vy) < 1) vy = 0; }
+        if (by < 0) { by = 0; vy = Math.abs(vy) * 0.6; }
         const speed = Math.hypot(vx, vy);
-        if (speed > 1) {
-          if (Math.abs(vx) > Math.abs(vy)) {
-            ball.className = "toybox-jelly " + (vx > 0 ? "squish-left" : "squish-right");
-          } else {
-            ball.className = "toybox-jelly " + (vy > 0 ? "squish-top" : "squish-bottom");
-          }
-        } else {
-          ball.className = "toybox-jelly";
-        }
+        ball.className = "toybox-jelly" + (speed > 2
+          ? (Math.abs(vx) > Math.abs(vy) ? (vx > 0 ? " squish-left" : " squish-right") : (vy > 0 ? " squish-top" : " squish-bottom"))
+          : "");
+      } else {
+        bx = Math.min(maxX, Math.max(0, bx));
+        by = Math.min(maxY, Math.max(0, by));
+        ball.className = "toybox-jelly";
       }
       ball.style.left = bx + "px";
       ball.style.top = by + "px";
@@ -2038,48 +2099,35 @@ function startToybox() {
     }
     animate();
 
-    function onAreaMouseDown(e) {
+    area.addEventListener("pointerdown", (e) => {
+      e.preventDefault();
+      area.setPointerCapture(e.pointerId);
       dragging = true;
       const rect = area.getBoundingClientRect();
       dragOffX = e.clientX - rect.left - bx;
       dragOffY = e.clientY - rect.top - by;
       vx = 0;
       vy = 0;
-    }
-    function onDocMouseMove(e) {
+      lastTX = e.clientX;
+      lastTY = e.clientY;
+      lastTT = performance.now();
+    });
+    area.addEventListener("pointermove", (e) => {
       if (!dragging) return;
       const rect = area.getBoundingClientRect();
       bx = e.clientX - rect.left - dragOffX;
       by = e.clientY - rect.top - dragOffY;
-    }
-    function release() {
-      if (dragging) {
-        dragging = false;
-        vx = (Math.random() - 0.5) * 6;
-        vy = -2 - Math.random() * 3;
-      }
-    }
-    function onAreaTouchStart(e) {
-      e.preventDefault();
-      dragging = true;
-      const rect = area.getBoundingClientRect();
-      dragOffX = e.touches[0].clientX - rect.left - bx;
-      dragOffY = e.touches[0].clientY - rect.top - by;
-      vx = 0;
-      vy = 0;
-    }
-    function onDocTouchMove(e) {
-      if (!dragging) return;
-      const rect = area.getBoundingClientRect();
-      bx = e.touches[0].clientX - rect.left - dragOffX;
-      by = e.touches[0].clientY - rect.top - dragOffY;
-    }
-    area.addEventListener("mousedown", onAreaMouseDown);
-    document.addEventListener("mousemove", onDocMouseMove);
-    document.addEventListener("mouseup", release);
-    area.addEventListener("touchstart", onAreaTouchStart, { passive: false });
-    document.addEventListener("touchmove", onDocTouchMove, { passive: false });
-    document.addEventListener("touchend", release);
+      const now = performance.now();
+      const dt = Math.max(8, now - lastTT);
+      vx = ((e.clientX - lastTX) / dt) * 16 * 0.9;
+      vy = ((e.clientY - lastTY) / dt) * 16 * 0.9;
+      lastTX = e.clientX;
+      lastTY = e.clientY;
+      lastTT = now;
+    });
+    const releaseJelly = () => { dragging = false; };
+    area.addEventListener("pointerup", releaseJelly);
+    area.addEventListener("pointercancel", releaseJelly);
 
     addCleanup(() => {
       cancelAnimationFrame(raf);
@@ -2099,6 +2147,7 @@ function startToybox() {
     toy.innerHTML = `
       <span class="toybox-toy-label">Gradient mixer</span>
       <div class="toybox-gradient-box" id="gradBox"></div>
+      <span class="toybox-hex" id="gradHex">#ff6b6b</span>
       <div class="toybox-sliders">
         <input type="range" class="toybox-slider r" min="0" max="255" value="255" id="sliderR"/>
         <input type="range" class="toybox-slider g" min="0" max="255" value="107" id="sliderG"/>
@@ -2111,12 +2160,47 @@ function startToybox() {
     const sG = toy.querySelector("#sliderG");
     const sB = toy.querySelector("#sliderB");
 
+    function rgbToHsl(r, g, b) {
+      r /= 255; g /= 255; b /= 255;
+      const max = Math.max(r, g, b), min = Math.min(r, g, b);
+      const l = (max + min) / 2;
+      if (max === min) return [0, 0, l];
+      const d = max - min;
+      const s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+      let h = 0;
+      if (max === r) h = ((g - b) / d + (g < b ? 6 : 0)) / 6;
+      else if (max === g) h = ((b - r) / d + 2) / 6;
+      else h = ((r - g) / d + 4) / 6;
+      return [h, s, l];
+    }
+    function hslToRgb(h, s, l) {
+      if (s === 0) {
+        const v = Math.round(l * 255);
+        return [v, v, v];
+      }
+      const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+      const p = 2 * l - q;
+      const conv = (t) => {
+        if (t < 0) t += 1;
+        if (t > 1) t -= 1;
+        if (t < 1 / 6) return p + (q - p) * 6 * t;
+        if (t < 1 / 2) return q;
+        if (t < 2 / 3) return p + (q - p) * (2 / 3 - t) * 6;
+        return p;
+      };
+      return [Math.round(conv(h + 1 / 3) * 255), Math.round(conv(h) * 255), Math.round(conv(h - 1 / 3) * 255)];
+    }
+    function toHex(v) {
+      return Math.max(0, Math.min(255, v)).toString(16).padStart(2, "0");
+    }
     function update() {
       r = +sR.value;
       g = +sG.value;
       b = +sB.value;
-      const r2 = 255 - r, g2 = 255 - g, b2 = 255 - b;
-      box.style.background = "linear-gradient(135deg, rgb(" + r + "," + g + "," + b + "), rgb(" + r2 + "," + g2 + "," + b2 + "))";
+      const hsl = rgbToHsl(r, g, b);
+      const second = hslToRgb((hsl[0] + 0.38) % 1, Math.min(1, hsl[1] * 1.05 + 0.05), Math.min(0.9, Math.max(0.15, hsl[2])));
+      box.style.background = "linear-gradient(135deg, rgb(" + r + "," + g + "," + b + "), rgb(" + second[0] + "," + second[1] + "," + second[2] + "))";
+      toy.querySelector("#gradHex").textContent = "#" + toHex(r) + toHex(g) + toHex(b);
     }
     sR.addEventListener("input", update);
     sG.addEventListener("input", update);
@@ -2130,7 +2214,7 @@ function startToybox() {
     toy.className = "toybox-toy";
     toy.style.gridColumn = "span 2";
     const toggleCount = 7;
-    let togglesHTML = '<span class="toybox-toy-label">Toggle parade</span><div class="toybox-toggles">';
+    let togglesHTML = '<span class="toybox-toy-label" id="toggleLabel">Toggle parade · 0/' + toggleCount + ' on</span><div class="toybox-toggles">';
     for (let i = 0; i < toggleCount; i++) {
       togglesHTML += '<div class="toybox-toggle" data-index="' + i + '"><div class="toybox-toggle-knob"></div></div>';
     }
@@ -2138,41 +2222,12 @@ function startToybox() {
     toy.innerHTML = togglesHTML;
     grid.append(toy);
 
+    const toggleLabel = toy.querySelector("#toggleLabel");
     toy.querySelectorAll(".toybox-toggle").forEach((toggle) => {
       toggle.addEventListener("click", () => {
         toggle.classList.toggle("on");
-      });
-    });
-  })();
-
-  /* ── Bubble Wrap ── */
-  (function initBubbleWrap() {
-    const toy = document.createElement("div");
-    toy.className = "toybox-toy";
-    toy.style.gridColumn = "span 2";
-    const cols = 8;
-    const rows = 5;
-    let html = '<span class="toybox-toy-label">Bubble wrap</span><div class="toybox-wrap-grid">';
-    for (let i = 0; i < cols * rows; i++) {
-      html += '<div class="toybox-bubble-cell" data-i="' + i + '"></div>';
-    }
-    html += "</div>";
-    toy.innerHTML = html;
-    grid.append(toy);
-
-    let popped = 0;
-    const cells = toy.querySelectorAll(".toybox-bubble-cell");
-    cells.forEach((cell) => {
-      cell.addEventListener("click", () => {
-        if (cell.classList.contains("popped")) return;
-        cell.classList.add("popped");
-        popped += 1;
-        if (popped === cols * rows) {
-          setTimeout(() => {
-            cells.forEach((c) => c.classList.remove("popped"));
-            popped = 0;
-          }, 600);
-        }
+        const on = toy.querySelectorAll(".toybox-toggle.on").length;
+        toggleLabel.textContent = "Toggle parade · " + on + "/" + toggleCount + " on";
       });
     });
   })();
@@ -2184,7 +2239,7 @@ function startToybox() {
     toy.innerHTML = `
       <span class="toybox-toy-label">Newton's cradle</span>
       <canvas class="toybox-cradle-canvas" id="cradleCanvas" width="200" height="130"></canvas>
-      <p class="toybox-cradle-hint">Click a ball to push it</p>
+      <p class="toybox-cradle-hint">Drag a ball back, let go</p>
     `;
     grid.append(toy);
     const canvas = toy.querySelector("#cradleCanvas");
@@ -2195,43 +2250,63 @@ function startToybox() {
     const spacing = ballR * 2 + 1;
     const anchorY = 15;
     const stringLen = 70;
+    const restX = (i) => W / 2 + (i - (numBalls - 1) / 2) * spacing;
     const balls = [];
-    for (let i = 0; i < numBalls; i++) {
-      balls.push({
-        angle: 0,
-        angVel: 0,
-        x: W / 2 + (i - (numBalls - 1) / 2) * spacing,
-        resting: true
-      });
-    }
-    let dragging = -1;
-    let raf;
+    for (let i = 0; i < numBalls; i++) balls.push({ x: restX(i), vx: 0 });
+    let grab = -1;
+    let grabVX = 0;
+    let lastGX = 0;
+    let lastGT = 0;
+    let raf = 0;
+    let last = performance.now();
 
-    function getBallAt(mx, my) {
+    function ballY(x, i) {
+      const dx = x - restX(i);
+      return anchorY + Math.sqrt(Math.max(64, stringLen * stringLen - dx * dx));
+    }
+
+    function toCanvas(e) {
+      const rect = canvas.getBoundingClientRect();
+      return {
+        x: (e.clientX - rect.left) * (W / rect.width),
+        y: (e.clientY - rect.top) * (H / rect.height)
+      };
+    }
+
+    function ballAt(p) {
       for (let i = 0; i < numBalls; i++) {
-        const bx = balls[i].x + Math.sin(balls[i].angle) * stringLen;
-        const by = anchorY + Math.cos(balls[i].angle) * stringLen;
-        if (Math.hypot(mx - bx, my - by) < ballR + 4) return i;
+        if (Math.hypot(p.x - balls[i].x, p.y - ballY(balls[i].x, i)) < ballR + 5) return i;
       }
       return -1;
     }
 
-    function physics() {
-      const g = 0.0015;
-      const damping = 0.999;
+    function physics(dt) {
+      const stiffness = 110;
+      const damping = 0.25;
       for (let i = 0; i < numBalls; i++) {
-        if (dragging === i) continue;
-        const acc = -g * Math.sin(balls[i].angle);
-        balls[i].angVel += acc;
-        balls[i].angVel *= damping;
-        balls[i].angle += balls[i].angVel;
+        if (i === grab) continue;
+        const b = balls[i];
+        b.vx += (-stiffness * (b.x - restX(i)) - damping * b.vx) * dt;
+        b.x += b.vx * dt;
       }
       for (let i = 0; i < numBalls - 1; i++) {
-        const a1 = balls[i], a2 = balls[i + 1];
-        if (a1.angVel > 0.0001 && a2.angVel < -0.0001) {
-          const swap = a1.angVel;
-          a1.angVel = a2.angVel * 0.95;
-          a2.angVel = swap * 0.95;
+        const a = balls[i], b = balls[i + 1];
+        const overlap = (ballR * 2 + 0.5) - (b.x - a.x);
+        if (overlap <= 0) continue;
+        if (i === grab) {
+          b.x += overlap;
+          b.vx = Math.max(b.vx, grabVX * 0.9);
+        } else if (i + 1 === grab) {
+          a.x -= overlap;
+          a.vx = Math.min(a.vx, grabVX * 0.9);
+        } else {
+          a.x -= overlap / 2;
+          b.x += overlap / 2;
+          if (a.vx > b.vx) {
+            const t = a.vx;
+            a.vx = b.vx;
+            b.vx = t;
+          }
         }
       }
     }
@@ -2241,10 +2316,10 @@ function startToybox() {
       ctx.fillStyle = "#394354";
       ctx.fillRect(W / 2 - (numBalls * spacing) / 2 - 10, anchorY - 6, numBalls * spacing + 20, 6);
       for (let i = 0; i < numBalls; i++) {
-        const bx = balls[i].x + Math.sin(balls[i].angle) * stringLen;
-        const by = anchorY + Math.cos(balls[i].angle) * stringLen;
+        const bx = balls[i].x;
+        const by = ballY(bx, i);
         ctx.beginPath();
-        ctx.moveTo(balls[i].x, anchorY);
+        ctx.moveTo(restX(i), anchorY);
         ctx.lineTo(bx, by);
         ctx.strokeStyle = "#999";
         ctx.lineWidth = 1.5;
@@ -2262,31 +2337,48 @@ function startToybox() {
       }
     }
 
-    function animate() {
-      physics();
+    function animate(now) {
+      const dt = Math.min(0.033, (now - last) / 1000);
+      last = now;
+      physics(dt);
       draw();
       raf = requestAnimationFrame(animate);
     }
-    animate();
+    raf = requestAnimationFrame(animate);
 
-    canvas.addEventListener("mousedown", (e) => {
-      const rect = canvas.getBoundingClientRect();
-      const mx = (e.clientX - rect.left) * (W / rect.width);
-      const my = (e.clientY - rect.top) * (H / rect.height);
-      dragging = getBallAt(mx, my);
+    canvas.addEventListener("pointerdown", (e) => {
+      e.preventDefault();
+      canvas.setPointerCapture(e.pointerId);
+      const p = toCanvas(e);
+      grab = ballAt(p);
+      if (grab >= 0) {
+        grabVX = 0;
+        lastGX = p.x;
+        lastGT = performance.now();
+      }
     });
-    canvas.addEventListener("mousemove", (e) => {
-      if (dragging < 0) return;
-      const rect = canvas.getBoundingClientRect();
-      const mx = (e.clientX - rect.left) * (W / rect.width);
-      const my = (e.clientY - rect.top) * (H / rect.height);
-      balls[dragging].angle = Math.atan2(mx - balls[dragging].x, my - anchorY);
-      balls[dragging].angle = Math.max(-0.8, Math.min(0.8, balls[dragging].angle));
-      balls[dragging].angVel = 0;
+    canvas.addEventListener("pointermove", (e) => {
+      if (grab < 0) return;
+      const p = toCanvas(e);
+      const now = performance.now();
+      const dt = Math.max(8, now - lastGT) / 1000;
+      grabVX = ((p.x - lastGX) / dt) * 0.85;
+      balls[grab].x = Math.min(restX(grab) + 46, Math.max(restX(grab) - 46, p.x));
+      balls[grab].vx = 0;
+      lastGX = p.x;
+      lastGT = now;
     });
-    canvas.addEventListener("mouseup", () => {
-      dragging = -1;
+    canvas.addEventListener("pointerup", (e) => {
+      if (grab < 0) return;
+      const p = toCanvas(e);
+      if (Math.abs(p.x - restX(grab)) < 5) {
+        balls[grab].vx = (balls[grab].x < W / 2 ? -1 : 1) * 300;
+      } else {
+        balls[grab].vx = Math.max(-600, Math.min(600, grabVX));
+      }
+      grab = -1;
     });
+    canvas.addEventListener("pointercancel", () => { grab = -1; });
 
     addCleanup(() => cancelAnimationFrame(raf));
   })();
@@ -2295,22 +2387,35 @@ function startToybox() {
   (function initPopTubes() {
     const toy = document.createElement("div");
     toy.className = "toybox-toy";
-    const tubeCount = 5;
-    let html = '<span class="toybox-toy-label">Pop tubes</span><div class="toybox-tubes">';
+    const tubeCount = 6;
+    const tubeStages = [24, 40, 56, 70];
+    let html = '<span class="toybox-toy-label" id="tubeLabel">Pop tubes</span><div class="toybox-tubes">';
     for (let i = 0; i < tubeCount; i++) {
-      html += '<div class="toybox-tube" data-i="' + i + '"><div class="toybox-tube-inner"></div></div>';
+      html += '<div class="toybox-tube" data-stage="0"><div class="toybox-tube-inner"></div></div>';
     }
-    html += "</div>";
+    html += '</div><button class="game-action toybox-mini" id="tubeReset" type="button">Collapse all</button>';
     toy.innerHTML = html;
     grid.append(toy);
 
+    const tubeLabel = toy.querySelector("#tubeLabel");
+    let tubePops = 0;
     const tubes = toy.querySelectorAll(".toybox-tube");
     tubes.forEach((tube) => {
-      let expanded = false;
       tube.addEventListener("click", () => {
-        expanded = !expanded;
-        tube.classList.toggle("expanded", expanded);
-        tube.querySelector(".toybox-tube-inner").style.height = expanded ? "60px" : "24px";
+        const stage = (Number(tube.dataset.stage) + 1) % tubeStages.length;
+        tube.dataset.stage = stage;
+        tube.querySelector(".toybox-tube-inner").style.height = tubeStages[stage] + "px";
+        tube.classList.toggle("s2", stage === 2);
+        tube.classList.toggle("s3", stage === 3);
+        tubePops += 1;
+        tubeLabel.textContent = "Pop tubes · " + tubePops + " pops";
+      });
+    });
+    toy.querySelector("#tubeReset").addEventListener("click", () => {
+      tubes.forEach((tube) => {
+        tube.dataset.stage = 0;
+        tube.querySelector(".toybox-tube-inner").style.height = tubeStages[0] + "px";
+        tube.classList.remove("s2", "s3");
       });
     });
   })();
@@ -2389,10 +2494,11 @@ function startToybox() {
     toy.className = "toybox-toy";
     toy.style.gridColumn = "span 2";
     toy.innerHTML = `
-      <span class="toybox-toy-label">Domino chain</span>
+      <span class="toybox-toy-label" id="dominoLabel">Domino chain</span>
       <canvas class="toybox-domino-canvas" id="dominoCanvas"></canvas>
       <div class="toybox-domino-actions">
-        <button class="game-action toybox-domino-reset" id="dominoReset" type="button">Reset</button>
+        <button class="game-action toybox-mini" id="dominoTip" type="button">Tip first</button>
+        <button class="game-action toybox-mini" id="dominoReset" type="button">Reset</button>
       </div>
     `;
     grid.append(toy);
@@ -2409,35 +2515,49 @@ function startToybox() {
     }
     resize();
 
+    const dominoPalette = [["#ffd9d9", "#e88"], ["#ffedbe", "#d9b64f"], ["#c9efe6", "#4fae9c"], ["#cfe0f5", "#5b84c4"], ["#ddd0f5", "#8a68c8"]];
+    let lastDown = -1;
+
     function buildChain() {
       dominos.length = 0;
       const count = Math.floor(w / 28);
       const startX = 15;
       for (let i = 0; i < count; i++) {
+        const palette = dominoPalette[i % dominoPalette.length];
         dominos.push({
           x: startX + i * 26,
           angle: 0,
           angVel: 0,
           falling: false,
-          fallen: false
+          fallen: false,
+          light: palette[0],
+          dark: palette[1]
         });
       }
+      lastDown = -1;
     }
     buildChain();
 
-    function physics() {
+    function updateDominoLabel() {
+      const down = dominos.filter((d) => d.fallen).length;
+      if (down === lastDown) return;
+      lastDown = down;
+      toy.querySelector("#dominoLabel").textContent = "Domino chain · " + down + "/" + dominos.length + " down";
+    }
+
+    function physics(dt) {
       for (let i = 0; i < dominos.length; i++) {
         const d = dominos[i];
         if (d.falling && !d.fallen) {
-          d.angVel += 0.008;
-          d.angle += d.angVel;
+          d.angVel += 4.2 * dt;
+          d.angle += d.angVel * dt;
           if (d.angle >= Math.PI / 2.2) {
             d.angle = Math.PI / 2.2;
             d.fallen = true;
             d.falling = false;
             if (i + 1 < dominos.length && !dominos[i + 1].fallen) {
               dominos[i + 1].falling = true;
-              dominos[i + 1].angVel = 0.02;
+              dominos[i + 1].angVel = 1.7;
             }
           }
         }
@@ -2453,8 +2573,8 @@ function startToybox() {
         ctx.translate(d.x, h - 5);
         ctx.rotate(d.angle);
         const grad = ctx.createLinearGradient(-dominoW / 2, 0, dominoW / 2, 0);
-        grad.addColorStop(0, d.fallen ? "#e88" : "#fff");
-        grad.addColorStop(1, d.fallen ? "#c66" : "#eee");
+        grad.addColorStop(0, d.fallen ? d.dark : d.light);
+        grad.addColorStop(1, d.fallen ? d.dark : "#ffffff");
         ctx.fillStyle = grad;
         ctx.fillRect(-dominoW / 2, -dominoH, dominoW, dominoH);
         ctx.strokeStyle = "#394354";
@@ -2468,12 +2588,16 @@ function startToybox() {
       });
     }
 
-    function animate() {
-      physics();
+    let lastTick = performance.now();
+    function animate(now) {
+      const dt = Math.min(0.05, (now - lastTick) / 1000);
+      lastTick = now;
+      physics(dt);
       draw();
+      updateDominoLabel();
       raf = requestAnimationFrame(animate);
     }
-    animate();
+    raf = requestAnimationFrame(animate);
 
     canvas.addEventListener("click", (e) => {
       const rect = canvas.getBoundingClientRect();
@@ -2481,9 +2605,16 @@ function startToybox() {
       for (let i = 0; i < dominos.length; i++) {
         if (!dominos[i].fallen && Math.abs(dominos[i].x - mx) < 20) {
           dominos[i].falling = true;
-          dominos[i].angVel = 0.03;
+          dominos[i].angVel = 2.0;
           break;
         }
+      }
+    });
+
+    toy.querySelector("#dominoTip").addEventListener("click", () => {
+      if (dominos.length && !dominos[0].fallen) {
+        dominos[0].falling = true;
+        dominos[0].angVel = 2.0;
       }
     });
 
@@ -2497,7 +2628,7 @@ function startToybox() {
   setSnapshot({
     mode: "playing",
     game: "Toybox",
-    toys: ["push", "spinner", "bubbles", "jelly", "gradient", "toggles", "wrap", "cradle", "tubes", "ripples", "dominos"]
+    toys: ["push", "spinner", "bubbles", "jelly", "gradient", "toggles", "cradle", "tubes", "ripples", "dominos"]
   });
 
   activeCleanup = () => {
@@ -2520,6 +2651,12 @@ function start2048() {
           <div class="t-bg" id="tBg"></div>
           <div class="t-tiles" id="tTiles"></div>
         </div>
+        <div class="t-pad" aria-label="Move tiles">
+          <button class="game-action t-pad-button" type="button" data-dir="up" aria-label="Move up">↑</button>
+          <button class="game-action t-pad-button" type="button" data-dir="left" aria-label="Move left">←</button>
+          <button class="game-action t-pad-button" type="button" data-dir="down" aria-label="Move down">↓</button>
+          <button class="game-action t-pad-button" type="button" data-dir="right" aria-label="Move right">→</button>
+        </div>
         <div class="game-actions">
           <button class="game-action" id="tUndo" type="button">Undo</button>
           <button class="game-action" id="tRestart" type="button">Restart</button>
@@ -2539,7 +2676,8 @@ function start2048() {
   const colors = {
     2: "#eee4da", 4: "#ede0c8", 8: "#f2b179", 16: "#f59563",
     32: "#f67c5f", 64: "#f65e3b", 128: "#edcf72", 256: "#edcc61",
-    512: "#edc850", 1024: "#edc53f", 2048: "#edc22e"
+    512: "#edc850", 1024: "#edc53f", 2048: "#edc22e",
+    4096: "#ff9ff3", 8192: "#222831"
   };
 
   function buildBg() {
@@ -2705,8 +2843,10 @@ function start2048() {
       const el = document.createElement("div");
       el.className = "t-tile";
       el.textContent = t.val;
-      el.style.left = (t.c * 25) + "%";
-      el.style.top = (t.r * 25) + "%";
+      el.style.width = "calc((100% - 30px) / 4)";
+      el.style.height = "calc((100% - 30px) / 4)";
+      el.style.left = `calc(${t.c} * ((100% - 30px) / 4 + 10px))`;
+      el.style.top = `calc(${t.r} * ((100% - 30px) / 4 + 10px))`;
       el.style.background = colors[t.val] || "#3c3a32";
       el.style.color = t.val <= 4 ? "#776e65" : "white";
       if (t.val >= 100) el.style.fontSize = "1.3rem";
@@ -2754,6 +2894,9 @@ function start2048() {
   }, { passive: true });
 
   document.addEventListener("keydown", keydown);
+  document.querySelectorAll(".t-pad-button").forEach((btn) => {
+    btn.addEventListener("click", () => move(btn.dataset.dir));
+  });
   document.querySelector("#tRestart").addEventListener("click", init);
   document.querySelector("#tUndo").addEventListener("click", undo);
   activeCleanup = () => {
