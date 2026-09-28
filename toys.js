@@ -606,17 +606,19 @@ Object.assign(gameStarters, {
   const button = document.querySelector("#surpriseBtn");
   if (!button) return;
   const DECK_KEY = "trinkets-deck-v1";
-  const master = Object.keys(gameStarters);
   let deck = null;
   try {
     const raw = JSON.parse(localStorage.getItem(DECK_KEY));
-    if (Array.isArray(raw)) deck = raw.filter((id) => master.includes(id));
+    if (Array.isArray(raw)) deck = raw;
   } catch (err) {
     deck = null;
   }
   let pressed = false;
   button.addEventListener("click", () => {
-    if (!deck || deck.length === 0) deck = shuffleArray([...master]);
+    const master = Object.keys(gameStarters);
+    if (!deck) deck = [];
+    deck = deck.filter((id) => master.includes(id));
+    if (deck.length === 0) deck = shuffleArray([...master]);
     const index = Math.floor(Math.random() * Math.min(6, deck.length));
     const pick = deck.splice(index, 1)[0];
     try {

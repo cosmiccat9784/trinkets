@@ -401,7 +401,9 @@ function startSwitchbackTiles() {
       grid.append(button);
     });
     moveLabel.textContent = `Moves: ${moves}`;
-    puzzleLabel.textContent = `Puzzle: ${puzzleIndex + 1}/${puzzles.length}`;
+    puzzleLabel.textContent = puzzleIndex < paths.length
+      ? `Puzzle: ${puzzleIndex + 1}/${paths.length}`
+      : "Puzzle: Random";
     message.textContent = solved ? "Connected. The switchback path is open." : "Click tiles to rotate them. Pipes must meet on both sides.";
     setSnapshot({
       mode: solved ? "won" : "playing",

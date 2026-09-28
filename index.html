@@ -14,7 +14,7 @@
     <meta name="twitter:image" content="https://cosmiccat9784.github.io/trinkets/assets/preview.png" />
     <link rel="icon" type="image/svg+xml" href="assets/favicon.svg" />
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" />
-    <link rel="stylesheet" href="styles.css?v=3" />
+    <link rel="stylesheet" href="styles.css?v=4" />
   </head>
   <body>
     <header class="topbar">
@@ -25,7 +25,7 @@
       <nav aria-label="Primary navigation">
         <a href="#games" data-nav-filter="all">Games</a>
         <a href="#games" data-nav-filter="puzzle">Puzzles</a>
-        <a href="#facts">Facts</a>
+        <a href="#games" id="navFacts">Facts</a>
         <a href="#scores">Scores</a>
       </nav>
     </header>
@@ -53,7 +53,7 @@
 
       <section class="quick-stats" id="scores" aria-label="Arcade stats">
         <div>
-          <strong id="statGames">13</strong>
+          <strong id="statGames">14</strong>
           <span>tiny games</span>
         </div>
         <div>
@@ -336,25 +336,28 @@
               </div>
             </div>
           </article>
+
+          <article class="game-card" data-category="toys" data-game="facts">
+            <div class="game-art facts-art" aria-hidden="true">
+              <span class="facts-bubble">?</span>
+              <span class="facts-dot fd1"></span>
+              <span class="facts-dot fd2"></span>
+              <span class="facts-dot fd3"></span>
+            </div>
+            <div class="game-content">
+              <p class="tag">Toy</p>
+              <h3>Useless Facts</h3>
+              <p>A machine that dispenses facts you will never need. Pull the lever.</p>
+              <div class="card-actions">
+                <button class="play-button" type="button">Play</button>
+                <button class="save-button" type="button">Save pick</button>
+              </div>
+            </div>
+          </article>
         </div>
       </section>
 
 
-
-      <section class="facts-machine" id="facts" aria-labelledby="facts-title">
-        <div class="facts-panel">
-          <div>
-            <p class="eyebrow">Useless facts</p>
-            <h2 id="facts-title">The Useless Facts Machine</h2>
-          </div>
-          <p class="fact-text" id="factText">Pull the lever. Receive a fact that changes nothing.</p>
-          <div class="facts-actions">
-            <button class="primary-button" id="factButton" type="button">Tell me a fact</button>
-            <button class="game-action facts-reset" id="factReset" type="button" hidden>Start over</button>
-            <span class="fact-count" id="factCount"></span>
-          </div>
-        </div>
-      </section>
 
       <section class="how-to-play" aria-labelledby="how-title">
         <div>
@@ -386,9 +389,9 @@
       <p>Trinkets Arcade keeps the shelf stocked with small, silly, satisfying playthings.</p>
     </footer>
 
-    <script src="script.js?v=3"></script>
-    <script src="powder.js?v=3"></script>
-    <script src="toys.js?v=3"></script>
-    <script src="facts.js?v=3"></script>
+    <script src="script.js?v=4"></script>
+    <script src="powder.js?v=4"></script>
+    <script src="toys.js?v=4"></script>
+    <script src="facts.js?v=4"></script>
   </body>
 </html>

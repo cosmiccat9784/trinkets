@@ -17,6 +17,7 @@ Progress:
 - Bug fixes: defined missing --cream var, fixed dead #puzzles nav anchor (now applies the puzzle filter), dynamic stat counts, persisted save picks to localStorage, fixed jelly toy document-listener leak, Bash start-button disabled mid-round with Play again label, Forge words.txt fetch catch, body scroll lock while modal open, touch-action none on game canvases/sheets, [hidden] guard, prefers-reduced-motion support.
 - Toybox overhaul: Pop Bubbles rewritten frame-rate independent, Squish Me rebuilt on pointer events with real fling velocity, Gradient Mixer uses harmonious HSL colors plus hex readout, Toggle Parade layout fixed with live counter, removed Bubble Wrap grid (standalone game), Newton's Cradle rewritten with real momentum transfer, Pop Tubes now 6 tubes x 4 color stages with counter and collapse, Dominos rebuilt with dt physics, palette colors, down-counter, and Tip First button.
 - Powder Sim moved to top toolbar layout with full-width responsive canvas; Zen swatches bigger with ring active state; 2048 gained d-pad, gap-correct tiles, 4096/8192 colors, no-scroll swipe; Clue Crate expanded to 28 riddles; Switchback Tiles gained a Random puzzle procedural generator.
+- Switchback counter now reads Puzzle: Random for generated puzzles; Useless Facts Machine converted from page section into a modal card game (nav Facts opens it, Surprise Me includes it).
 
 TODO:
 - Manual in-browser playtest recommended from the already-open file URL.

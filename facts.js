@@ -148,12 +148,27 @@ const FACTS = [
   "An Alaskan town once had a cat as its honorary mayor for 20 years."
 ];
 
-(function initFactsMachine() {
+function startUselessFacts() {
+  openGame(
+    "Useless Facts",
+    "Toys",
+    `
+      <div class="game-layout">
+        <div class="clue-panel">
+          <p class="fact-text" id="factText">Press the button. Learn something useless.</p>
+          <div class="facts-actions">
+            <button class="primary-button" id="factButton" type="button">Tell me a fact</button>
+            <button class="game-action facts-reset" id="factReset" type="button" hidden>Start over</button>
+            <span class="fact-count" id="factCount"></span>
+          </div>
+        </div>
+      </div>
+    `
+  );
   const text = document.querySelector("#factText");
   const button = document.querySelector("#factButton");
   const reset = document.querySelector("#factReset");
   const count = document.querySelector("#factCount");
-  if (!text || !button) return;
   const DECK_KEY = "trinkets-facts-deck-v1";
   let deck = null;
   try {
@@ -209,6 +224,18 @@ const FACTS = [
     showCount();
     swapText("Deck reshuffled. The facts remember nothing, and neither do we.");
   });
+  setSnapshot({ mode: "playing", game: "Useless Facts", seen: FACTS.length - deck.length });
   save();
   showCount();
+}
+
+gameStarters.facts = startUselessFacts;
+
+(function initFactsNav() {
+  const link = document.querySelector("#navFacts");
+  if (!link) return;
+  link.addEventListener("click", (event) => {
+    event.preventDefault();
+    startUselessFacts();
+  });
 })();
