@@ -59,6 +59,10 @@ a {
   font: inherit;
 }
 
+button {
+  touch-action: manipulation;
+}
+
 a {
   color: inherit;
   text-decoration: none;
@@ -76,6 +80,7 @@ a {
   background: rgba(255, 248, 234, 0.9);
   border-bottom: 3px solid var(--line);
   backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
 }
 
 .brand,
@@ -121,6 +126,7 @@ main {
   align-items: center;
   gap: clamp(24px, 5vw, 72px);
   min-height: calc(100vh - 75px);
+  min-height: calc(100dvh - 75px);
   padding: clamp(32px, 7vw, 86px) clamp(18px, 6vw, 88px);
   border-bottom: 3px solid var(--line);
   background:
@@ -176,6 +182,7 @@ h3 {
 
 .hero-actions {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 14px;
   margin-top: 30px;
@@ -707,6 +714,7 @@ body.modal-open {
   width: min(980px, 100%);
   max-height: calc(100vh - 36px);
   overflow: auto;
+  overscroll-behavior: contain;
   background: var(--paper);
   border: 3px solid var(--line);
   border-radius: 8px;
@@ -804,7 +812,9 @@ body.modal-open {
 }
 
 .pipe-grid {
-  grid-template-columns: repeat(5, minmax(48px, 76px));
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  width: min(100%, 412px);
+  margin: 0 auto;
 }
 
 .pipe-tile {
@@ -926,9 +936,8 @@ body.modal-open {
 
 .maze-grid {
   /* columns set dynamically in render() */
-  overflow-x: auto;
-  max-width: 100%;
-  width: fit-content;
+  width: 100%;
+  max-width: 520px;
   margin: 0 auto;
 }
 
@@ -937,6 +946,7 @@ body.modal-open {
   place-items: center;
   aspect-ratio: 1;
   min-width: 0;
+  overflow: hidden;
   background: white;
   border: 3px solid var(--line);
   border-radius: 8px;
@@ -960,7 +970,7 @@ body.modal-open {
 }
 
 .maze-icon {
-  font-size: 1.5rem;
+  font-size: clamp(0.95rem, 4.5vw, 1.5rem);
   line-height: 1;
   pointer-events: none;
 }
@@ -1252,7 +1262,9 @@ body.modal-open {
 }
 
 .bash-grid {
-  grid-template-columns: repeat(3, minmax(68px, 110px));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  width: min(100%, 362px);
+  margin: 0 auto;
 }
 
 .bash-button {
@@ -1808,6 +1820,7 @@ body.modal-open {
   width: 200px;
   height: 130px;
   cursor: pointer;
+  touch-action: none;
 }
 
 .toybox-cradle-hint {
@@ -2460,7 +2473,7 @@ footer p {
   cursor: not-allowed;
 }
 
-.hero-art {
+  .hero-art {
     max-height: 390px;
   }
 
@@ -2479,6 +2492,7 @@ footer p {
 
   .topbar {
     position: static;
+    padding: 12px 18px;
   }
 
   nav {
@@ -2507,6 +2521,27 @@ footer p {
     min-height: 380px;
   }
 
+  .hero-art {
+    min-height: 200px;
+  }
+
+  .game-modal {
+    padding: 10px;
+  }
+
+  .modal-panel {
+    max-height: calc(100vh - 20px);
+    max-height: calc(100dvh - 20px);
+  }
+
+  .modal-header {
+    padding: 16px;
+  }
+
+  .game-shell {
+    padding: 14px;
+  }
+
   .game-art {
     min-height: 160px;
   }
@@ -2516,6 +2551,37 @@ footer p {
   }
 
 
+}
+
+@media (pointer: coarse) {
+  .play-button,
+  .save-button,
+  .game-action {
+    min-height: 46px;
+  }
+
+  .powder-mini,
+  .toybox-mini {
+    min-height: 42px;
+  }
+
+  .maze-level-btn {
+    font-size: 1rem;
+  }
+
+  .maze-control {
+    width: 60px;
+    height: 54px;
+  }
+
+  .t-pad {
+    grid-template-columns: repeat(3, 60px);
+  }
+
+  .zen-swatch {
+    width: 44px;
+    height: 44px;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

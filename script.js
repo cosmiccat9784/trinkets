@@ -805,7 +805,8 @@ function startCometCatch() {
     timeLabel.textContent = `Time: ${Math.ceil(state.time)}`;
 
     if (state.hintTimer > 0) {
-      message.textContent = "Move with WASD, arrows, or mouse";
+      const touchMove = "ontouchstart" in window || navigator.maxTouchPoints > 0;
+      message.textContent = touchMove ? "Drag on the starfield to move" : "Move with WASD, arrows, or mouse";
     } else if (running) {
       message.textContent = "";
     }
@@ -1296,7 +1297,8 @@ function startPocketMaze() {
   function render() {
     const grid = document.querySelector("#mazeGrid");
     grid.innerHTML = "";
-    grid.style.gridTemplateColumns = `repeat(${maze[0].length}, minmax(28px, 48px))`;
+    grid.style.gridTemplateColumns = `repeat(${maze[0].length}, minmax(0, 1fr))`;
+    grid.style.maxWidth = (maze[0].length * 52) + "px";
     const icons = {
       P: '<span class="material-symbols-outlined maze-icon maze-icon-player">person</span>',
       K: '<span class="material-symbols-outlined maze-icon maze-icon-key">key</span>',

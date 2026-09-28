@@ -19,6 +19,7 @@ Progress:
 - Powder Sim moved to top toolbar layout with full-width responsive canvas; Zen swatches bigger with ring active state; 2048 gained d-pad, gap-correct tiles, 4096/8192 colors, no-scroll swipe; Clue Crate expanded to 28 riddles; Switchback Tiles gained a Random puzzle procedural generator.
 - Switchback counter now reads Puzzle: Random for generated puzzles; Useless Facts Machine converted from page section into a modal card game (nav Facts opens it, Surprise Me includes it).
 - Switchback Tiles deals a fresh procedural puzzle on open and on every Next (Puzzle #n counter); Random button removed.
+- Mobile pass: theme-color meta, dvh hero, wrapping hero actions, fluid pipe/bash/maze grids that shrink instead of overflowing, scaling maze icons, touch-action none on cradle canvas, manipulation on buttons, overscroll containment in modals, touch wording in Comet Catch, proportional Powder canvas, compact phone modal spacing, 44px+ touch targets on coarse pointers.
 
 TODO:
 - Manual in-browser playtest recommended from the already-open file URL.
