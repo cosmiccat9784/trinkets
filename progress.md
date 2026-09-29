@@ -33,6 +33,7 @@ Progress:
 - Added 2048 self-heal: every move verifies tile objects match the board and rebuilds them if not, so desync can never hard-crash again.
 - Deep links: every game opens from a #slug URL (button_bash, powder_sim, etc., plus short-id and dashed aliases); opening a game updates the address bar, closing clears it.
 - Domino chain rebuilt on contact physics: next domino starts on touch (~30°) with momentum transfer, pusher leans instead of passing through; proven by simulation (12-chain topples in order in ~2s, max overlap 3.4px).
+- Comet Catch gained rare green comets worth 25 points with matching trails, popups, difficulty scaling, and end-burst.
 - Gradient Mixer second endpoint is now a predictable dark shade of the chosen color instead of a hue rotation; range inputs claim horizontal touch gestures.
 
 TODO:

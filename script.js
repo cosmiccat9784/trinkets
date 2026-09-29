@@ -639,6 +639,7 @@ function startCometCatch() {
     state = {
       player: { x: 360, y: 270, r: 16 },
       comets: Array.from({ length: 5 }, () => makeDot(11, "#f6c445")),
+      greens: Array.from({ length: 2 }, () => makeDot(10, "#4ade80")),
       sparks: Array.from({ length: 3 }, () => makeDot(13, "#ff6b6b")),
       particles: [],
       popups: [],
@@ -648,6 +649,7 @@ function startCometCatch() {
       shakeX: 0,
       shakeY: 0,
       nextCometScore: 30,
+      nextGreenScore: 80,
       nextSparkScore: 60,
       hintTimer: 3.5
     };
@@ -720,6 +722,10 @@ function startCometCatch() {
       moveDot(dot, dt);
       if (isOffscreen(dot)) spawnFromEdge(dot);
     });
+    state.greens.forEach((dot) => {
+      moveDot(dot, dt);
+      if (isOffscreen(dot)) spawnFromEdge(dot);
+    });
     state.sparks.forEach((dot) => {
       moveDot(dot, dt);
       if (isOffscreen(dot)) spawnFromEdge(dot);
@@ -730,6 +736,14 @@ function startCometCatch() {
         state.score += 10;
         spawnParticles(dot.x, dot.y, "#f6c445", 8);
         spawnPopup(dot.x, dot.y - 20, "+10", "#f6c445");
+        spawnFromEdge(dot);
+      }
+    });
+    state.greens.forEach((dot) => {
+      if (distance(state.player, dot) < state.player.r + dot.r) {
+        state.score += 25;
+        spawnParticles(dot.x, dot.y, "#4ade80", 10);
+        spawnPopup(dot.x, dot.y - 20, "+25", "#4ade80");
         spawnFromEdge(dot);
       }
     });
@@ -748,6 +762,10 @@ function startCometCatch() {
     while (state.score >= state.nextCometScore) {
       state.comets.push(makeDot(11, "#f6c445"));
       state.nextCometScore += 30;
+    }
+    while (state.score >= state.nextGreenScore) {
+      state.greens.push(makeDot(10, "#4ade80"));
+      state.nextGreenScore += 80;
     }
     while (state.score >= state.nextSparkScore) {
       state.sparks.push(makeDot(13, "#ff6b6b"));
@@ -780,8 +798,10 @@ function startCometCatch() {
       const result = recordScore("comet", state.score, "high");
       message.textContent = `Time! Final score: ${state.score}.` + (result.isNew && state.score > 0 ? " New best!" : ` Best: ${result.best}.`);
       state.comets.forEach((dot) => spawnParticles(dot.x, dot.y, "#f6c445", 14));
+      state.greens.forEach((dot) => spawnParticles(dot.x, dot.y, "#4ade80", 12));
       state.sparks.forEach((dot) => spawnParticles(dot.x, dot.y, "#ff6b6b", 10));
       state.comets = [];
+      state.greens = [];
       state.sparks = [];
     }
   }
@@ -817,11 +837,11 @@ function startCometCatch() {
       ctx.fill();
     }
 
-    state.comets.forEach((dot) => {
+    function drawGlowy(dot, r, g, b) {
       for (let t = 0; t < dot.trail.length; t++) {
         const alpha = (t / dot.trail.length) * 0.35;
         const size = dot.r * (t / dot.trail.length) * 0.7;
-        ctx.fillStyle = `rgba(246,196,69,${alpha})`;
+        ctx.fillStyle = `rgba(${r},${g},${b},${alpha})`;
         ctx.beginPath();
         ctx.arc(dot.trail[t].x, dot.trail[t].y, size, 0, Math.PI * 2);
         ctx.fill();
@@ -837,7 +857,9 @@ function startCometCatch() {
       ctx.beginPath();
       ctx.arc(dot.x - dot.r * 0.25, dot.y - dot.r * 0.25, dot.r * 0.35, 0, Math.PI * 2);
       ctx.fill();
-    });
+    }
+    state.comets.forEach((dot) => drawGlowy(dot, 246, 196, 69));
+    state.greens.forEach((dot) => drawGlowy(dot, 74, 222, 128));
 
     state.sparks.forEach((dot) => {
       ctx.fillStyle = dot.color;
@@ -964,6 +986,7 @@ function startCometCatch() {
       coordinateSystem: "Canvas origin top-left, x right, y down.",
       player: roundedPoint(state.player),
       comets: state.comets.map(roundedPoint),
+      greens: state.greens.map(roundedPoint),
       sparks: state.sparks.map(roundedPoint),
       score: state.score,
       time: Math.ceil(state.time)
