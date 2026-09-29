@@ -1340,6 +1340,264 @@ body.embed {
   50% { transform: translateY(-18px); }
 }
 
+/* ── Penguin Parkour ── */
+.penguin-art {
+  position: relative;
+  background: linear-gradient(180deg, #8ecae6 0%, #cfe9f7 55%, #ffffff 100%);
+  overflow: hidden;
+}
+.penguin-art-ice {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 18px;
+  background: #fff;
+  border-top: 3px solid var(--line);
+}
+.penguin-art-platform {
+  position: absolute;
+  background: #eef3f7;
+  border: 2px solid var(--line);
+  border-radius: 4px;
+  box-shadow: 2px 2px 0 var(--line);
+}
+.penguin-art-platform.p1 { left: 14%; bottom: 34px; width: 62px; height: 10px; }
+.penguin-art-platform.p2 { left: 38%; bottom: 64px; width: 54px; height: 10px; }
+.penguin-art-platform.p3 { left: 62%; bottom: 44px; width: 58px; height: 10px; }
+.penguin-art-penguin {
+  position: absolute;
+  left: 39%;
+  bottom: 70px;
+  width: 28px;
+  height: 32px;
+}
+.penguin-art-body {
+  position: absolute;
+  inset: 0;
+  background: #1e2a3a;
+  border: 2px solid var(--line);
+  border-radius: 50% / 58%;
+}
+.penguin-art-belly {
+  position: absolute;
+  left: 7px;
+  right: 7px;
+  top: 10px;
+  bottom: 4px;
+  background: #fff8ea;
+  border-radius: 50% / 60%;
+}
+.penguin-art-beak {
+  position: absolute;
+  left: 50%;
+  top: 12px;
+  width: 10px;
+  height: 6px;
+  transform: translateX(-50%);
+  background: #ff9f2e;
+  border: 1px solid var(--line);
+  clip-path: polygon(0 0, 100% 0, 50% 100%);
+}
+.penguin-art-coin {
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #ffe9a0, #d9a92f 75%);
+  border: 2px solid #7a4a0a;
+  animation: penguin-coin-float 2s ease-in-out infinite;
+}
+.penguin-art-coin.c1 { left: 18%; bottom: 52px; animation-delay: 0s; }
+.penguin-art-coin.c2 { left: 42%; bottom: 82px; animation-delay: 0.4s; }
+.penguin-art-coin.c3 { left: 68%; bottom: 62px; animation-delay: 0.8s; }
+@keyframes penguin-coin-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-6px); }
+}
+
+.penguin-canvas {
+  display: block;
+  width: min(100%, 720px, calc((100dvh - 380px) * 3 / 2));
+  aspect-ratio: 3 / 2;
+  margin: 0 auto;
+  border: 3px solid var(--line);
+  border-radius: 12px;
+  box-shadow: 8px 8px 0 var(--line);
+  background: #8ecae6;
+  touch-action: none;
+}
+
+.penguin-stage {
+  position: relative;
+  width: min(100%, 720px, calc((100dvh - 380px) * 3 / 2));
+  margin: 0 auto;
+}
+
+.penguin-touch {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.penguin-touch-btn {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 52px;
+  background: white;
+  border: 3px solid var(--line);
+  border-radius: 10px;
+  box-shadow: 4px 4px 0 var(--line);
+  cursor: pointer;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: manipulation;
+  transition: transform 0.08s, box-shadow 0.08s;
+}
+
+.penguin-touch-btn:active {
+  transform: translate(2px, 2px);
+  box-shadow: 2px 2px 0 var(--line);
+}
+
+.penguin-shop-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 6;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 12px;
+  background: rgba(25, 33, 43, 0.72);
+  border-radius: 12px;
+  overflow: auto;
+}
+
+.penguin-shop-overlay[hidden] {
+  display: none !important;
+}
+
+.penguin-shop-overlay:not([hidden]) {
+  display: flex;
+}
+
+.penguin-shop-panel {
+  width: min(560px, 100%);
+  max-height: calc(100% - 10px);
+  overflow: auto;
+  background: var(--paper);
+  border: 3px solid var(--line);
+  border-radius: 12px;
+  box-shadow: 8px 8px 0 rgba(0,0,0,0.22);
+  padding: 16px;
+  display: grid;
+  gap: 12px;
+}
+
+.penguin-shop-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.penguin-shop-header strong {
+  font-size: 1.15rem;
+}
+
+.penguin-shop-coins {
+  margin: 0;
+  color: #394354;
+  font-size: 0.92rem;
+  font-weight: 700;
+}
+
+.penguin-shop-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 10px;
+}
+
+.penguin-shop-card {
+  display: grid;
+  grid-template-columns: 72px 1fr;
+  gap: 10px;
+  align-items: center;
+  padding: 10px;
+  background: white;
+  border: 3px solid var(--line);
+  border-radius: 10px;
+  box-shadow: 3px 3px 0 var(--line);
+}
+
+.penguin-shop-card.selected {
+  border-color: var(--mint);
+  box-shadow: 3px 3px 0 var(--mint), 0 0 0 2px rgba(67,198,172,0.25);
+}
+
+.penguin-shop-preview {
+  width: 72px;
+  height: 72px;
+  display: grid;
+  place-items: center;
+  border: 2px solid var(--line);
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.penguin-shop-info {
+  display: grid;
+  gap: 2px;
+}
+
+.penguin-shop-info strong {
+  font-size: 0.98rem;
+}
+
+.penguin-shop-info span {
+  color: var(--muted);
+  font-size: 0.82rem;
+  line-height: 1.3;
+}
+
+.penguin-shop-action {
+  grid-column: 1 / -1;
+  display: flex;
+}
+
+.penguin-shop-action .game-action {
+  width: 100%;
+  justify-content: center;
+}
+
+.penguin-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 42px;
+  background: var(--mint);
+  border: 3px solid var(--line);
+  border-radius: 8px;
+  font-weight: 900;
+  font-size: 0.88rem;
+}
+
+.penguin-badge.equipped {
+  background: var(--gold);
+}
+
+.penguin-shop-hint {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.82rem;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
 .feedback-wrap {
   display: grid;
   gap: 18px;
@@ -3639,6 +3897,11 @@ footer p {
 
   .coin-canvas {
     width: min(100%, 720px, calc((100vh - 420px) * 12 / 7));
+  }
+
+  .penguin-canvas,
+  .penguin-stage {
+    width: min(100%, 720px, calc((100vh - 380px) * 3 / 2));
   }
 
   .embed .modal-panel {

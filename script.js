@@ -66,7 +66,8 @@ const gameSlugs = {
   coin: "coin_flip",
   cheese: "cheese_thief",
   machine: "normal_machine",
-  onebutton: "one_button"
+  onebutton: "one_button",
+  penguin: "penguin_parkour"
 };
 
 function slugToGame(slug) {
@@ -319,6 +320,11 @@ function embedStatText(snap) {
   }
   if (snap.game === "Clue Crate" && typeof snap.crate === "number") {
     parts.push("Crate: " + snap.crate);
+  }
+  if (snap.game === "Penguin Parkour") {
+    if (typeof snap.level === "number") parts.push("Level " + snap.level);
+    if (typeof snap.coins === "number") parts.push("Coins " + snap.coins);
+    if (typeof snap.levelCoins === "string") parts.push(snap.levelCoins);
   }
   return parts.join(" · ");
 }
