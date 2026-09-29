@@ -43,6 +43,69 @@ function findOrchardLine(cells) {
   return null;
 }
 
+const ORCH_DIRS = [[1, 0], [-1, 0], [0, 1], [0, -1]];
+
+function orchardStateKey(p, o, x) {
+  const s = (t) => t.x + "," + t.y;
+  return s(p) + "|" + o.map(s).sort().join(";") + "|" + x.map(s).sort().join(";");
+}
+
+function minWinDepth(level) {
+  const blocked = new Set([...level.walls, ...(level.voids || [])]);
+  const blockedAt = (x, y) => x < 1 || x > 5 || y < 1 || y > 5 || blocked.has(orchKey(x, y));
+  const start = {
+    p: { ...level.player },
+    o: level.oTiles.map((t) => ({ ...t })),
+    x: level.xTiles.map((t) => ({ ...t })),
+    d: 0
+  };
+  const oCellsOf = (s) => [{ ...s.p }, ...s.o.map((t) => ({ ...t }))];
+  if (findOrchardLine(oCellsOf(start))) return 0;
+  const seen = new Set([orchardStateKey(start.p, start.o, start.x)]);
+  const queue = [start];
+  let expanded = 0;
+  while (queue.length && expanded < 30000) {
+    const s = queue.shift();
+    if (s.d >= 6) continue;
+    expanded++;
+    for (const [dx, dy] of ORCH_DIRS) {
+      const nx = s.p.x + dx;
+      const ny = s.p.y + dy;
+      let np;
+      let no;
+      let nxTiles;
+      const hit = s.o.concat(s.x).find((t) => t.x === nx && t.y === ny) || null;
+      if (!hit) {
+        if (blockedAt(nx, ny)) continue;
+        np = { x: nx, y: ny };
+        no = s.o;
+        nxTiles = s.x;
+      } else {
+        const bx = nx + dx;
+        const by = ny + dy;
+        if (blockedAt(bx, by)) continue;
+        if (s.o.concat(s.x).some((t) => t.x === bx && t.y === by)) continue;
+        np = { x: nx, y: ny };
+        const moved = { x: bx, y: by };
+        if (s.o.includes(hit)) {
+          no = s.o.map((t) => (t === hit ? moved : { ...t }));
+          nxTiles = s.x;
+        } else {
+          no = s.o;
+          nxTiles = s.x.map((t) => (t === hit ? moved : { ...t }));
+        }
+      }
+      if (findOrchardLine(nxTiles)) continue;
+      if (findOrchardLine([{ ...np }, ...no.map((t) => ({ ...t }))])) return s.d + 1;
+      const k = orchardStateKey(np, no, nxTiles);
+      if (seen.has(k)) continue;
+      seen.add(k);
+      queue.push({ p: np, o: no, x: nxTiles, d: s.d + 1 });
+    }
+  }
+  return Infinity;
+}
+
 function tryGenOrchard(rand) {
   const inBounds = (x, y) => x >= 1 && x <= 5 && y >= 1 && y <= 5;
   const horiz = rand() < 0.5;
@@ -52,7 +115,7 @@ function tryGenOrchard(rand) {
   const reserved = new Set(lineCells.map((c) => orchKey(c.x, c.y)));
 
   const voids = new Set();
-  const voidCount = 3 + Math.floor(rand() * 5);
+  const voidCount = 3 + Math.floor(rand() * 3);
   let vx = 1 + Math.floor(rand() * 5);
   let vy = 1 + Math.floor(rand() * 5);
   let guard = 0;
@@ -65,7 +128,7 @@ function tryGenOrchard(rand) {
   }
 
   const walls = new Set();
-  const wallCount = 2 + Math.floor(rand() * 4);
+  const wallCount = 2 + Math.floor(rand() * 2);
   guard = 0;
   while (walls.size < wallCount && guard++ < 200) {
     const x = 1 + Math.floor(rand() * 5);
@@ -80,7 +143,7 @@ function tryGenOrchard(rand) {
   const taken = new Set(reserved);
   const xTiles = [];
   guard = 0;
-  while (xTiles.length < 5 && guard++ < 300) {
+  while (xTiles.length < 4 && guard++ < 300) {
     const x = 1 + Math.floor(rand() * 5);
     const y = 1 + Math.floor(rand() * 5);
     const k = orchKey(x, y);
@@ -88,7 +151,7 @@ function tryGenOrchard(rand) {
     taken.add(k);
     xTiles.push({ x, y });
   }
-  if (xTiles.length < 5) return null;
+  if (xTiles.length < 4) return null;
   if (findOrchardLine(xTiles)) return null;
 
   const atTile = (x, y) =>
@@ -112,8 +175,9 @@ function tryGenOrchard(rand) {
   if (!oTiles.concat(xTiles).every((t) => seenFloor.has(orchKey(t.x, t.y)))) return null;
 
   const solution = [];
-  let pulls = 0;
-  const steps = 40 + Math.floor(rand() * 30);
+  let lastDx = 0;
+  let lastDy = 0;
+  const steps = 60 + Math.floor(rand() * 40);
   for (let s = 0; s < steps; s++) {
     const options = [[1, 0], [-1, 0], [0, 1], [0, -1]].filter(([dx, dy]) => {
       const nx = player.x + dx;
@@ -121,7 +185,11 @@ function tryGenOrchard(rand) {
       return inBounds(nx, ny) && !blockedGen(nx, ny) && !atTile(nx, ny);
     });
     if (options.length === 0) return null;
-    const [dx, dy] = options[Math.floor(rand() * options.length)];
+    const fresh = options.filter(([dx, dy]) => !(dx === -lastDx && dy === -lastDy));
+    const pool = fresh.length > 0 ? fresh : options;
+    const [dx, dy] = pool[Math.floor(rand() * pool.length)];
+    lastDx = dx;
+    lastDy = dy;
     const px = player.x;
     const py = player.y;
     const behind = atTile(px - dx, py - dy);
@@ -130,13 +198,11 @@ function tryGenOrchard(rand) {
     if (behind) {
       behind.x = px;
       behind.y = py;
-      pulls += 1;
     }
     if (findOrchardLine(xTiles)) {
       if (behind) {
         behind.x = px - dx;
         behind.y = py - dy;
-        pulls -= 1;
       }
       player.x = px;
       player.y = py;
@@ -144,10 +210,9 @@ function tryGenOrchard(rand) {
     }
     solution.push([dx, dy]);
   }
-  if (pulls < 6) return null;
   if (findOrchardLine(oCells())) return null;
   if (findOrchardLine(xTiles)) return null;
-  return {
+  const level = {
     walls: [...walls],
     voids: [...voids],
     player: { ...player },
@@ -155,10 +220,12 @@ function tryGenOrchard(rand) {
     xTiles: xTiles.map((t) => ({ ...t })),
     solution: solution.reverse().map(([dx, dy]) => [-dx, -dy])
   };
+  if (minWinDepth(level) < 6) return null;
+  return level;
 }
 
 function genOrchardLevel(rand) {
-  for (let attempt = 0; attempt < 80; attempt++) {
+  for (let attempt = 0; attempt < 200; attempt++) {
     const level = tryGenOrchard(rand);
     if (level) return level;
   }
@@ -167,7 +234,7 @@ function genOrchardLevel(rand) {
     voids: [],
     player: { x: 3, y: 2 },
     oTiles: [{ x: 2, y: 3 }, { x: 4, y: 3 }],
-    xTiles: [{ x: 1, y: 1 }, { x: 5, y: 1 }, { x: 3, y: 5 }, { x: 1, y: 5 }, { x: 5, y: 5 }],
+    xTiles: [{ x: 1, y: 1 }, { x: 5, y: 1 }, { x: 3, y: 5 }, { x: 1, y: 5 }],
     solution: [[0, 1]]
   };
 }

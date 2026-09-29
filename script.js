@@ -262,6 +262,7 @@ function openGame(title, kicker, html) {
 
 function closeActiveGame() {
   closeCurrentGameOnly();
+  if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
   gameModal.classList.remove("open");
   gameModal.setAttribute("aria-hidden", "true");
   document.body.classList.remove("modal-open");

@@ -2369,25 +2369,34 @@ body.modal-open {
 
 .orch-cell.x {
   position: relative;
-  background: #fff8ea;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #ffb3a7, #e03131 70%);
   border: 3px solid var(--line);
 }
 
-.orch-cell.x::before,
-.orch-cell.x::after {
+.orch-cell.x::before {
   content: "";
   position: absolute;
+  top: -7px;
   left: 50%;
-  top: 50%;
-  width: 64%;
-  height: 14%;
-  background: var(--coral);
-  border-radius: 99px;
-  transform: translate(-50%, -50%) rotate(45deg);
+  width: 5px;
+  height: 10px;
+  margin-left: -2.5px;
+  background: #7a4a21;
+  border-radius: 3px;
 }
 
 .orch-cell.x::after {
-  transform: translate(-50%, -50%) rotate(-45deg);
+  content: "";
+  position: absolute;
+  top: -6px;
+  right: 12%;
+  width: 30%;
+  height: 18%;
+  background: var(--mint);
+  border: 2px solid var(--line);
+  border-radius: 50% 50% 50% 4px;
+  transform: rotate(-24deg);
 }
 
 .orch-cell.win {
@@ -2457,14 +2466,9 @@ body.modal-open {
   bottom: 14%;
   width: 32px;
   height: 32px;
-  display: grid;
-  place-items: center;
-  background: #fff8ea;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #ffb3a7, #e03131 70%);
   border: 3px solid var(--line);
-  border-radius: 8px;
-  color: var(--coral);
-  font-size: 1.3rem;
-  font-weight: 900;
   transform: rotate(8deg);
 }
 
