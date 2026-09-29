@@ -184,7 +184,9 @@ function startUselessFacts() {
   function save() {
     try {
       localStorage.setItem(DECK_KEY, JSON.stringify(deck));
+      localStorage.setItem("trinkets-facts-seen", String(FACTS.length - deck.length));
     } catch (err) {}
+    if (typeof updateStatsBand === "function") updateStatsBand();
   }
 
   function showCount() {

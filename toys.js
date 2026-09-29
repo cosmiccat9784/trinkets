@@ -55,6 +55,7 @@ function startBubbleWrap() {
     if (chain > best) {
       best = chain;
       chainEl.textContent = `Best chain: ${best}`;
+      recordScore("wrap", best, "high");
     }
     poppedEl.textContent = `Popped: ${lifetime}`;
     if (popped === cols * rows && !refilling) {
@@ -609,7 +610,8 @@ function startSpirograph() {
         hue = (hue + 0.25) % 360;
         if (theta >= period) {
           finished = true;
-          document.querySelector("#spiroState").textContent = "Pattern complete.";
+          const total = bumpScore("spiro");
+          document.querySelector("#spiroState").textContent = `Pattern complete (${total} total).`;
           document.querySelector("#spiroNew").classList.add("finish-pulse");
           break;
         }

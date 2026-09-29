@@ -107,13 +107,66 @@ saveButtons.forEach((button) => {
 });
 
 const statGames = document.querySelector("#statGames");
-const statPuzzles = document.querySelector("#statPuzzles");
 if (statGames) statGames.textContent = String(cards.length);
-if (statPuzzles) {
-  statPuzzles.textContent = String(
-    cards.filter((card) => ["puzzle", "word"].includes(card.dataset.category)).length
-  );
+
+const SCORE_KEY = "trinkets-highscores";
+
+function readScores() {
+  try {
+    const parsed = JSON.parse(localStorage.getItem(SCORE_KEY));
+    if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) return parsed;
+  } catch (err) {}
+  return {};
 }
+
+function updateStatsBand() {
+  if (statGames) statGames.textContent = String(cards.length);
+  const bestsEl = document.querySelector("#statBests");
+  if (bestsEl) bestsEl.textContent = String(Object.keys(readScores()).length);
+  const factsEl = document.querySelector("#statFacts");
+  if (factsEl) {
+    let seen = 0;
+    try {
+      seen = Number(localStorage.getItem("trinkets-facts-seen")) || 0;
+    } catch (err) {}
+    factsEl.textContent = String(seen);
+  }
+}
+
+function recordScore(game, value, mode) {
+  const scores = readScores();
+  const prev = scores[game];
+  let isNew = false;
+  if (prev === undefined) {
+    if (value > 0) {
+      scores[game] = value;
+      isNew = true;
+    }
+  } else if (mode === "low" ? value < prev : value > prev) {
+    scores[game] = value;
+    isNew = true;
+  }
+  if (isNew) {
+    try {
+      localStorage.setItem(SCORE_KEY, JSON.stringify(scores));
+    } catch (err) {}
+  }
+  updateStatsBand();
+  const best = scores[game];
+  return { best: best === undefined ? value : best, isNew };
+}
+
+function bumpScore(game) {
+  const scores = readScores();
+  scores[game] = (scores[game] || 0) + 1;
+  try {
+    localStorage.setItem(SCORE_KEY, JSON.stringify(scores));
+  } catch (err) {}
+  updateStatsBand();
+  return scores[game];
+}
+
+updateStatsBand();
 
 document.querySelectorAll("[data-nav-filter]").forEach((link) => {
   link.addEventListener("click", () => {
@@ -673,7 +726,8 @@ function startCometCatch() {
 
     if (state.time <= 0) {
       running = false;
-      message.textContent = `Time! Final score: ${state.score}.`;
+      const result = recordScore("comet", state.score, "high");
+      message.textContent = `Time! Final score: ${state.score}.` + (result.isNew && state.score > 0 ? " New best!" : ` Best: ${result.best}.`);
       state.comets.forEach((dot) => spawnParticles(dot.x, dot.y, "#f6c445", 14));
       state.sparks.forEach((dot) => spawnParticles(dot.x, dot.y, "#ff6b6b", 10));
       state.comets = [];
@@ -1021,6 +1075,7 @@ function startFourLetterForge() {
     history.push(word);
     steps += 1;
     if (current === level.target) {
+      recordScore("forge", levelIndex + 1, "high");
       if (levelIndex === levels.length - 1) {
         message.textContent = "All chains forged. Nicely done.";
       } else {
@@ -1319,7 +1374,8 @@ function startPocketMaze() {
         document.querySelector("#mazeMessage").textContent = "";
         showWinScreen();
       } else {
-        document.querySelector("#mazeMessage").textContent = `Escaped in ${moves} moves! Well played.`;
+        const mazeResult = recordScore("maze", moves, "low");
+        document.querySelector("#mazeMessage").textContent = `Escaped in ${moves} moves!` + (mazeResult.isNew ? " New best escape!" : " Well played.");
       }
     } else {
       document.querySelector("#mazeMessage").textContent = moves % 5 === 0 ? "The maze shifted." : "Keep going.";
@@ -1635,7 +1691,8 @@ function startButtonBash() {
         target = -1;
         startButton.disabled = false;
         startButton.textContent = "Play again";
-        document.querySelector("#bashMessage").textContent = `Round over. Score: ${score}.`;
+        const bashResult = recordScore("bash", score, "high");
+        document.querySelector("#bashMessage").textContent = `Round over. Score: ${score}.` + (bashResult.isNew && score > 0 ? " New best!" : ` Best: ${bashResult.best}.`);
       }
       render();
     }, 1000);
@@ -1783,7 +1840,12 @@ function startClueCrate() {
     if (answer === riddles[index].a) {
       score += 10;
       index += 1;
-      message.textContent = index >= riddles.length ? "Every crate is open." : "Correct. Next crate.";
+      if (index >= riddles.length) {
+        const clueResult = recordScore("clue", score, "high");
+        message.textContent = "Every crate is open. " + (clueResult.isNew ? "New best!" : `Best: ${clueResult.best}.`);
+      } else {
+        message.textContent = "Correct. Next crate.";
+      }
     } else {
       score = Math.max(0, score - 2);
       message.textContent = "Not quite. Try another angle.";
@@ -2778,6 +2840,7 @@ function start2048() {
     tiles = [];
     nextId = 1;
     score = 0;
+    best = readScores().thousand || 0;
     won = false;
     over = false;
     prev = null;
@@ -2921,6 +2984,7 @@ function start2048() {
 
   function render() {
     best = Math.max(best || 0, score);
+    recordScore("thousand", best, "high");
     tileLayer.innerHTML = "";
     tiles.forEach((t) => {
       const el = document.createElement("div");
