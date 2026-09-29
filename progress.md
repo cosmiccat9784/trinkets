@@ -41,6 +41,7 @@ Progress:
 - Embeddable games: new embed.html (?game=slug) runs any game chromeless with live score caption; copy-embed-code button in every game header; Bubble Wrap/Spirograph/Gravity Balls snapshots kept live for the caption.
 - Feedback system: feedback.html sends prefilled GitHub issues ([Game][Type] subjects), keeps a local sent-history, and shows a live dev inbox from the repo API.
 - Anonymous feedback: Send anonymously posts to a Google Sheet via Apps Script (feedback-server.gs holds the server code); GitHub stays as the public option.
+- Feedback went anonymous-only: GitHub path and dev inbox removed, single sheet inbox, no popups or new windows.
 - Gradient Mixer second endpoint is now a predictable dark shade of the chosen color instead of a hue rotation; range inputs claim horizontal touch gestures.
 
 TODO:

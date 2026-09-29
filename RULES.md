@@ -55,9 +55,9 @@ chrome eats more viewport height than developers expect.
    Live stats for the embed caption come from `setSnapshot` — keep snapshots
    fresh if a game tracks a score.
 
-8. **Feedback flows to GitHub.** Player reports arrive as issues labeled
-   `feedback` with `[Game] [Type]` title prefixes (see feedback.html). The dev
-   inbox on that page reads them live from the public repo API — no backend.
+8. **Feedback is anonymous-only.** Reports from feedback.html post straight
+   to the private sheet inbox (see feedback-server.gs). No popups, no new
+   windows, no accounts. The reporter's own history lives in localStorage.
 
 ## Testing checklist (manual — no headless browser in this repo)
 

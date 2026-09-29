@@ -1,4 +1,3 @@
-const FEEDBACK_REPO = "cosmiccat9784/trinkets";
 const FEEDBACK_LOG_KEY = "trinkets-feedback-log";
 // Anonymous inbox: paste your Google Apps Script web-app URL between the quotes.
 // (See feedback-server.gs for the 5-minute setup.) Leave empty to hide the
@@ -74,73 +73,6 @@ function renderLog() {
   });
 }
 
-function parseChips(title) {
-  const match = /^\[(.+?)\] \[(.+?)\]/.exec(title || "");
-  if (!match) return [];
-  return [match[1], match[2]];
-}
-
-function renderInbox() {
-  const list = document.querySelector("#fbInbox");
-  const status = document.querySelector("#fbInboxStatus");
-  fetch(`https://api.github.com/repos/${FEEDBACK_REPO}/issues?state=open&labels=feedback&per_page=20`)
-    .then((response) => {
-      if (!response.ok) throw new Error("http " + response.status);
-      return response.json();
-    })
-    .then((items) => {
-      const issues = items.filter((item) => !item.pull_request);
-      list.innerHTML = "";
-      if (!issues.length) {
-        status.textContent = "No open reports. Be the first!";
-        return;
-      }
-      status.textContent = `${issues.length} open report${issues.length === 1 ? "" : "s"}:`;
-      issues.forEach((issue) => {
-        const li = document.createElement("li");
-        const title = document.createElement("div");
-        title.className = "feedback-item-title";
-        const link = document.createElement("a");
-        link.className = "feedback-item-link";
-        link.href = issue.html_url;
-        link.target = "_blank";
-        link.rel = "noopener";
-        link.textContent = issue.title;
-        title.append(link);
-        const meta = document.createElement("div");
-        meta.className = "feedback-item-meta";
-        parseChips(issue.title).forEach((chip) => {
-          const span = document.createElement("span");
-          span.className = "feedback-chip";
-          span.textContent = chip;
-          meta.append(span);
-        });
-        meta.append(document.createTextNode(formatDate(issue.created_at)));
-        li.append(title, meta);
-        if (issue.body) {
-          const snippet = document.createElement("div");
-          snippet.className = "feedback-item-meta";
-          snippet.textContent = issue.body.slice(0, 140) + (issue.body.length > 140 ? "…" : "");
-          li.append(snippet);
-        }
-        list.append(li);
-      });
-    })
-    .catch(() => {
-      status.textContent = "Couldn't load live reports.";
-      const li = document.createElement("li");
-      const link = document.createElement("a");
-      link.className = "feedback-item-link";
-      link.href = `https://github.com/${FEEDBACK_REPO}/issues?q=is%3Aissue+is%3Aopen+label%3Afeedback`;
-      link.target = "_blank";
-      link.rel = "noopener";
-      link.textContent = "View reports on GitHub instead";
-      li.append(link);
-      list.innerHTML = "";
-      list.append(li);
-    });
-}
-
 function readFields() {
   return {
     game: fbGame.value,
@@ -192,24 +124,9 @@ async function sendAnonymous() {
 
 document.querySelector("#fbSendAnon").addEventListener("click", sendAnonymous);
 
-document.querySelector("#fbSend").addEventListener("click", () => {
-  const { game, type, subject, details } = readFields();
-  if (!subject || !details) {
-    fbMsg.textContent = "Give it a subject and a few details first.";
-    return;
-  }
-  const title = `[${GAME_NAMES[game] || game}] [${type}] ${subject}`;
-  const body = `Game: ${GAME_NAMES[game] || game} (${game || "arcade"})\nType: ${type}\nPage: ${location.href}\n\n${details}\n\n---\nSent from the Trinkets Arcade feedback page.`;
-  const url = `https://github.com/${FEEDBACK_REPO}/issues/new?title=${encodeURIComponent(title)}&body=${encodeURIComponent(body)}&labels=${encodeURIComponent("feedback")}`;
-  logSent(game, type, subject, details);
-  fbMsg.textContent = "Opened! Hit Submit on GitHub to send it.";
-  window.open(url, "_blank", "noopener");
-});
-
 document.querySelector("#fbClear").addEventListener("click", () => {
   writeLog([]);
   renderLog();
 });
 
 renderLog();
-renderInbox();
