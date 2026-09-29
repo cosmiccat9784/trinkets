@@ -1459,9 +1459,9 @@ body.embed {
   background: rgba(255,255,255,0.92);
   border-radius: 50%;
 }
-.penguin-art-coin.c1 { left: 14%; bottom: 56px; animation-delay: 0s, 0s; }
-.penguin-art-coin.c2 { left: 40%; bottom: 96px; animation-delay: 0.35s, 0.15s; }
-.penguin-art-coin.c3 { left: 67%; bottom: 72px; animation-delay: 0.7s, 0.3s; }
+.penguin-art-coin.c1 { left: 12%; bottom: 56px; animation-delay: 0s, 0s; }
+.penguin-art-coin.c2 { left: 47%; bottom: 101px; animation-delay: 0.35s, 0.15s; }
+.penguin-art-coin.c3 { left: 69%; bottom: 72px; animation-delay: 0.7s, 0.3s; }
 @keyframes penguin-coin-float {
   0%, 100% { transform: translateY(0) scaleX(1); }
   50% { transform: translateY(-7px) scaleX(1); }
