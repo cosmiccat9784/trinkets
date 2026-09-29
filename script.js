@@ -2903,7 +2903,39 @@ function start2048() {
     return { survivors, absorbed };
   }
 
+  function healTiles() {
+    const seen = new Set();
+    let ok = true;
+    for (const t of tiles) {
+      const key = t.r + "," + t.c;
+      if (t.r < 0 || t.r > 3 || t.c < 0 || t.c > 3 || seen.has(key) || grid[t.r][t.c] !== t.val) {
+        ok = false;
+        break;
+      }
+      seen.add(key);
+    }
+    if (ok) {
+      for (let r = 0; r < 4 && ok; r++) {
+        for (let c = 0; c < 4; c++) {
+          if (grid[r][c] !== 0 && !seen.has(r + "," + c)) {
+            ok = false;
+            break;
+          }
+        }
+      }
+    }
+    if (!ok) {
+      tiles = [];
+      for (let r = 0; r < 4; r++) {
+        for (let c = 0; c < 4; c++) {
+          if (grid[r][c] !== 0) tiles.push({ id: nextId++, val: grid[r][c], r, c, merged: false, fresh: false });
+        }
+      }
+    }
+  }
+
   function move(dir) {
+    healTiles();
     prev = { grid: grid.map((r) => [...r]), score, tiles: tiles.map((t) => ({ ...t })) };
     let moved = false;
     const absorbed = [];
