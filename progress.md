@@ -25,6 +25,7 @@ Progress:
 - Modal header is now sticky so the X button never scrolls away on tall games like Toybox.
 - Toybox double-width toys forced a phantom second column on phones; narrow screens now force single-column stacking.
 - Toybox pagination now reflows on viewport resize/rotation, keeping the first visible toy stable, with its resize listener cleaned up on close.
+- Fixed dead X button on Toybox: jelly cleanup referenced deleted listener functions, throwing inside close and aborting the close; audited all other cleanups clean.
 
 TODO:
 - Manual in-browser playtest recommended from the already-open file URL.

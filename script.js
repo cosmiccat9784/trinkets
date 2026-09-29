@@ -2166,10 +2166,6 @@ function startToybox() {
 
     addCleanup(() => {
       cancelAnimationFrame(raf);
-      document.removeEventListener("mousemove", onDocMouseMove);
-      document.removeEventListener("mouseup", release);
-      document.removeEventListener("touchmove", onDocTouchMove);
-      document.removeEventListener("touchend", release);
     });
   })();
 
