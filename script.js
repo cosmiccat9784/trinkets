@@ -2229,7 +2229,7 @@ function startToybox() {
       g = +sG.value;
       b = +sB.value;
       const hsl = rgbToHsl(r, g, b);
-      const second = hslToRgb((hsl[0] + 0.38) % 1, Math.min(1, hsl[1] * 1.05 + 0.05), Math.min(0.9, Math.max(0.15, hsl[2])));
+      const second = hslToRgb(hsl[0], hsl[1], Math.max(0.08, hsl[2] * 0.35));
       box.style.background = "linear-gradient(135deg, rgb(" + r + "," + g + "," + b + "), rgb(" + second[0] + "," + second[1] + "," + second[2] + "))";
       toy.querySelector("#gradHex").textContent = "#" + toHex(r) + toHex(g) + toHex(b);
     }
