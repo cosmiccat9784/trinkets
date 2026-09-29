@@ -23,6 +23,7 @@ let savedPicks = 0;
 let activeCleanup = null;
 let activeSnapshot = { mode: "shelf" };
 let activeAdvance = null;
+let activeGameId = null;
 const SAVE_KEY = "trinkets-saved-picks";
 
 function shuffleArray(array) {
@@ -43,6 +44,53 @@ const gameStarters = {
   toybox: startToybox,
   thousand: start2048
 };
+
+const gameSlugs = {
+  switchback: "switchback_tiles",
+  comet: "comet_catch",
+  forge: "four_letter_forge",
+  maze: "pocket_maze",
+  bash: "button_bash",
+  clue: "clue_crate",
+  toybox: "toybox",
+  thousand: "2048",
+  powder: "powder_sim",
+  wrap: "bubble_wrap",
+  zen: "zen_sand",
+  gravity: "gravity_balls",
+  spiro: "spirograph",
+  facts: "useless_facts"
+};
+
+function slugToGame(slug) {
+  const clean = String(slug || "").toLowerCase().replace(/-/g, "_");
+  if (!clean) return null;
+  for (const id of Object.keys(gameSlugs)) {
+    if (gameSlugs[id] === clean || id === clean) return id;
+  }
+  return null;
+}
+
+function showGame(id) {
+  const starter = gameStarters[id];
+  if (!starter) return false;
+  activeGameId = id;
+  starter();
+  try {
+    history.replaceState(null, "", "#" + (gameSlugs[id] || id));
+  } catch (err) {}
+  return true;
+}
+
+window.addEventListener("hashchange", () => {
+  const id = slugToGame(location.hash.slice(1));
+  if (id && id !== activeGameId) showGame(id);
+});
+
+window.addEventListener("DOMContentLoaded", () => {
+  const id = slugToGame(location.hash.slice(1));
+  if (id) showGame(id);
+});
 
 filters.forEach((button) => {
   button.addEventListener("click", () => {
@@ -178,10 +226,7 @@ document.querySelectorAll("[data-nav-filter]").forEach((link) => {
 playButtons.forEach((button) => {
   button.addEventListener("click", () => {
     const card = button.closest(".game-card");
-    const starter = gameStarters[card.dataset.game];
-    if (starter) {
-      starter();
-    }
+    showGame(card.dataset.game);
   });
 });
 
@@ -223,6 +268,12 @@ function closeActiveGame() {
   document.querySelectorAll("#mazeLevelPicker,#mazeCheatPopup").forEach((el) => el.remove());
   activeSnapshot = { mode: "shelf" };
   activeAdvance = null;
+  activeGameId = null;
+  try {
+    if (slugToGame(location.hash.slice(1))) {
+      history.replaceState(null, "", location.pathname + location.search);
+    }
+  } catch (err) {}
 }
 
 function closeCurrentGameOnly() {

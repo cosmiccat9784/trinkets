@@ -680,6 +680,6 @@ Object.assign(gameStarters, {
       button.textContent = "Surprise me again";
       pressed = true;
     }
-    gameStarters[pick]();
+    showGame(pick);
   });
 })();

@@ -238,6 +238,6 @@ gameStarters.facts = startUselessFacts;
   if (!link) return;
   link.addEventListener("click", (event) => {
     event.preventDefault();
-    startUselessFacts();
+    showGame("facts");
   });
 })();
