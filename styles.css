@@ -2642,6 +2642,10 @@ footer p {
     height: 64px;
   }
 
+  .toybox-grid .toybox-toy {
+    grid-column: auto !important;
+  }
+
   .game-art {
     min-height: 160px;
   }
