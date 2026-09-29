@@ -859,7 +859,7 @@ body.embed {
 
 .coin-canvas {
   display: block;
-  width: min(100%, 720px);
+  width: min(100%, 720px, calc((100dvh - 420px) * 12 / 7));
   aspect-ratio: 12 / 7;
   margin: 0 auto;
   border: 3px solid var(--line);
@@ -3547,6 +3547,26 @@ footer p {
     gap: 14px;
   }
 
+  .coin-stats {
+    gap: 6px;
+    padding: 10px;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .coin-stat strong {
+    font-size: 1rem;
+  }
+
+  .coin-stat span {
+    font-size: 0.7rem;
+  }
+
+  .game-topline .game-stat {
+    font-size: 0.85rem;
+    min-height: 36px;
+    padding: 0 10px;
+  }
+
 }
 
 @media (pointer: coarse) {
@@ -3615,6 +3635,10 @@ footer p {
 
   .one-canvas {
     width: min(100%, 720px, calc((100vh - 420px) * 3 / 2));
+  }
+
+  .coin-canvas {
+    width: min(100%, 720px, calc((100vh - 420px) * 12 / 7));
   }
 
   .embed .modal-panel {
