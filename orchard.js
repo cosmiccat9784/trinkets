@@ -51,14 +51,27 @@ function tryGenOrchard(rand) {
   const lineCells = [0, 1, 2].map((k) => (horiz ? { x: lineStart + k, y: linePos } : { x: linePos, y: lineStart + k }));
   const reserved = new Set(lineCells.map((c) => orchKey(c.x, c.y)));
 
+  const voids = new Set();
+  const voidCount = 3 + Math.floor(rand() * 5);
+  let vx = 1 + Math.floor(rand() * 5);
+  let vy = 1 + Math.floor(rand() * 5);
+  let guard = 0;
+  while (voids.size < voidCount && guard++ < 300) {
+    const k = orchKey(vx, vy);
+    if (!reserved.has(k) && !voids.has(k)) voids.add(k);
+    const step = [[1, 0], [-1, 0], [0, 1], [0, -1]][Math.floor(rand() * 4)];
+    vx = Math.min(5, Math.max(1, vx + step[0]));
+    vy = Math.min(5, Math.max(1, vy + step[1]));
+  }
+
   const walls = new Set();
   const wallCount = 2 + Math.floor(rand() * 4);
-  let guard = 0;
+  guard = 0;
   while (walls.size < wallCount && guard++ < 200) {
     const x = 1 + Math.floor(rand() * 5);
     const y = 1 + Math.floor(rand() * 5);
     const k = orchKey(x, y);
-    if (reserved.has(k) || walls.has(k)) continue;
+    if (reserved.has(k) || walls.has(k) || voids.has(k)) continue;
     walls.add(k);
   }
 
@@ -67,20 +80,36 @@ function tryGenOrchard(rand) {
   const taken = new Set(reserved);
   const xTiles = [];
   guard = 0;
-  while (xTiles.length < 4 && guard++ < 300) {
+  while (xTiles.length < 5 && guard++ < 300) {
     const x = 1 + Math.floor(rand() * 5);
     const y = 1 + Math.floor(rand() * 5);
     const k = orchKey(x, y);
-    if (taken.has(k) || walls.has(k)) continue;
+    if (taken.has(k) || walls.has(k) || voids.has(k)) continue;
     taken.add(k);
     xTiles.push({ x, y });
   }
-  if (xTiles.length < 4) return null;
+  if (xTiles.length < 5) return null;
   if (findOrchardLine(xTiles)) return null;
 
   const atTile = (x, y) =>
     oTiles.concat(xTiles).find((t) => t.x === x && t.y === y) || null;
+  const blockedGen = (x, y) => walls.has(orchKey(x, y)) || voids.has(orchKey(x, y));
   const oCells = () => [{ ...player }, ...oTiles.map((t) => ({ ...t }))];
+
+  const seenFloor = new Set([orchKey(player.x, player.y)]);
+  const queue = [{ ...player }];
+  while (queue.length) {
+    const cell = queue.pop();
+    for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+      const nx = cell.x + dx;
+      const ny = cell.y + dy;
+      const k = orchKey(nx, ny);
+      if (nx < 1 || nx > 5 || ny < 1 || ny > 5 || blockedGen(nx, ny) || seenFloor.has(k)) continue;
+      seenFloor.add(k);
+      queue.push({ x: nx, y: ny });
+    }
+  }
+  if (!oTiles.concat(xTiles).every((t) => seenFloor.has(orchKey(t.x, t.y)))) return null;
 
   const solution = [];
   let pulls = 0;
@@ -89,7 +118,7 @@ function tryGenOrchard(rand) {
     const options = [[1, 0], [-1, 0], [0, 1], [0, -1]].filter(([dx, dy]) => {
       const nx = player.x + dx;
       const ny = player.y + dy;
-      return inBounds(nx, ny) && !walls.has(orchKey(nx, ny)) && !atTile(nx, ny);
+      return inBounds(nx, ny) && !blockedGen(nx, ny) && !atTile(nx, ny);
     });
     if (options.length === 0) return null;
     const [dx, dy] = options[Math.floor(rand() * options.length)];
@@ -120,6 +149,7 @@ function tryGenOrchard(rand) {
   if (findOrchardLine(xTiles)) return null;
   return {
     walls: [...walls],
+    voids: [...voids],
     player: { ...player },
     oTiles: oTiles.map((t) => ({ ...t })),
     xTiles: xTiles.map((t) => ({ ...t })),
@@ -134,15 +164,23 @@ function genOrchardLevel(rand) {
   }
   return {
     walls: [],
+    voids: [],
     player: { x: 3, y: 2 },
     oTiles: [{ x: 2, y: 3 }, { x: 4, y: 3 }],
-    xTiles: [{ x: 1, y: 1 }, { x: 5, y: 1 }, { x: 3, y: 5 }, { x: 1, y: 5 }],
+    xTiles: [{ x: 1, y: 1 }, { x: 5, y: 1 }, { x: 3, y: 5 }, { x: 1, y: 5 }, { x: 5, y: 5 }],
     solution: [[0, 1]]
   };
 }
 
-function startOrchardGo() {
-  openGame(
+const ORCH_NAMES = [
+  "Windfall Row", "The Potting Shed", "Cider Press", "Scarecrow Corner",
+  "Blossom Gate", "Compost Heap", "Wishing Tree", "Seedling Bed",
+  "Harvest Moon", "Orchard Wall", "Duck Pond", "Beekeeper's Rest",
+  "Crabapple Corner", "Wheelbarrow Run", "Greenhouse", "Sunrise Row",
+  "Foxglove Patch", "Rain Barrel", "Honeycrisp Hill", "Old Gatehouse"
+];
+
+function startOrchardGo() {  openGame(
     "Orchard Go",
     "Puzzle",
     `
@@ -152,6 +190,11 @@ function startOrchardGo() {
           <span class="game-stat" id="orchMoves">Moves: 0</span>
         </div>
         <p class="game-message" id="orchMsg">Shove oranges into a line of three. Crabapples must never line up.</p>
+        <div class="orch-rules" id="orchRules" hidden>
+          <strong>How to play</strong>
+          <p>You are the orange with eyes. Move with arrows, WASD, swipe, or the pad. Bumping a fruit shoves it one square, but only if the square behind is free — one at a time, never into walls or other fruit.</p>
+          <p>Line up three oranges in a row (you count!) to win. If three crabapples line up first, you lose. Undo is infinite. Fewest moves wins.</p>
+        </div>
         <div class="orch-grid" id="orchGrid" aria-label="Orchard board"></div>
         <div class="t-pad" aria-label="Move">
           <button class="game-action t-pad-button" type="button" data-step="up" aria-label="Move up">↑</button>
@@ -163,6 +206,7 @@ function startOrchardGo() {
           <button class="game-action" id="orchUndo" type="button">Undo</button>
           <button class="game-action" id="orchReset" type="button">Reset</button>
           <button class="game-action" id="orchNext" type="button">Next board</button>
+          <button class="game-action" id="orchRulesBtn" type="button">Rules</button>
         </div>
       </div>
     `
@@ -173,6 +217,8 @@ function startOrchardGo() {
   let levels = [];
   let orchIndex = 0;
   let walls = new Set();
+  let voids = new Set();
+  const dayOfYear = Math.floor(Date.now() / 86400000);
   let player = { x: 3, y: 3 };
   let oTiles = [];
   let xTiles = [];
@@ -194,9 +240,14 @@ function startOrchardGo() {
     }
   }
 
+  function boardName(index) {
+    return ORCH_NAMES[(index * 3 + dayOfYear) % ORCH_NAMES.length];
+  }
+
   function loadLevel(index) {
     const level = levels[index];
     walls = new Set(level.walls);
+    voids = new Set(level.voids || []);
     player = { ...level.player };
     oTiles = level.oTiles.map((t) => ({ ...t }));
     xTiles = level.xTiles.map((t) => ({ ...t }));
@@ -206,7 +257,7 @@ function startOrchardGo() {
     winCells = [];
     doomCells = [];
     history = [];
-    document.querySelector("#orchBoard").textContent = `Board: ${index + 1}/${levels.length}`;
+    document.querySelector("#orchBoard").textContent = `Board ${index + 1}/${levels.length} · ${boardName(index)}`;
     message.textContent = index === 0
       ? "Today's board first, then fresh ones. Shove oranges into a line of three."
       : "Shove oranges into a line of three. Crabapples must never line up.";
@@ -218,8 +269,8 @@ function startOrchardGo() {
   }
 
   function floorFree(x, y) {
-    if (x < 0 || x > 6 || y < 0 || y > 6) return false;
-    if (walls.has(orchKey(x, y))) return false;
+    if (x < 1 || x > 5 || y < 1 || y > 5) return false;
+    if (walls.has(orchKey(x, y)) || voids.has(orchKey(x, y))) return false;
     if (tileAt(x, y)) return false;
     return true;
   }
@@ -251,7 +302,7 @@ function startOrchardGo() {
     const nx = player.x + dx;
     const ny = player.y + dy;
     if (!floorFree(nx, ny)) {
-      const tile = nx >= 0 && nx <= 6 && ny >= 0 && ny <= 6 && !walls.has(orchKey(nx, ny)) ? tileAt(nx, ny) : null;
+      const tile = tileAt(nx, ny);
       if (!tile) return;
       const bx = nx + dx;
       const by = ny + dy;
@@ -299,8 +350,13 @@ function startOrchardGo() {
     for (let y = 0; y < 7; y++) {
       for (let x = 0; x < 7; x++) {
         const cell = document.createElement("div");
-        cell.className = "orch-cell f";
         const k = orchKey(x, y);
+        if (x < 1 || x > 5 || y < 1 || y > 5 || voids.has(k)) {
+          cell.className = "orch-void";
+          grid.append(cell);
+          continue;
+        }
+        cell.className = "orch-cell f";
         if (walls.has(k)) {
           cell.classList.remove("f");
           cell.classList.add("w");
@@ -380,6 +436,11 @@ function startOrchardGo() {
     });
   });
   document.querySelector("#orchUndo").addEventListener("click", doUndo);
+  document.querySelector("#orchRulesBtn").addEventListener("click", () => {
+    const panel = document.querySelector("#orchRules");
+    panel.hidden = !panel.hidden;
+    fitGameShell();
+  });
   document.querySelector("#orchReset").addEventListener("click", () => {
     loadLevel(orchIndex);
     message.textContent = "Board reset. Fresh start, same fruit.";
