@@ -1659,5 +1659,472 @@ Object.assign(gameStarters, {
   ice: startIceCube,
   coin: startCoinFlip,
   cheese: startCheeseThief,
-  machine: startNormalMachine
+  machine: startNormalMachine,
+  onebutton: startOneButton
 });
+
+function startOneButton() {
+  openGame(
+    "One Button",
+    "Arcade",
+    `
+      <div class="game-layout">
+        <div class="game-topline">
+          <span class="game-stat" id="oneScore">0 m</span>
+          <span class="game-stat" id="oneBest">Best: 0 m</span>
+        </div>
+        <canvas class="one-canvas" id="oneCanvas" width="720" height="480"></canvas>
+        <div class="game-actions">
+          <button class="game-action one-press" id="oneBtn" type="button">PRESS</button>
+        </div>
+        <p class="game-message" id="oneMsg">One button. Press to jump. That's the whole game. Probably.</p>
+      </div>
+    `
+  );
+
+  const canvas = document.querySelector("#oneCanvas");
+  const ctx = canvas.getContext("2d");
+  const W = canvas.width;
+  const H = canvas.height;
+  const FLOOR = H - 70;
+  const CEIL = 70;
+  const PX = 150;
+  const PW = 30;
+  const PH = 38;
+  const scoreLabel = document.querySelector("#oneScore");
+  const bestLabel = document.querySelector("#oneBest");
+  const message = document.querySelector("#oneMsg");
+  const pressBtn = document.querySelector("#oneBtn");
+
+  const QUIPS = [
+    "SPLAT.",
+    "The floor sends regards.",
+    "Gravity remains undefeated.",
+    "Ouch. Ouch ouch ouch.",
+    "That one looked expensive.",
+    "Too late. Or early. One of those."
+  ];
+  const FLAVOR = [
+    "The floor is lava. Just kidding. Unless?",
+    "Have you tried jumping?",
+    "The button sends its regards.",
+    "SNAKES. (there are no snakes.)",
+    "No refunds.",
+    "Looking good. Keep jumping."
+  ];
+
+  let raf = 0;
+  let last = performance.now();
+  let time = 0;
+  let dead = false;
+  let deadT = 0;
+  let dist = 0;
+  let best = 0;
+  try {
+    best = Number(readScores().onebutton) || 0;
+  } catch (err) {}
+  let speed = 280;
+  let g = 1;
+  let gravMul = 1;
+  let player = { y: FLOOR - PH / 2, vy: 0, grounded: true, coyote: 0, buffer: 0 };
+  let obstacles = [];
+  let parts = [];
+  let nextSpawn = 300;
+  let banner = null;
+  let flavorT = 16;
+  let eventT = 9;
+  let moleT = 14;
+  let warnT = 0;
+  let unlocks = { fly: false, vote: false, legs: false, fast: false };
+  let lastDodgeMsg = 0;
+
+  function showBanner(text) {
+    banner = { text, t: 2.4 };
+  }
+
+  function jumpAttempt() {
+    if (dead) return;
+    if (player.grounded || player.coyote > 0) {
+      player.vy = -950 * g;
+      player.grounded = false;
+      player.coyote = 0;
+      player.buffer = 0;
+    } else {
+      player.buffer = 0.12;
+    }
+  }
+
+  function burst(x, y, n, color) {
+    for (let i = 0; i < n; i++) {
+      const a = Math.random() * Math.PI * 2;
+      const sp = 80 + Math.random() * 220;
+      parts.push({ x, y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp - 120, life: 0.7, max: 0.7, color });
+    }
+  }
+
+  function die() {
+    if (dead) return;
+    dead = true;
+    deadT = 1.4;
+    const d = Math.floor(dist);
+    const result = recordScore("onebutton", d, "high");
+    best = Math.max(best, result.best);
+    message.textContent = QUIPS[Math.floor(Math.random() * QUIPS.length)] + (result.isNew && d > 0 ? ` New best: ${d} m!` : ` Best: ${best} m.`);
+    bestLabel.textContent = `Best: ${best} m`;
+    burst(PX, player.y, 18, "#ff6b6b");
+    setSnapshot({ mode: "ended", game: "One Button", dist: d, best });
+  }
+
+  function resetRun() {
+    dead = false;
+    dist = 0;
+    speed = 280;
+    g = 1;
+    gravMul = 1;
+    obstacles = [];
+    parts = [];
+    nextSpawn = 300;
+    banner = null;
+    flavorT = 16;
+    eventT = 9;
+    moleT = 14;
+    warnT = 0;
+    unlocks = { fly: false, vote: false, legs: false, fast: false };
+    player = { y: FLOOR - PH / 2, vy: 0, grounded: true, coyote: 0, buffer: 0 };
+    pressBtn.style.transform = "";
+    message.textContent = "One button. Press to jump. That's the whole game. Probably.";
+  }
+
+  function spawnPattern() {
+    const tier = dist >= 600 ? 3 : dist >= 300 ? 2 : dist >= 150 ? 1 : 0;
+    const roll = Math.random();
+    const side = Math.random() < 0.75 ? g : -g;
+    if (roll < 0.34) {
+      obstacles.push({ kind: "block", x: W + 40, w: 30 + Math.random() * 26, h: 36 + Math.random() * 48, side });
+    } else if (roll < 0.58) {
+      obstacles.push({ kind: "pit", x: W + 40, w: 90 + Math.random() * 110, side });
+    } else if (roll < 0.8 && tier >= 1) {
+      const low = Math.random() < 0.6;
+      obstacles.push({ kind: "fly", x: W + 40, r: 14 + Math.random() * 5, low, side, phase: Math.random() * 6 });
+    } else {
+      obstacles.push({ kind: "block", x: W + 40, w: 30, h: 36 + Math.random() * 40, side: -side });
+    }
+  }
+
+  function checkUnlocks() {
+    if (!unlocks.fly && dist >= 150) {
+      unlocks.fly = true;
+      showBanner("BIRDS. (they are blocks.)");
+    }
+    if (!unlocks.vote && dist >= 300) {
+      unlocks.vote = true;
+      eventT = 4;
+      showBanner("GRAVITY VOTES BEGIN SOON");
+    }
+    if (!unlocks.legs && dist >= 450) {
+      unlocks.legs = true;
+      showBanner("THE BUTTON HAS LEGS NOW");
+      message.textContent = "The button dodges. SPACE still loves you.";
+    }
+    if (!unlocks.fast && dist >= 600) {
+      unlocks.fast = true;
+      showBanner("FASTER. NO REFUNDS.");
+    }
+  }
+
+  function overFloor(x) {
+    for (const o of obstacles) {
+      if (o.kind !== "pit" || o.side !== g) continue;
+      if (x + PW / 2 > o.x && x - PW / 2 < o.x + o.w) return false;
+    }
+    return true;
+  }
+
+  function flyY(o) {
+    const base = o.side === 1 ? FLOOR - 60 : CEIL + 60;
+    const lift = o.low ? 0 : -140 * o.side;
+    return base + lift + Math.sin(time * 3 + o.phase) * 22;
+  }
+
+  function collides(o) {
+    if (o.kind === "block") {
+      const by = o.side === 1 ? FLOOR - o.h : CEIL;
+      return PX + PW / 2 > o.x && PX - PW / 2 < o.x + o.w &&
+        player.y + PH / 2 > by && player.y - PH / 2 < by + o.h;
+    }
+    if (o.kind === "fly") {
+      const fy = flyY(o);
+      const cx = Math.max(o.x - o.r, Math.min(PX, o.x + o.r));
+      const cy = Math.max(fy - o.r, Math.min(player.y, fy + o.r));
+      const dx = PX - cx;
+      const dy = player.y - cy;
+      return dx * dx + dy * dy < (o.r + 12) * (o.r + 12) * 0.5;
+    }
+    return false;
+  }
+
+  function update(dt) {
+    time += dt;
+    if (banner) {
+      banner.t -= dt;
+      if (banner.t <= 0) banner = null;
+    }
+    if (dead) {
+      deadT -= dt;
+      updateParts(dt);
+      if (deadT <= 0) resetRun();
+      return;
+    }
+    dist += (speed * dt) / 50;
+    speed = Math.min(640, 280 + dist * 0.55) * (unlocks.fast ? 1.15 : 1);
+    checkUnlocks();
+
+    if (unlocks.vote) {
+      eventT -= dt;
+      if (eventT <= 0 && warnT <= 0) {
+        warnT = 2;
+        showBanner("GRAVITY VOTE INCOMING");
+      }
+    }
+    if (warnT > 0) {
+      warnT -= dt;
+      if (warnT <= 0) {
+        g *= -1;
+        player.vy = 0;
+        showBanner(g === 1 ? "GRAVITY: FLOOR. boring. safe." : "REVERSED. good luck.");
+        eventT = (unlocks.fast ? 8 : 11) + Math.random() * 4;
+      }
+    }
+    if (dist >= 500) {
+      moleT -= dt;
+      if (moleT <= 0) {
+        if (gravMul === 1) {
+          if (Math.random() < 0.5) {
+            gravMul = 0.45;
+            showBanner("MOON GRAVITY. wheee.");
+          } else {
+            gravMul = 1.8;
+            showBanner("LEAD BOOTS. good luck up there.");
+          }
+        } else {
+          gravMul = 1;
+          showBanner("gravity: normal-ish.");
+        }
+        moleT = 12 + Math.random() * 6;
+      }
+    }
+    flavorT -= dt;
+    if (flavorT <= 0) {
+      flavorT = 18 + Math.random() * 10;
+      if (!banner) showBanner(FLAVOR[Math.floor(Math.random() * FLAVOR.length)]);
+    }
+
+    player.vy += 2600 * g * gravMul * dt;
+    player.y += player.vy * dt;
+    const groundY = g === 1 ? FLOOR : CEIL;
+    const supported = overFloor(PX);
+    if (supported && (g === 1 ? player.y + PH / 2 >= groundY : player.y - PH / 2 <= groundY)) {
+      player.y = g === 1 ? groundY - PH / 2 : groundY + PH / 2;
+      player.vy = 0;
+      player.grounded = true;
+      player.coyote = 0.08;
+    } else {
+      player.grounded = false;
+      player.coyote -= dt;
+    }
+    if (player.buffer > 0) {
+      player.buffer -= dt;
+      if (player.grounded) jumpAttempt();
+    }
+
+    for (let i = obstacles.length - 1; i >= 0; i--) {
+      const o = obstacles[i];
+      o.x -= speed * dt;
+      if (o.x < -140) {
+        obstacles.splice(i, 1);
+        continue;
+      }
+      if (collides(o)) {
+        die();
+        return;
+      }
+    }
+    if (g === 1 && player.y - PH / 2 > H + 30) {
+      die();
+      return;
+    }
+    if (g === -1 && player.y + PH / 2 < -30) {
+      die();
+      return;
+    }
+    nextSpawn -= speed * dt;
+    if (nextSpawn <= 0) {
+      spawnPattern();
+      nextSpawn = 280 + Math.random() * 260 + speed * 0.3;
+    }
+    updateParts(dt);
+    scoreLabel.textContent = `${Math.floor(dist)} m`;
+    setSnapshot({ mode: "playing", game: "One Button", dist: Math.floor(dist), best });
+  }
+
+  function updateParts(dt) {
+    parts = parts.filter((p) => p.life > 0);
+    for (const p of parts) {
+      p.x += p.vx * dt;
+      p.y += p.vy * dt;
+      p.vy += 1400 * dt;
+      p.life -= dt;
+    }
+  }
+
+  function draw() {
+    const sky = ctx.createLinearGradient(0, 0, 0, H);
+    sky.addColorStop(0, "#2b3a67");
+    sky.addColorStop(0.6, "#6b4a6e");
+    sky.addColorStop(1, "#3a2b4d");
+    ctx.fillStyle = sky;
+    ctx.fillRect(0, 0, W, H);
+    ctx.fillStyle = "rgba(255,255,255,0.5)";
+    for (let i = 0; i < 40; i++) {
+      const sx = (i * 173 + 40) % W;
+      const sy = (i * 97 + 20) % 300;
+      ctx.fillRect(sx, sy, 2, 2);
+    }
+    ctx.fillStyle = "rgba(20,16,32,0.6)";
+    ctx.beginPath();
+    for (let x = 0; x <= W; x += 8) {
+      const y = H - 40 + Math.sin((x + time * 40) * 0.02) * 14;
+      if (x === 0) ctx.moveTo(x, y);
+      else ctx.lineTo(x, y);
+    }
+    ctx.lineTo(W, H);
+    ctx.lineTo(0, H);
+    ctx.fill();
+    ctx.fillStyle = "#54402c";
+    ctx.fillRect(0, FLOOR, W, H - FLOOR);
+    ctx.fillRect(0, 0, W, CEIL);
+    ctx.fillStyle = "#f6c445";
+    ctx.fillRect(0, FLOOR - 4, W, 4);
+    ctx.fillRect(0, CEIL, W, 4);
+    for (const o of obstacles) {
+      if (o.kind === "pit") {
+        const py = o.side === 1 ? FLOOR : 0;
+        const ph = o.side === 1 ? H - FLOOR : CEIL;
+        ctx.fillStyle = "#0c0a14";
+        ctx.fillRect(o.x, py, o.w, ph);
+        ctx.fillStyle = "#f6c445";
+        for (let sx = o.x + 6; sx < o.x + o.w - 6; sx += 18) {
+          ctx.fillRect(sx, py + (o.side === 1 ? -8 : ph + 2), 10, 6);
+        }
+      } else if (o.kind === "block") {
+        const by = o.side === 1 ? FLOOR - o.h : CEIL;
+        ctx.fillStyle = "#2fbf71";
+        ctx.strokeStyle = "#0f1320";
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.roundRect(o.x, by, o.w, o.h, 6);
+        ctx.fill();
+        ctx.stroke();
+      } else if (o.kind === "fly") {
+        const fy = flyY(o);
+        ctx.fillStyle = "#6a4c93";
+        ctx.strokeStyle = "#0f1320";
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.arc(o.x, fy, o.r, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+        ctx.fillStyle = "#fff";
+        ctx.beginPath();
+        ctx.arc(o.x - 5, fy - 4, 3.5, 0, Math.PI * 2);
+        ctx.arc(o.x + 5, fy - 4, 3.5, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+    ctx.save();
+    ctx.translate(PX, player.y);
+    if (g === -1) ctx.rotate(Math.PI);
+    if (dead) ctx.rotate(time * 9);
+    ctx.fillStyle = "#ff6b6b";
+    ctx.strokeStyle = "#0f1320";
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.roundRect(-PW / 2, -PH / 2, PW, PH, 8);
+    ctx.fill();
+    ctx.stroke();
+    ctx.fillStyle = "#fff";
+    ctx.beginPath();
+    ctx.arc(-4, -4, 4.5, 0, Math.PI * 2);
+    ctx.arc(8, -4, 4.5, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = "#0f1320";
+    ctx.beginPath();
+    ctx.arc(-3, -4, 2, 0, Math.PI * 2);
+    ctx.arc(9, -4, 2, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+    for (const p of parts) {
+      ctx.globalAlpha = Math.max(0, p.life / p.max);
+      ctx.fillStyle = p.color;
+      ctx.fillRect(p.x - 3, p.y - 3, 6, 6);
+    }
+    ctx.globalAlpha = 1;
+    if (banner) {
+      ctx.font = "bold 24px sans-serif";
+      ctx.textAlign = "center";
+      const tw = ctx.measureText(banner.text).width + 44;
+      ctx.fillStyle = "rgba(12,10,20,0.82)";
+      ctx.beginPath();
+      ctx.roundRect(W / 2 - tw / 2, 22, tw, 44, 12);
+      ctx.fill();
+      ctx.fillStyle = "#f6c445";
+      ctx.textBaseline = "middle";
+      ctx.fillText(banner.text, W / 2, 45);
+    }
+  }
+
+  function tick(now) {
+    const dt = Math.min(0.033, (now - last) / 1000);
+    last = now;
+    update(dt);
+    draw();
+    raf = requestAnimationFrame(tick);
+  }
+
+  function keydown(e) {
+    if (e.repeat) return;
+    if (e.code === "Space" || e.code === "ArrowUp" || e.code === "KeyW") {
+      e.preventDefault();
+      jumpAttempt();
+    }
+  }
+
+  canvas.addEventListener("pointerdown", (e) => {
+    e.preventDefault();
+    jumpAttempt();
+  });
+  pressBtn.addEventListener("click", jumpAttempt);
+  pressBtn.addEventListener("pointerenter", () => {
+    if (!unlocks.legs) return;
+    if (Math.random() < 0.45) {
+      const dx = Math.round((Math.random() - 0.5) * 280);
+      const dy = Math.round((Math.random() - 0.5) * 80);
+      pressBtn.style.transition = "transform 0.18s ease";
+      pressBtn.style.transform = `translate(${dx}px, ${dy}px)`;
+      const now = performance.now();
+      if (now - lastDodgeMsg > 3000) {
+        lastDodgeMsg = now;
+        message.textContent = "The button dodges. Rude.";
+      }
+    }
+  });
+  document.addEventListener("keydown", keydown);
+  bestLabel.textContent = `Best: ${best} m`;
+  setSnapshot({ mode: "playing", game: "One Button", dist: 0, best });
+  activeCleanup = () => {
+    cancelAnimationFrame(raf);
+    document.removeEventListener("keydown", keydown);
+  };
+  last = performance.now();
+  raf = requestAnimationFrame(tick);
+}

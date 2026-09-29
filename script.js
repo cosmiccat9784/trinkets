@@ -65,7 +65,8 @@ const gameSlugs = {
   ice: "ice_cube",
   coin: "coin_flip",
   cheese: "cheese_thief",
-  machine: "normal_machine"
+  machine: "normal_machine",
+  onebutton: "one_button"
 };
 
 function slugToGame(slug) {

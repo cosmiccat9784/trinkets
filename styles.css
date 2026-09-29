@@ -1258,6 +1258,68 @@ body.embed {
   50% { transform: rotate(14deg); }
 }
 
+.one-canvas {
+  display: block;
+  width: min(100%, 720px, calc((100dvh - 420px) * 3 / 2));
+  aspect-ratio: 3 / 2;
+  margin: 0 auto;
+  border: 3px solid var(--line);
+  border-radius: 12px;
+  box-shadow: 8px 8px 0 var(--line);
+  cursor: pointer;
+  touch-action: none;
+  background: #2b3a67;
+}
+
+.one-press {
+  width: 100%;
+  min-height: 64px;
+  font-size: 1.4rem;
+  background: var(--gold);
+}
+
+.one-art {
+  position: relative;
+  background: #2b3a67;
+  overflow: hidden;
+}
+
+.one-floor {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 34px;
+  height: 10px;
+  background: #6b4a2f;
+  border-top: 3px solid var(--gold);
+}
+
+.one-block {
+  position: absolute;
+  left: 46%;
+  bottom: 44px;
+  width: 40px;
+  height: 52px;
+  background: #2fbf71;
+  border: 3px solid var(--line);
+  border-radius: 6px;
+}
+
+.one-arrow {
+  position: absolute;
+  left: 22%;
+  bottom: 60px;
+  color: #fff;
+  font-size: 2rem;
+  font-weight: 900;
+  animation: one-hop 1.2s ease-in-out infinite;
+}
+
+@keyframes one-hop {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-18px); }
+}
+
 .feedback-wrap {
   display: grid;
   gap: 18px;
@@ -3529,6 +3591,10 @@ footer p {
 
   .orch-grid {
     width: min(100%, 400px, calc(100vh - 500px));
+  }
+
+  .one-canvas {
+    width: min(100%, 720px, calc((100vh - 420px) * 3 / 2));
   }
 
   .embed .modal-panel {
