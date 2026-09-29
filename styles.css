@@ -2540,6 +2540,11 @@ footer p {
   margin-bottom: 0;
 }
 
+.build-tag {
+  opacity: 0.6;
+  font-size: 0.85em;
+}
+
 @media (max-width: 920px) {
   .hero {
     grid-template-columns: 1fr;

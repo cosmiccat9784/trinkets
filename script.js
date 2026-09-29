@@ -4,6 +4,14 @@ const saveButtons = document.querySelectorAll(".save-button");
 const playButtons = document.querySelectorAll(".play-button");
 const favoriteCount = document.querySelector("#favoriteCount");
 
+(function showBuildTag() {
+  const tag = document.querySelector("#buildTag");
+  const script = document.querySelector('script[src*="script.js?v="]');
+  if (!tag || !script) return;
+  const match = /[?&]v=([^&"]+)/.exec(script.getAttribute("src") || "");
+  if (match) tag.textContent = "· build " + match[1];
+})();
+
 
 const gameModal = document.querySelector("#gameModal");
 const gameShell = document.querySelector("#gameShell");
