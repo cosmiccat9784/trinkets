@@ -722,6 +722,9 @@ body.modal-open {
 }
 
 .modal-header {
+  position: sticky;
+  top: 0;
+  z-index: 5;
   display: flex;
   justify-content: space-between;
   gap: 20px;
@@ -2649,6 +2652,10 @@ footer p {
 
   .how-to-play {
     grid-template-columns: 1fr;
+  }
+
+  .how-to-play > * {
+    min-width: 0;
   }
 
   .game-layout {
