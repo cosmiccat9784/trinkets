@@ -290,6 +290,7 @@ function startPenguinParkour() {
   var MAX_FALL = 950;
   var COYOTE_TIME = 0.13;
   var BUFFER_TIME = 0.14;
+  var LAVA_TOP = 448;
 
   var selectedPenguin = penguinById(data.selected);
 
@@ -299,23 +300,35 @@ function startPenguinParkour() {
   function buildLevel(n) {
     level = getPenguinLevel(n);
     levelWidth = level.width;
-    platforms = level.platforms.map(function(p){
+    // filter out the old floor (y==440 w==width) — floor is now lava!
+    var rawPlats = level.platforms.filter(function(p){ return !(p.y===440 && p.w===level.width); });
+    platforms = rawPlats.map(function(p){
       var np = { x: p.x, y: p.y, w: p.w, h: p.h, type: p.type, origX: p.x, alive:true, crumbleT:0 };
       if (p.move) { np.move = { min:p.move.min, max:p.move.max, speed:p.move.speed, dir: 1 }; np.x = (p.move.min + p.move.max)/2; }
       return np;
     });
+    // ensure spawn island
+    var hasSpawn = platforms.some(function(p){ return p.x < level.start.x + 40 && p.x + p.w > level.start.x - 40 && Math.abs(p.y - 390) < 30; });
+    if (!hasSpawn) {
+      platforms.push({ x: level.start.x - 48, y: 395, w: 112, h: 16, type: "normal", origX: level.start.x - 48, alive:true, crumbleT:0 });
+    }
+    // ensure flag island
+    var hasFlagPlat = platforms.some(function(p){ return Math.abs(p.x + p.w/2 - level.flag.x) < 90 && Math.abs(p.y - 395) < 60; });
+    if (!hasFlagPlat) {
+      platforms.push({ x: level.flag.x - 68, y: 395, w: 136, h: 16, type: "normal", origX: level.flag.x - 68, alive:true, crumbleT:0 });
+    }
     coins = level.coins.map(function(c){ return { x:c.x, y:c.y, r:11, taken:false, phase: Math.random()*Math.PI*2 }; });
-    flag = { x: level.flag.x, y: level.flag.y, w: 26, h: 70 };
+    var flagBaseY = hasFlagPlat ? level.flag.y : 395;
+    flag = { x: level.flag.x, y: flagBaseY, w: 26, h: 70 };
     startPos = { x: level.start.x, y: level.start.y };
     player.x = startPos.x;
-    player.y = startPos.y;
+    player.y = startPos.y - 6;
     player.vx = 0; player.vy = 0; player.onGround=false; player.coyote=0; player.buffer=0; player.squish=0;
     won=false; dead=false; deadTimer=0; levelCoinsCollected=0; camX=0;
     particles=[]; popups=[]; shake=0;
-    // reset crumble timers
     levelIndex = n;
     updateUI();
-    msg.textContent = levelLabel(n) + " — grab all the fish-coins!";
+    msg.textContent = levelLabel(n) + " — THE FLOOR IS LAVA! Stay on platforms!";
     document.querySelector("#penguinNext").hidden = true;
   }
 
@@ -659,15 +672,24 @@ function startPenguinParkour() {
       }
     }
 
-    // fall death
-    if (player.y - PH/2 > H + 140) {
+    // lava death — THE FLOOR IS LAVA
+    if (!dead && !won && player.y + PH/2 > LAVA_TOP) {
+      dead = true;
+      deadTimer = 0.7;
+      shake = 14;
+      msg.textContent = "SIZZLE! The floor is lava! Respawning…";
+      for (var di=0; di<16; di++) {
+        var angL = Math.random()*Math.PI - Math.PI;
+        particles.push({ x: player.x + (Math.random()-0.5)*14, y: LAVA_TOP - 2, vx: Math.cos(angL)* (40+Math.random()*120), vy: -90 - Math.random()*160, life:0.55+Math.random()*0.25, max:0.7, r:3+Math.random()*3, color: ["#ff6b35","#ff4500","#ff8c00","#ffd166"][Math.floor(Math.random()*4)], type:"star"});
+      }
+      for (var di2=0; di2<10; di2++) particles.push({ x: player.x, y: LAVA_TOP-2, vx:(Math.random()-0.5)*90, vy:-30 -Math.random()*50, life:0.45, max:0.45, r:3, color:"rgba(40,14,2,0.9)", type:"puff"});
+    } else if (player.y - PH/2 > H + 180) {
+      // fallback void
       dead = true;
       deadTimer = 0.55;
       shake = 10;
-      // penalty? lose half of level coins? we keep already earned total, but levelCoins reset visually? we keep taken flags so coins don't respawn; just respawn position.
-      msg.textContent = "Splash! The ice is thin there. Respawning…";
-      // penalty puff
-      for (var di=0; di<10; di++) particles.push({ x: player.x, y: H-30, vx:(Math.random()-0.5)*120, vy:-80 -Math.random()*120, life:0.6, max:0.6, r:3, color:"#4f8fcf", type:"puff"});
+      msg.textContent = "Whoa — you fell into the abyss! Respawning…";
+      for (var di3=0; di3<10; di3++) particles.push({ x: player.x, y: H-30, vx:(Math.random()-0.5)*120, vy:-80 -Math.random()*120, life:0.6, max:0.6, r:3, color:"#4f8fcf", type:"puff"});
     }
 
     // camera follow
@@ -748,9 +770,75 @@ function startPenguinParkour() {
       ctx.fill();
     }
 
-    // ground base (snow)
-    ctx.fillStyle = "#fffdf6";
-    ctx.fillRect(-10, H-10, W+20, 20);
+    // LAVA FLOOR — THE FLOOR IS LAVA!
+    (function drawLava(){
+      var lavaY = LAVA_TOP;
+      var t = performance.now() * 0.004;
+      // glow above lava
+      var gradGlow = ctx.createLinearGradient(0, lavaY-28, 0, lavaY+6);
+      gradGlow.addColorStop(0, "rgba(255,107,53,0)");
+      gradGlow.addColorStop(0.6, "rgba(255,120,40,0.22)");
+      gradGlow.addColorStop(1, "rgba(255,80,20,0.45)");
+      ctx.fillStyle = gradGlow;
+      ctx.fillRect(-20, lavaY-28, W+40, 34);
+      // main lava
+      var grad = ctx.createLinearGradient(0, lavaY, 0, H);
+      grad.addColorStop(0, "#ff8c2a");
+      grad.addColorStop(0.22, "#ff5a1f");
+      grad.addColorStop(0.55, "#cc1a00");
+      grad.addColorStop(1, "#5a0a00");
+      ctx.fillStyle = grad;
+      ctx.fillRect(-20, lavaY, W+40, H - lavaY + 20);
+      // wobbly surface line
+      ctx.strokeStyle = "#ffd166";
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(-20, lavaY);
+      for (var lx=-20; lx<=W+20; lx+=14) {
+        var wy = lavaY + Math.sin(lx*0.045 + t*2.2)*5 + Math.cos(lx*0.02 - t*1.4)*3;
+        ctx.lineTo(lx, wy);
+      }
+      ctx.stroke();
+      // inner bright core
+      ctx.strokeStyle = "rgba(255,240,180,0.9)";
+      ctx.lineWidth = 1.4;
+      ctx.beginPath();
+      ctx.moveTo(-20, lavaY+2);
+      for (var lx2=-20; lx2<=W+20; lx2+=14) {
+        var wy2 = lavaY+2 + Math.sin(lx2*0.055 + t*2.6)*3;
+        ctx.lineTo(lx2, wy2);
+      }
+      ctx.stroke();
+      // bubbles
+      ctx.fillStyle = "rgba(255,230,160,0.95)";
+      for (var bi=0; bi<5; bi++) {
+        var bx = (bi*150 + (t*40)%150 + (bi*73)%80) % (W+40) -20;
+        var by = lavaY + 12 + Math.sin(bi*1.7 + t*1.8 + bi)*6;
+        var br = 2 + (bi%2? 3: 4) + Math.sin(t*3 + bi)*0.7;
+        // pop
+        var popPhase = (t*0.9 + bi*1.3) % 4;
+        if (popPhase < 0.3) continue; // occasionally pop
+        ctx.globalAlpha = 0.85;
+        ctx.beginPath(); ctx.arc(bx, by, br, 0, Math.PI*2); ctx.fill();
+        // highlight
+        ctx.fillStyle = "rgba(255,255,255,0.9)";
+        ctx.beginPath(); ctx.arc(bx- br*0.3, by- br*0.3, br*0.35, 0, Math.PI*2); ctx.fill();
+        ctx.fillStyle = "rgba(255,230,160,0.95)";
+      }
+      ctx.globalAlpha = 1;
+      // crust cracks
+      ctx.strokeStyle = "rgba(60,10,0,0.35)";
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      for (var ck=0; ck<3; ck++) {
+        var csx = (ck*260 + t*18) % (W+60) -30;
+        ctx.moveTo(csx, lavaY+16);
+        ctx.lineTo(csx+18, lavaY+22);
+        ctx.moveTo(csx+10, lavaY+28);
+        ctx.lineTo(csx+24, lavaY+32);
+      }
+      ctx.stroke();
+    })();
 
     // helper to draw world entities with camera offset
     function worldX(x) { return x - camX; }
