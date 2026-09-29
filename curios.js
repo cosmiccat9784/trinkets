@@ -953,9 +953,7 @@ function startCheeseThief() {
       catAwake: 0,
       catHome: def.cat ? { ...def.cat } : null,
       catPos: def.cat ? { x: def.cat.x, y: def.cat.y } : null,
-      chefLeg: 0,
-      chefPos: def.chefs.length ? { ...def.chefs[0].path[0] } : null,
-      chefFace: Math.PI / 2
+      protect: 1.5
     };
     sus = 0;
     telegraphs = [];
@@ -967,6 +965,10 @@ function startCheeseThief() {
       chef.leg = 0;
       chef.pos = { ...chef.path[0] };
       chef.face = Math.PI / 2;
+    }
+    if (def.vacuum) {
+      def.vacuum.x = def.vacuum.x1;
+      def.vacuum.dir = 1;
     }
     message.textContent = def.hint;
     render();
@@ -1019,6 +1021,12 @@ function startCheeseThief() {
     return Math.abs(a) < half;
   }
 
+  function hurt(reason) {
+    if (cleared || state.protect > 0) return false;
+    catchMouse(reason);
+    return true;
+  }
+
   function catchMouse(reason) {
     strikes += 1;
     flash = 0.6;
@@ -1031,6 +1039,7 @@ function startCheeseThief() {
     }
     state.player.x = levelDef().hole.x;
     state.player.y = levelDef().hole.y - 60;
+    state.protect = 1.5;
     sus = 0;
     telegraphs = [];
     if (state.catPos && state.catHome) {
@@ -1064,6 +1073,7 @@ function startCheeseThief() {
     p.x = Math.max(18, Math.min(W - 18, p.x));
     p.y = Math.max(18, Math.min(H - 18, p.y));
     collideFurniture(p, 14);
+    if (state.protect > 0) state.protect -= dt;
 
     let seen = false;
     for (const lamp of def.lamps) {
@@ -1097,11 +1107,10 @@ function startCheeseThief() {
         }
       }
     }
-    if (seen && !cleared) sus = Math.min(1, sus + dt * 1.4);
+    if (seen && !cleared && state.protect <= 0) sus = Math.min(1, sus + dt * 1.4);
     else sus = Math.max(0, sus - dt * 1.1);
     if (sus >= 1 && !cleared) {
-      catchMouse("Spotted!");
-      return;
+      if (hurt("Spotted!")) return;
     }
 
     if (def.vacuum && !cleared) {
@@ -1114,8 +1123,7 @@ function startCheeseThief() {
       if (v.x > v.x2) { v.x = v.x2; v.dir = -1; }
       if (v.x < v.x1) { v.x = v.x1; v.dir = 1; }
       if (Math.hypot(p.x - v.x, p.y - v.y) < 34) {
-        catchMouse("Vacuumed!");
-        return;
+        if (hurt("Vacuumed!")) return;
       }
     }
 
@@ -1133,8 +1141,7 @@ function startCheeseThief() {
         state.catPos.y += (dy / d) * 190 * dt;
         collideFurniture(state.catPos, c.r);
         if (d < c.r + 14) {
-          catchMouse("The cat got you!");
-          return;
+          if (hurt("The cat got you!")) return;
         }
         if (state.catAwake <= 0) {
           state.catPos.x = state.catHome.x;
@@ -1161,8 +1168,7 @@ function startCheeseThief() {
           telegraphs.splice(i, 1);
           splats.push({ x: t.x, y: t.y, r: t.r, life: 0.8 });
           if (Math.hypot(p.x - t.x, p.y - t.y) < t.r) {
-            catchMouse("Plated!");
-            return;
+            if (hurt("Plated!")) return;
           }
         }
       }
@@ -1352,11 +1358,13 @@ function startCheeseThief() {
       ctx.arc(chef.pos.x, chef.pos.y, 16, 0, Math.PI * 2);
       ctx.fill();
       ctx.stroke();
-      ctx.fillStyle = "#fafafa";
-      ctx.fillRect(chef.pos.x - 10, chef.pos.y - 34, 20, 12);
-      ctx.strokeRect(chef.pos.x - 10, chef.pos.y - 34, 20, 12);
-    }
-    ctx.fillStyle = "#9aa3b2";
+    ctx.fillStyle = "#fafafa";
+    ctx.fillRect(chef.pos.x - 10, chef.pos.y - 34, 20, 12);
+    ctx.strokeRect(chef.pos.x - 10, chef.pos.y - 34, 20, 12);
+  }
+  ctx.save();
+  if (state.protect > 0) ctx.globalAlpha = 0.55;
+  ctx.fillStyle = "#9aa3b2";
     ctx.strokeStyle = "#0f1320";
     ctx.lineWidth = 2;
     ctx.beginPath();
@@ -1374,6 +1382,7 @@ function startCheeseThief() {
     ctx.moveTo(p.x + 12, p.y + 8);
     ctx.quadraticCurveTo(p.x + 24, p.y + 12, p.x + 20, p.y + 24);
     ctx.stroke();
+    ctx.restore();
     if (sus > 0) {
       ctx.fillStyle = `rgba(255,80,80,${Math.min(1, sus + 0.2)})`;
       ctx.font = "bold 26px sans-serif";
@@ -1395,9 +1404,9 @@ function startCheeseThief() {
   function tick(now) {
     const dt = Math.min(0.033, (now - last) / 1000);
     last = now;
+    if (raf !== 0) raf = requestAnimationFrame(tick);
     update(dt);
     draw();
-    if (raf !== 0) raf = requestAnimationFrame(tick);
   }
 
   function toCanvas(e) {

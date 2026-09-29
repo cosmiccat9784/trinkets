@@ -44,6 +44,7 @@ Progress:
 - Feedback went anonymous-only: GitHub path and dev inbox removed, single sheet inbox, no popups or new windows.
 - Added Weird category (Facts moved in) plus 5 games: Magnet Mess, Ice Cube (BFS-verified pars), Coin Flip (persistent stats), Cheese Thief (5 kitchens), Completely Normal Machine (10 persistent discoveries).
 - Ice Cube slides with animation; Magnet spacebar fixed (was natively triggering focused X); Cheese Thief rebuilt as true stealth (cones, LOS furniture, suspicion, patrols, cat AI); Gravity Balls moved Arcade to Toys.
+- Cheese Thief retry freeze fixed: vacuum initializes on level start, loop reschedules before updating so errors can't kill it, 1.5s spawn protection after retry and respawn.
 - Gradient Mixer second endpoint is now a predictable dark shade of the chosen color instead of a hue rotation; range inputs claim horizontal touch gestures.
 
 TODO:
