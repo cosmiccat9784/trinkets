@@ -55,6 +55,10 @@ chrome eats more viewport height than developers expect.
    Live stats for the embed caption come from `setSnapshot` — keep snapshots
    fresh if a game tracks a score.
 
+8. **Feedback flows to GitHub.** Player reports arrive as issues labeled
+   `feedback` with `[Game] [Type]` title prefixes (see feedback.html). The dev
+   inbox on that page reads them live from the public repo API — no backend.
+
 ## Testing checklist (manual — no headless browser in this repo)
 
 - 360×640 phone portrait: every game opens with zero scrollbars.

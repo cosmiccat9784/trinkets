@@ -835,6 +835,113 @@ body.embed {
   display: none;
 }
 
+.feedback-wrap {
+  display: grid;
+  gap: 18px;
+  max-width: 860px;
+  margin: 0 auto;
+  padding: clamp(24px, 5vw, 60px) clamp(18px, 6vw, 88px);
+}
+
+.feedback-card {
+  display: grid;
+  gap: 14px;
+  padding: clamp(20px, 3vw, 32px);
+  background: var(--panel);
+  border: 3px solid var(--line);
+  border-radius: 8px;
+  box-shadow: var(--shadow);
+}
+
+.feedback-card h2 {
+  margin: 0;
+}
+
+.feedback-sub {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.55;
+}
+
+.feedback-label {
+  display: grid;
+  gap: 6px;
+  font-size: 0.9rem;
+  font-weight: 900;
+}
+
+select.game-input {
+  appearance: none;
+  -webkit-appearance: none;
+  padding-right: 36px;
+  background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%2327313f' stroke-width='2' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  cursor: pointer;
+}
+
+.game-textarea {
+  width: 100%;
+  min-height: 110px;
+  padding: 12px 14px;
+  border: 3px solid var(--line);
+  border-radius: 8px;
+  color: var(--ink);
+  font: inherit;
+  font-weight: 600;
+  resize: vertical;
+}
+
+.feedback-log {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.feedback-log li {
+  padding: 10px 14px;
+  background: #fff;
+  border: 2px solid var(--line);
+  border-radius: 8px;
+}
+
+.feedback-item-title {
+  font-weight: 900;
+}
+
+.feedback-item-meta {
+  color: var(--muted);
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.feedback-chip {
+  display: inline-block;
+  margin-right: 6px;
+  padding: 2px 8px;
+  background: var(--gold);
+  border: 2px solid var(--line);
+  border-radius: 99px;
+  font-size: 0.72rem;
+  font-weight: 900;
+}
+
+.feedback-item-link {
+  font-weight: 800;
+  text-decoration: underline;
+}
+
+.footer-links {
+  margin-top: 10px;
+}
+
+.footer-links a {
+  font-weight: 800;
+  text-decoration: underline;
+}
+
 .game-shell {
   padding: 22px;
 }

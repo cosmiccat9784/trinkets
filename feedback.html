@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Feedback · Trinkets Arcade</title>
+    <meta name="theme-color" content="#fff8ea" />
+    <link rel="icon" type="image/svg+xml" href="assets/favicon.svg" />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" />
+    <link rel="stylesheet" href="styles.css?v=14" />
+  </head>
+  <body>
+    <header class="topbar">
+      <a class="brand" href="./" aria-label="Trinkets Arcade home">
+        <span class="brand-mark" aria-hidden="true"></span>
+        <span>Trinkets Arcade</span>
+      </a>
+      <nav aria-label="Primary navigation">
+        <a href="./#games">Games</a>
+        <a href="./">← Back to arcade</a>
+      </nav>
+    </header>
+
+    <main>
+      <section class="feedback-wrap" aria-labelledby="feedback-title">
+        <div class="feedback-card">
+          <div>
+            <p class="eyebrow">Feedback</p>
+            <h2 id="feedback-title">Send feedback</h2>
+          </div>
+          <p class="feedback-sub">Found a bug? Want a feature? Fill this in and it opens a pre-filled report you send in one click. No account needed to write it — sending uses GitHub.</p>
+          <label class="feedback-label">Game
+            <select class="game-input feedback-select" id="fbGame">
+              <option value="">Whole arcade</option>
+              <option value="switchback">Switchback Tiles</option>
+              <option value="comet">Comet Catch</option>
+              <option value="forge">Four-Letter Forge</option>
+              <option value="maze">Pocket Maze</option>
+              <option value="bash">Button Bash</option>
+              <option value="clue">Clue Crate</option>
+              <option value="toybox">Toybox</option>
+              <option value="thousand">2048</option>
+              <option value="powder">Powder Sim</option>
+              <option value="wrap">Bubble Wrap</option>
+              <option value="zen">Zen Sand</option>
+              <option value="gravity">Gravity Balls</option>
+              <option value="spiro">Spirograph</option>
+              <option value="facts">Useless Facts</option>
+              <option value="orchard">Orchard Go</option>
+            </select>
+          </label>
+          <label class="feedback-label">Type
+            <select class="game-input feedback-select" id="fbType">
+              <option>Bug</option>
+              <option>Idea</option>
+              <option>Praise</option>
+              <option>Other</option>
+            </select>
+          </label>
+          <label class="feedback-label">Subject
+            <input class="game-input" id="fbSubject" maxlength="80" autocomplete="off" placeholder="Short summary" />
+          </label>
+          <label class="feedback-label">Details
+            <textarea class="game-textarea" id="fbDetails" rows="4" placeholder="What happened? What did you expect?"></textarea>
+          </label>
+          <p class="game-message" id="fbMsg"></p>
+          <div class="game-actions">
+            <button class="primary-button" id="fbSend" type="button">Send via GitHub</button>
+          </div>
+        </div>
+
+        <div class="feedback-card">
+          <h2>Your sent feedback</h2>
+          <ul class="feedback-log" id="fbLog"></ul>
+          <div class="game-actions">
+            <button class="game-action" id="fbClear" type="button">Clear history</button>
+          </div>
+        </div>
+
+        <div class="feedback-card">
+          <div>
+            <p class="eyebrow">Dev inbox</p>
+            <h2>Latest reports</h2>
+          </div>
+          <p class="feedback-sub" id="fbInboxStatus">Loading reports from GitHub…</p>
+          <ul class="feedback-log" id="fbInbox"></ul>
+        </div>
+      </section>
+    </main>
+
+    <footer>
+      <p>Trinkets Arcade keeps the shelf stocked with small, silly, satisfying playthings.</p>
+    </footer>
+
+    <script src="feedback.js?v=1"></script>
+  </body>
+</html>
