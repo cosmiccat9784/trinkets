@@ -15,7 +15,7 @@
     <meta name="twitter:image" content="https://cosmiccat9784.github.io/trinkets/assets/preview.png" />
     <link rel="icon" type="image/svg+xml" href="assets/favicon.svg" />
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" />
-    <link rel="stylesheet" href="styles.css?v=14" />
+    <link rel="stylesheet" href="styles.css?v=15" />
   </head>
   <body>
     <header class="topbar">
@@ -55,7 +55,7 @@
 
       <section class="quick-stats" id="scores" aria-label="Arcade stats">
         <div>
-          <strong id="statGames">15</strong>
+          <strong id="statGames">20</strong>
           <span>tiny games</span>
         </div>
         <div>
@@ -84,6 +84,7 @@
             <button class="filter" type="button" data-filter="arcade" aria-pressed="false">Arcade</button>
             <button class="filter" type="button" data-filter="word" aria-pressed="false">Word</button>
             <button class="filter" type="button" data-filter="toys" aria-pressed="false">Toys</button>
+            <button class="filter" type="button" data-filter="weird" aria-pressed="false">Weird</button>
           </div>
         </div>
 
@@ -339,7 +340,7 @@
             </div>
           </article>
 
-          <article class="game-card" data-category="toys" data-game="facts">
+          <article class="game-card" data-category="weird" data-game="facts">
             <div class="game-art facts-art" aria-hidden="true">
               <span class="facts-bubble">?</span>
               <span class="facts-dot fd1"></span>
@@ -347,7 +348,7 @@
               <span class="facts-dot fd3"></span>
             </div>
             <div class="game-content">
-              <p class="tag">Toy</p>
+              <p class="tag">Weird</p>
               <h3>Useless Facts</h3>
               <p>A machine that dispenses facts you will never need. Pull the lever.</p>
               <div class="card-actions">
@@ -368,6 +369,92 @@
               <p class="tag">Puzzle</p>
               <h3>Orchard Go</h3>
               <p>Shove oranges into a line of three. Don't let the crabapples line up.</p>
+              <div class="card-actions">
+                <button class="play-button" type="button">Play</button>
+                <button class="save-button" type="button">Save pick</button>
+              </div>
+            </div>
+          </article>
+
+          <article class="game-card" data-category="toys" data-game="magnet">
+            <div class="game-art magnet-art" aria-hidden="true">
+              <span class="magnet-thumb magnet-red"></span>
+              <span class="magnet-dot md1"></span>
+              <span class="magnet-dot md2"></span>
+              <span class="magnet-dot md3"></span>
+              <span class="magnet-dot md4"></span>
+            </div>
+            <div class="game-content">
+              <p class="tag">Toy</p>
+              <h3>Magnet Mess</h3>
+              <p>Drag the magnet. Flip it from hug to shove and watch metal obey.</p>
+              <div class="card-actions">
+                <button class="play-button" type="button">Play</button>
+                <button class="save-button" type="button">Save pick</button>
+              </div>
+            </div>
+          </article>
+
+          <article class="game-card" data-category="puzzle" data-game="ice">
+            <div class="game-art ice-art" aria-hidden="true">
+              <span class="ice-target"></span>
+              <span class="ice-cube-thumb"></span>
+            </div>
+            <div class="game-content">
+              <p class="tag">Puzzle</p>
+              <h3>Ice Cube</h3>
+              <p>Shove the cube. It won't stop till it hits something. Don't melt.</p>
+              <div class="card-actions">
+                <button class="play-button" type="button">Play</button>
+                <button class="save-button" type="button">Save pick</button>
+              </div>
+            </div>
+          </article>
+
+          <article class="game-card" data-category="toys" data-game="coin">
+            <div class="game-art coin-art" aria-hidden="true">
+              <span class="coin-thumb">H</span>
+            </div>
+            <div class="game-content">
+              <p class="tag">Toy</p>
+              <h3>Coin Flip</h3>
+              <p>Flip it. Flick it. Catch it. Land it standing up (good luck).</p>
+              <div class="card-actions">
+                <button class="play-button" type="button">Play</button>
+                <button class="save-button" type="button">Save pick</button>
+              </div>
+            </div>
+          </article>
+
+          <article class="game-card" data-category="arcade" data-game="cheese">
+            <div class="game-art cheese-art" aria-hidden="true">
+              <span class="cheese-wedge"></span>
+              <span class="cheese-beam"></span>
+            </div>
+            <div class="game-content">
+              <p class="tag">Arcade</p>
+              <h3>Cheese Thief</h3>
+              <p>Steal cheese, dodge the light, outrun the cat, survive the chef.</p>
+              <div class="card-actions">
+                <button class="play-button" type="button">Play</button>
+                <button class="save-button" type="button">Save pick</button>
+              </div>
+            </div>
+          </article>
+
+          <article class="game-card" data-category="weird" data-game="machine">
+            <div class="game-art machine-art" aria-hidden="true">
+              <span class="machine-panel-thumb">
+                <span class="machine-dot m1"></span>
+                <span class="machine-dot m2"></span>
+                <span class="machine-dot m3"></span>
+                <span class="machine-lever"></span>
+              </span>
+            </div>
+            <div class="game-content">
+              <p class="tag">Weird</p>
+              <h3>Completely Normal Machine</h3>
+              <p>Three buttons. Two levers. One red switch. Zero explanations.</p>
               <div class="card-actions">
                 <button class="play-button" type="button">Play</button>
                 <button class="save-button" type="button">Save pick</button>
@@ -413,10 +500,11 @@
       <p class="footer-links"><a href="feedback.html">Send feedback</a></p>
     </footer>
 
-    <script src="script.js?v=21"></script>
+    <script src="script.js?v=22"></script>
     <script src="powder.js?v=7"></script>
     <script src="toys.js?v=9"></script>
     <script src="facts.js?v=6"></script>
     <script src="orchard.js?v=4"></script>
+    <script src="curios.js?v=1"></script>
   </body>
 </html>

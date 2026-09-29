@@ -60,7 +60,12 @@ const gameSlugs = {
   gravity: "gravity_balls",
   spiro: "spirograph",
   facts: "useless_facts",
-  orchard: "orchard_go"
+  orchard: "orchard_go",
+  magnet: "magnet_mess",
+  ice: "ice_cube",
+  coin: "coin_flip",
+  cheese: "cheese_thief",
+  machine: "normal_machine"
 };
 
 function slugToGame(slug) {
