@@ -274,8 +274,13 @@ function startGravityBalls() {
           <span class="game-stat">Click empty space to drop one. Drag a ball to fling it.</span>
         </div>
         <canvas class="grav-canvas" id="gravCanvas" width="720" height="480"></canvas>
+        <div class="spiro-sliders">
+          <label class="spiro-slider">Size <input type="range" id="gravSize" min="8" max="36" step="1" value="18"><span id="gravSizev">18</span></label>
+          <label class="spiro-slider">Speed <input type="range" id="gravSpeed" min="0.2" max="2.5" step="0.1" value="1"><span id="gravSpeedv">1.0x</span></label>
+          <label class="spiro-slider">Max balls <input type="range" id="gravMax" min="5" max="80" step="1" value="36"><span id="gravMaxv">36</span></label>
+        </div>
         <div class="game-actions">
-          <button class="game-action" id="gravSlow" type="button">Slow-mo: off</button>
+          <div class="zen-swatches" id="gravSwatches"></div>
           <button class="game-action" id="gravClear" type="button">Clear</button>
         </div>
       </div>
@@ -288,7 +293,10 @@ function startGravityBalls() {
   const H = canvas.height;
   const palette = ["#ff6b6b", "#43c6ac", "#f6c445", "#4f8fcf", "#6a4c93", "#fff8ea"];
   let balls = [];
-  let slowmo = false;
+  let speedScale = 1;
+  let ballSize = 18;
+  let maxBalls = 36;
+  let spawnColor = null;
   let grab = null;
   let grabDX = 0;
   let grabDY = 0;
@@ -305,14 +313,27 @@ function startGravityBalls() {
     return null;
   }
 
+  function trimBalls() {
+    while (balls.length > maxBalls) {
+      const i = balls.findIndex((b) => b !== grab);
+      if (i < 0) break;
+      balls.splice(i, 1);
+    }
+    document.querySelector("#gravCount").textContent = `Balls: ${balls.length}`;
+  }
+
   function spawn(x, y) {
-    if (balls.length >= 36) balls.shift();
+    while (balls.length >= maxBalls) {
+      const i = balls.findIndex((b) => b !== grab);
+      if (i < 0) return;
+      balls.splice(i, 1);
+    }
     balls.push({
       x, y,
       vx: (Math.random() - 0.5) * 200,
       vy: 0,
-      r: 12 + Math.random() * 14,
-      color: palette[Math.floor(Math.random() * palette.length)]
+      r: ballSize,
+      color: spawnColor || palette[Math.floor(Math.random() * palette.length)]
     });
     document.querySelector("#gravCount").textContent = `Balls: ${balls.length}`;
   }
@@ -384,7 +405,7 @@ function startGravityBalls() {
   }
 
   function tick(now) {
-    const dt = Math.min(0.033, (now - last) / 1000) * (slowmo ? 0.3 : 1);
+    const dt = Math.min(0.033, (now - last) / 1000) * speedScale;
     last = now;
     step(dt);
     render();
@@ -432,16 +453,45 @@ function startGravityBalls() {
   canvas.addEventListener("pointerup", releaseGrab);
   canvas.addEventListener("pointercancel", releaseGrab);
 
-  document.querySelector("#gravSlow").addEventListener("click", (e) => {
-    slowmo = !slowmo;
-    e.currentTarget.textContent = `Slow-mo: ${slowmo ? "on" : "off"}`;
+  const sizeSlider = document.querySelector("#gravSize");
+  const speedSlider = document.querySelector("#gravSpeed");
+  const maxSlider = document.querySelector("#gravMax");
+  sizeSlider.addEventListener("input", () => {
+    ballSize = Number(sizeSlider.value);
+    document.querySelector("#gravSizev").textContent = sizeSlider.value;
+  });
+  speedSlider.addEventListener("input", () => {
+    speedScale = Number(speedSlider.value);
+    document.querySelector("#gravSpeedv").textContent = `${speedScale.toFixed(1)}x`;
+  });
+  maxSlider.addEventListener("input", () => {
+    maxBalls = Number(maxSlider.value);
+    document.querySelector("#gravMaxv").textContent = maxSlider.value;
+    trimBalls();
+  });
+  const swatchWrap = document.querySelector("#gravSwatches");
+  const swatchDefs = [{ name: "Mix", css: "linear-gradient(135deg,#ff6b6b,#f6c445,#43c6ac,#4f8fcf)", value: null },
+    ...palette.map((c) => ({ name: c, css: c, value: c }))];
+  swatchDefs.forEach((def, i) => {
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "zen-swatch" + (i === 0 ? " active" : "");
+    btn.style.background = def.css;
+    btn.title = def.name === "Mix" ? "Random colors" : def.name;
+    btn.setAttribute("aria-label", def.name === "Mix" ? "Random ball colors" : `Ball color ${def.name}`);
+    btn.addEventListener("click", () => {
+      spawnColor = def.value;
+      swatchWrap.querySelectorAll(".zen-swatch").forEach((el) => el.classList.remove("active"));
+      btn.classList.add("active");
+    });
+    swatchWrap.append(btn);
   });
   document.querySelector("#gravClear").addEventListener("click", () => {
     balls = [];
     document.querySelector("#gravCount").textContent = "Balls: 0";
   });
 
-  setSnapshot({ mode: "playing", game: "Gravity Balls", slowmo });
+  setSnapshot({ mode: "playing", game: "Gravity Balls" });
   activeCleanup = () => cancelAnimationFrame(raf);
   raf = requestAnimationFrame(tick);
 }

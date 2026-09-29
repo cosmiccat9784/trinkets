@@ -27,6 +27,7 @@ Progress:
 - Toybox pagination now reflows on viewport resize/rotation, keeping the first visible toy stable, with its resize listener cleaned up on close.
 - Fixed dead X button on Toybox: jelly cleanup referenced deleted listener functions, throwing inside close and aborting the close; audited all other cleanups clean.
 - Added footer build tag showing the running script version so stale-cache reports are instantly diagnosable; re-bumped script to v12 after a same-URL content change slipped through.
+- Gravity Balls is now customizable: Size, Speed, and Max Balls sliders plus color swatches (Mix default); Slow-mo toggle retired in favor of the Speed slider.
 - Gradient Mixer second endpoint is now a predictable dark shade of the chosen color instead of a hue rotation; range inputs claim horizontal touch gestures.
 
 TODO:
