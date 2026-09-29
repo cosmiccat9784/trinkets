@@ -177,7 +177,8 @@ function fitGameShell() {
   const header = panel ? panel.querySelector(".modal-header") : null;
   const layout = gameShell.querySelector(".game-layout");
   if (!panel || !header || !layout) return;
-  layout.style.zoom = "";
+  layout.style.transform = "";
+  layout.style.marginBottom = "";
   const availH = panel.clientHeight - header.offsetHeight - 44;
   const availW = panel.clientWidth - 50;
   if (availH <= 0 || availW <= 0) return;
@@ -187,7 +188,11 @@ function fitGameShell() {
   if (needH > availH) z = Math.min(z, availH / needH);
   if (needW > availW) z = Math.min(z, availW / needW);
   z = Math.max(0.35, z);
-  if (z < 1) layout.style.zoom = z.toFixed(3);
+  if (z < 1) {
+    layout.style.transformOrigin = "top center";
+    layout.style.transform = `scale(${z.toFixed(3)})`;
+    layout.style.marginBottom = `${-Math.round(needH * (1 - z))}px`;
+  }
 }
 
 window.addEventListener("resize", fitGameShell);
@@ -211,7 +216,7 @@ function startSwitchbackTiles() {
     `
       <div class="game-layout">
         <div class="game-topline">
-          <span class="game-stat">Goal: connect <img src="assets/switchback/start.png" class="tile-img-inline" alt="Start" /> to <img src="assets/switchback/end.png" class="tile-img-inline" alt="End" /></span>
+          <span class="game-stat">Goal: connect <span class="goal-dot goal-start" aria-hidden="true"></span> start to <span class="goal-dot goal-end" aria-hidden="true"></span> finish</span>
           <span class="game-stat" id="switchPuzzle">Puzzle: 1/1</span>
           <span class="game-stat" id="switchMoves">Moves: 0</span>
         </div>
@@ -248,8 +253,8 @@ function startSwitchbackTiles() {
   let randomCount = 0;
 
   function newRandomPuzzle() {
-    puzzles.push(buildSwitchbackPuzzle(randomSwitchPath(), puzzles.length));
-    puzzleIndex = puzzles.length - 1;
+    puzzles[0] = buildSwitchbackPuzzle(randomSwitchPath(), randomCount);
+    puzzleIndex = 0;
     randomCount += 1;
     reset();
   }
@@ -396,12 +401,18 @@ function startSwitchbackTiles() {
   }
 
   function glyph(tile, index, isConnected) {
-    const lit = isConnected ? "_lit" : "";
-    if (index === 0) return '<img src="assets/switchback/start.png" class="tile-img" alt="Start" />';
-    if (index === 24) return '<img src="assets/switchback/end' + lit + '.png" class="tile-img" alt="End" />';
-    if (tile.type === "line") return '<img src="assets/switchback/straight' + lit + '.png" class="tile-img" style="transform:rotate(' + (tile.rotation * 90) + 'deg)" alt="Pipe" />';
-    if (tile.type === "corner") return '<img src="assets/switchback/turn' + lit + '.png" class="tile-img" style="transform:rotate(' + (tile.rotation * 90) + 'deg)" alt="Pipe" />';
-    if (tile.type === "tee") return '<img src="assets/switchback/junction' + lit + '.png" class="tile-img" style="transform:rotate(' + (tile.rotation * 90) + 'deg)" alt="Pipe" />';
+    const lit = isConnected ? " lit" : "";
+    const rot = ((tile.rotation || 0) * 90) % 360;
+    if (index === 0) {
+      return '<svg class="tile-svg" viewBox="0 0 48 48" aria-hidden="true"><circle cx="24" cy="24" r="14" class="s"/><circle cx="24" cy="24" r="5.5" class="s-dot"/></svg>';
+    }
+    if (index === 24) {
+      return '<svg class="tile-svg" viewBox="0 0 48 48" aria-hidden="true"><circle cx="24" cy="24" r="14" class="f"/><circle cx="24" cy="24" r="5.5" class="f-dot"/></svg>';
+    }
+    const open = `<svg class="tile-svg${lit}" viewBox="0 0 48 48" style="transform:rotate(${rot}deg)" aria-hidden="true">`;
+    if (tile.type === "line") return open + '<rect class="p" x="19" y="5" width="10" height="38" rx="5"/></svg>';
+    if (tile.type === "corner") return open + '<rect class="p" x="19" y="5" width="10" height="24" rx="5"/><rect class="p" x="19" y="19" width="24" height="10" rx="5"/></svg>';
+    if (tile.type === "tee") return open + '<rect class="p" x="19" y="5" width="10" height="24" rx="5"/><rect class="p" x="5" y="19" width="38" height="10" rx="5"/></svg>';
     return ".";
   }
 
@@ -1044,7 +1055,7 @@ function startPocketMaze() {
           <button class="game-stat" id="mazeNumber" type="button" title="Skip to next maze">Maze: 1/1</button>
           <span class="game-stat" id="mazeMoves">Moves: 0</span>
           <span class="game-stat" id="mazeKey">Key: no</span>
-          <span class="game-stat">Move: arrows, WASD, or buttons</span>
+          <span class="game-stat maze-hint-stat">Move: arrows, WASD, or buttons</span>
         </div>
         <p class="game-message" id="mazeMessage">Collect the key, then reach the exit door.</p>
         <div class="maze-grid" id="mazeGrid" aria-label="Pocket maze"></div>
@@ -1321,7 +1332,8 @@ function startPocketMaze() {
     const grid = document.querySelector("#mazeGrid");
     grid.innerHTML = "";
     grid.style.gridTemplateColumns = `repeat(${maze[0].length}, minmax(0, 1fr))`;
-    grid.style.maxWidth = Math.min(maze[0].length * 52, window.innerHeight - 500) + "px";
+    const reserve = window.innerHeight < 700 ? 470 : 500;
+    grid.style.maxWidth = Math.min(maze[0].length * 52, window.innerHeight - reserve) + "px";
     const icons = {
       P: '<span class="material-symbols-outlined maze-icon maze-icon-player">person</span>',
       K: '<span class="material-symbols-outlined maze-icon maze-icon-key">key</span>',

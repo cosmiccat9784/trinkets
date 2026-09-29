@@ -36,10 +36,11 @@ chrome eats more viewport height than developers expect.
 4. **`fitGameShell()` is the universal backstop** (script.js).
    After every game opens (and on window resize, and on Toybox page flips),
    it measures the game layout against the visible modal space and applies a
-   CSS `zoom` shrink if anything overflows. Pointer math in all games uses
-   `getBoundingClientRect`, which stays correct under zoom — keep it that way.
-   Never position fixed overlays inside `.game-layout` (zoom would trap them);
-   attach them to `.modal-panel` and remove them on close.
+   GPU-friendly `transform: scale()` shrink if anything overflows (scale keeps
+   all pointer math correct, since every game maps input through
+   `getBoundingClientRect`).
+   Never position fixed overlays inside `.game-layout` (the transform would
+   trap them); attach them to `.modal-panel` and remove them on close.
 
 5. **Paginate instead of stacking.** Content that is inherently tall (the
    Toybox grid) must be split into pages that each fit, never one long column.

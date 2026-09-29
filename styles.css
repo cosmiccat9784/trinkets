@@ -858,6 +858,58 @@ body.modal-open {
   object-fit: contain;
 }
 
+.tile-svg {
+  width: 80%;
+  height: 80%;
+}
+
+.tile-svg .p {
+  fill: #aeb9c6;
+}
+
+.tile-svg.lit .p {
+  fill: var(--mint);
+}
+
+.tile-svg.lit {
+  filter: drop-shadow(0 0 4px rgba(67, 198, 172, 0.9));
+}
+
+.tile-svg .s {
+  fill: var(--mint);
+}
+
+.tile-svg .s-dot {
+  fill: #ffffff;
+}
+
+.tile-svg .f {
+  fill: var(--coral);
+}
+
+.tile-svg .f-dot {
+  fill: #ffffff;
+}
+
+.pipe-tile.end.solved .f {
+  fill: var(--gold);
+}
+
+.goal-dot {
+  display: inline-block;
+  width: 0.85em;
+  height: 0.85em;
+  border-radius: 50%;
+}
+
+.goal-start {
+  background: var(--mint);
+}
+
+.goal-end {
+  background: var(--coral);
+}
+
 .tile-img-inline {
   width: 1.2rem;
   height: 1.2rem;
@@ -2559,6 +2611,34 @@ footer p {
     padding: 14px;
   }
 
+  .maze-hint-stat {
+    display: none;
+  }
+
+  .toybox-toy {
+    padding: 12px 8px;
+  }
+
+  .toybox-bubbles-canvas {
+    height: 96px;
+  }
+
+  .toybox-ripple-canvas {
+    height: 110px;
+  }
+
+  .toybox-domino-canvas {
+    height: 84px;
+  }
+
+  .toybox-jelly-area {
+    height: 84px;
+  }
+
+  .toybox-gradient-box {
+    height: 64px;
+  }
+
   .game-art {
     min-height: 160px;
   }
@@ -2567,6 +2647,13 @@ footer p {
     text-align: left;
   }
 
+  .how-to-play {
+    grid-template-columns: 1fr;
+  }
+
+  .game-layout {
+    gap: 14px;
+  }
 
 }
 
@@ -2598,6 +2685,36 @@ footer p {
   .zen-swatch {
     width: 44px;
     height: 44px;
+  }
+}
+
+@supports not (height: 100dvh) {
+  .arcade-canvas {
+    width: min(100%, 720px, calc((100vh - 380px) * 4 / 3));
+  }
+
+  .zen-stage {
+    width: min(100%, 720px, calc((100vh - 360px) * 12 / 7));
+  }
+
+  .grav-canvas {
+    width: min(100%, 720px, calc((100vh - 380px) * 3 / 2));
+  }
+
+  .spiro-canvas {
+    width: min(100%, 520px, calc(100vh - 460px));
+  }
+
+  .t-board-wrap {
+    width: min(100%, 560px, calc(100vh - 560px));
+  }
+
+  .pipe-grid {
+    width: min(100%, 412px, calc(100vh - 420px));
+  }
+
+  .bw-sheet {
+    width: min(100%, 640px, calc((100vh - 380px) * 1.75));
   }
 }
 

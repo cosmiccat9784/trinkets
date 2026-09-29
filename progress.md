@@ -21,6 +21,7 @@ Progress:
 - Switchback Tiles deals a fresh procedural puzzle on open and on every Next (Puzzle #n counter); Random button removed.
 - Mobile pass: theme-color meta, dvh hero, wrapping hero actions, fluid pipe/bash/maze grids that shrink instead of overflowing, scaling maze icons, touch-action none on cradle canvas, manipulation on buttons, overscroll containment in modals, touch wording in Comet Catch, proportional Powder canvas, compact phone modal spacing, 44px+ touch targets on coarse pointers.
 - No-scroll law: added RULES.md; viewport-capped widths on every play widget, JS viewport caps for maze and powder, universal fitGameShell zoom backstop on open/resize/page-flip, maze overlays reparented to modal panel, Toybox paginated (4 per page, 2 on narrow screens).
+- iPhone crash fix: Switchback tiles converted from PNG images to inline SVG (no more per-tap image decode storm), puzzle history capped at one board, fit pass switched from zoom to transform scale; maze hint hidden and toy heights reduced on small screens; how-to-play collapses to one column; vh fallbacks for browsers without dvh.
 
 TODO:
 - Manual in-browser playtest recommended from the already-open file URL.
