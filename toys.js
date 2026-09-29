@@ -56,6 +56,7 @@ function startBubbleWrap() {
       best = chain;
       chainEl.textContent = `Best chain: ${best}`;
       recordScore("wrap", best, "high");
+      setSnapshot({ mode: "playing", game: "Bubble Wrap", popped: lifetime, best });
     }
     poppedEl.textContent = `Popped: ${lifetime}`;
     if (popped === cols * rows && !refilling) {
@@ -337,6 +338,7 @@ function startGravityBalls() {
       color: spawnColor || palette[Math.floor(Math.random() * palette.length)]
     });
     document.querySelector("#gravCount").textContent = `Balls: ${balls.length}`;
+    setSnapshot({ mode: "playing", game: "Gravity Balls", balls: balls.length });
   }
 
   function step(dt) {
@@ -490,6 +492,7 @@ function startGravityBalls() {
   document.querySelector("#gravClear").addEventListener("click", () => {
     balls = [];
     document.querySelector("#gravCount").textContent = "Balls: 0";
+    setSnapshot({ mode: "playing", game: "Gravity Balls", balls: 0 });
   });
 
   setSnapshot({ mode: "playing", game: "Gravity Balls" });
@@ -611,6 +614,7 @@ function startSpirograph() {
         if (theta >= period) {
           finished = true;
           const total = bumpScore("spiro");
+          setSnapshot({ mode: "playing", game: "Spirograph", drawn: total });
           document.querySelector("#spiroState").textContent = `Pattern complete (${total} total).`;
           document.querySelector("#spiroNew").classList.add("finish-pulse");
           break;

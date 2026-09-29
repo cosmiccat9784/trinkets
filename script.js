@@ -233,6 +233,67 @@ playButtons.forEach((button) => {
 
 
 closeGame.addEventListener("click", closeActiveGame);
+
+function embedSnippet() {
+  const base = location.origin + location.pathname.replace(/[^/]*$/, "") + "embed.html";
+  const slug = activeGameId ? (gameSlugs[activeGameId] || activeGameId) : "";
+  return `<iframe src="${base}?game=${slug}" width="720" height="600" style="border:0;border-radius:12px;" loading="lazy" allowfullscreen title="Trinkets Arcade game"></iframe>`;
+}
+
+const embedButton = document.querySelector("#embedButton");
+if (embedButton) {
+  embedButton.addEventListener("click", async () => {
+    const snippet = embedSnippet();
+    let ok = false;
+    try {
+      await navigator.clipboard.writeText(snippet);
+      ok = true;
+    } catch (err) {
+      try {
+        const ta = document.createElement("textarea");
+        ta.value = snippet;
+        document.body.append(ta);
+        ta.select();
+        ok = document.execCommand("copy");
+        ta.remove();
+      } catch (err2) {}
+    }
+    const icon = embedButton.querySelector(".material-symbols-outlined");
+    if (ok && icon) {
+      const prev = icon.textContent;
+      icon.textContent = "check";
+      setTimeout(() => { icon.textContent = prev; }, 1200);
+    } else if (!ok) {
+      window.prompt("Copy your embed code:", snippet);
+    }
+  });
+}
+
+function embedStatText(snap) {
+  if (!snap || typeof snap !== "object") return "";
+  const parts = [];
+  if (typeof snap.score === "number") parts.push("Score: " + snap.score);
+  if (snap.game === "2048" && typeof snap.best === "number" && snap.best > 0) {
+    parts.push("Best: " + snap.best);
+  }
+  if (typeof snap.maze === "number" && snap.game === "Pocket Maze") {
+    parts.unshift("Maze " + snap.maze);
+  }
+  if (typeof snap.board === "number") parts.unshift("Board " + snap.board);
+  if (typeof snap.moves === "number" && (snap.game === "Switchback Tiles" || snap.game === "Pocket Maze" || snap.game === "Orchard Go")) {
+    parts.push("Moves: " + snap.moves);
+  }
+  if (typeof snap.popped === "number") parts.push("Popped: " + snap.popped);
+  if (typeof snap.balls === "number") parts.push("Balls: " + snap.balls);
+  if (typeof snap.drawn === "number") parts.push("Drawn: " + snap.drawn);
+  if (snap.game === "Four-Letter Forge" && typeof snap.steps === "number") {
+    parts.push("Steps: " + snap.steps);
+  }
+  if (snap.game === "Clue Crate" && typeof snap.crate === "number") {
+    parts.push("Crate: " + snap.crate);
+  }
+  return parts.join(" · ");
+}
 gameModal.addEventListener("click", (event) => {
   if (event.target === gameModal) {
     closeActiveGame();
@@ -293,7 +354,8 @@ function fitGameShell() {
   if (!panel || !header || !layout) return;
   layout.style.transform = "";
   layout.style.marginBottom = "";
-  const availH = panel.clientHeight - header.offsetHeight - 44;
+  const embedReserve = document.body.classList.contains("embed") ? 52 : 0;
+  const availH = panel.clientHeight - header.offsetHeight - 44 - embedReserve;
   const availW = panel.clientWidth - 50;
   if (availH <= 0 || availW <= 0) return;
   const needH = layout.scrollHeight;

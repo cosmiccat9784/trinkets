@@ -38,6 +38,7 @@ Progress:
 - Orchard Go: 4 crabapples and 40 boards per visit; fixed setup X-lines that made perfect solutions end in simultaneous win+lose (win now takes precedence); re-proven 520/520 across seed families.
 - Orchard Go matches the real thing: irregular blob boards with void edges, tighter 5x5 play area, 5 crabapples, named boards that rotate daily, in-game Rules panel; re-proven 150/150.
 - Orchard Go goes hard: real crabapple sprites, BFS solver certifies every board needs 6+ moves (trivial boards rejected), longer exploratory scrambles; fallback flood fixed (was 100%); modal blur fix for aria warning.
+- Embeddable games: new embed.html (?game=slug) runs any game chromeless with live score caption; copy-embed-code button in every game header; Bubble Wrap/Spirograph/Gravity Balls snapshots kept live for the caption.
 - Gradient Mixer second endpoint is now a predictable dark shade of the chosen color instead of a hue rotation; range inputs claim horizontal touch gestures.
 
 TODO:

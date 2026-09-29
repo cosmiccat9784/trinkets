@@ -750,6 +750,91 @@ body.modal-open {
   text-transform: uppercase;
 }
 
+.modal-buttons {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  flex: 0 0 auto;
+}
+
+.embed-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  width: 44px;
+  height: 44px;
+  background: var(--mint);
+  border: 3px solid var(--line);
+  border-radius: 8px;
+  box-shadow: 4px 4px 0 var(--line);
+  color: var(--ink);
+  font-weight: 900;
+  cursor: pointer;
+  transition: transform 160ms ease, box-shadow 160ms ease;
+}
+
+.embed-button:hover {
+  transform: translate(-2px, -2px);
+}
+
+.embed-button .material-symbols-outlined {
+  font-size: 22px;
+}
+
+body.embed {
+  min-width: 0;
+  background: var(--paper);
+}
+
+.embed .game-modal {
+  position: static;
+  display: block;
+  padding: 12px;
+  background: transparent;
+}
+
+.embed .modal-panel {
+  max-height: calc(100dvh - 24px);
+  margin: 0 auto;
+  box-shadow: 8px 8px 0 rgba(25, 33, 43, 0.16);
+}
+
+.embed .close-button {
+  display: none;
+}
+
+.embed-caption {
+  position: fixed;
+  left: 50%;
+  bottom: 10px;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  max-width: calc(100vw - 20px);
+  padding: 8px 14px;
+  overflow: hidden;
+  background: var(--ink);
+  border-radius: 999px;
+  color: #fff;
+  font-size: 0.8rem;
+  font-weight: 800;
+  white-space: nowrap;
+  z-index: 30;
+  pointer-events: none;
+}
+
+.embed-caption .embed-link {
+  pointer-events: auto;
+  color: var(--gold);
+  text-decoration: underline;
+}
+
+.embed-stat:empty {
+  display: none;
+}
+
 .game-shell {
   padding: 22px;
 }
@@ -2914,6 +2999,10 @@ footer p {
 
   .orch-grid {
     width: min(100%, 400px, calc(100vh - 500px));
+  }
+
+  .embed .modal-panel {
+    max-height: calc(100vh - 24px);
   }
 }
 }

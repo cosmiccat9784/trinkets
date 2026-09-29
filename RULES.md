@@ -49,6 +49,12 @@ chrome eats more viewport height than developers expect.
    `minmax(0, 1fr)` columns inside a capped-width container. Maze cells are
    display-only (movement is via d-pad/keys), so shrinking them is always safe.
 
+7. **Embeddable by construction.** Every game also runs inside embed.html
+   (no topbar, no shelf, no page-specific DOM). Starters must only touch the
+   `#gameShell` subtree plus document-level listeners that cleanup removes.
+   Live stats for the embed caption come from `setSnapshot` — keep snapshots
+   fresh if a game tracks a score.
+
 ## Testing checklist (manual — no headless browser in this repo)
 
 - 360×640 phone portrait: every game opens with zero scrollbars.
