@@ -94,7 +94,7 @@ window.addEventListener("hashchange", () => {
   if (id && id !== activeGameId) showGame(id);
 });
 
-const KONAMI = ["arrowup", "arrowup", "arrowdown", "arrowdown", "arrowleft", "arrowright", "arrowleft", "arrowright", "b", "a", "enter"];
+const KONAMI = ["arrowup", "arrowup", "arrowdown", "arrowdown", "arrowleft", "arrowright", "arrowleft", "arrowright", "b", "a"];
 let konamiIndex = 0;
 document.addEventListener("keydown", (e) => {
   if (e.repeat) return;
