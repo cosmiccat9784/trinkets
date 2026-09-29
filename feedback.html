@@ -28,7 +28,7 @@
             <p class="eyebrow">Feedback</p>
             <h2 id="feedback-title">Send feedback</h2>
           </div>
-          <p class="feedback-sub">Found a bug? Want a feature? Fill this in and it opens a pre-filled report you send in one click. No account needed to write it — sending uses GitHub.</p>
+          <p class="feedback-sub">No account needed for anonymous reports — they go straight to the dev's sheet. Prefer GitHub? That opens a public issue instead.</p>
           <label class="feedback-label">Game
             <select class="game-input feedback-select" id="fbGame">
               <option value="">Whole arcade</option>
@@ -65,7 +65,8 @@
           </label>
           <p class="game-message" id="fbMsg"></p>
           <div class="game-actions">
-            <button class="primary-button" id="fbSend" type="button">Send via GitHub</button>
+            <button class="primary-button" id="fbSendAnon" type="button">Send anonymously</button>
+            <button class="game-action" id="fbSend" type="button">Send via GitHub</button>
           </div>
         </div>
 
@@ -92,6 +93,6 @@
       <p>Trinkets Arcade keeps the shelf stocked with small, silly, satisfying playthings.</p>
     </footer>
 
-    <script src="feedback.js?v=1"></script>
+    <script src="feedback.js?v=2"></script>
   </body>
 </html>

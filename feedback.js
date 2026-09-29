@@ -1,5 +1,9 @@
 const FEEDBACK_REPO = "cosmiccat9784/trinkets";
 const FEEDBACK_LOG_KEY = "trinkets-feedback-log";
+// Anonymous inbox: paste your Google Apps Script web-app URL between the quotes.
+// (See feedback-server.gs for the 5-minute setup.) Leave empty to hide the
+// anonymous option until then.
+const FEEDBACK_SHEET_URL = "";
 const GAME_NAMES = {
   "": "Whole arcade",
   switchback: "Switchback Tiles",
@@ -137,11 +141,59 @@ function renderInbox() {
     });
 }
 
+function readFields() {
+  return {
+    game: fbGame.value,
+    type: fbType.value,
+    subject: fbSubject.value.trim(),
+    details: fbDetails.value.trim()
+  };
+}
+
+function logSent(game, type, subject, details) {
+  const entries = readLog();
+  entries.unshift({ game, type, subject, details, at: Date.now() });
+  writeLog(entries);
+  renderLog();
+  fbSubject.value = "";
+  fbDetails.value = "";
+}
+
+async function sendAnonymous() {
+  const { game, type, subject, details } = readFields();
+  if (!subject || !details) {
+    fbMsg.textContent = "Give it a subject and a few details first.";
+    return;
+  }
+  if (!FEEDBACK_SHEET_URL) {
+    fbMsg.textContent = "Anonymous inbox isn't set up yet — use GitHub for now.";
+    return;
+  }
+  fbMsg.textContent = "Sending…";
+  try {
+    await fetch(FEEDBACK_SHEET_URL, {
+      method: "POST",
+      mode: "no-cors",
+      headers: { "Content-Type": "text/plain" },
+      body: JSON.stringify({
+        game: GAME_NAMES[game] || game,
+        type,
+        subject,
+        details,
+        page: location.href
+      })
+    });
+    logSent(game, type, subject, details);
+    fbMsg.textContent = "Sent anonymously. Thank you!";
+  } catch (err) {
+    fbMsg.textContent = "Couldn't reach the inbox. Try GitHub instead?";
+  }
+}
+
+document.querySelector("#fbSendAnon").addEventListener("click", sendAnonymous);
+
 document.querySelector("#fbSend").addEventListener("click", () => {
-  const game = fbGame.value;
-  const type = fbType.value;
-  const subject = fbSubject.value.trim();
-  const details = fbDetails.value.trim();
+  const { game, type, subject, details } = readFields();
   if (!subject || !details) {
     fbMsg.textContent = "Give it a subject and a few details first.";
     return;
@@ -149,12 +201,7 @@ document.querySelector("#fbSend").addEventListener("click", () => {
   const title = `[${GAME_NAMES[game] || game}] [${type}] ${subject}`;
   const body = `Game: ${GAME_NAMES[game] || game} (${game || "arcade"})\nType: ${type}\nPage: ${location.href}\n\n${details}\n\n---\nSent from the Trinkets Arcade feedback page.`;
   const url = `https://github.com/${FEEDBACK_REPO}/issues/new?title=${encodeURIComponent(title)}&body=${encodeURIComponent(body)}&labels=${encodeURIComponent("feedback")}`;
-  const entries = readLog();
-  entries.unshift({ game, type, subject, details, at: Date.now() });
-  writeLog(entries);
-  renderLog();
-  fbSubject.value = "";
-  fbDetails.value = "";
+  logSent(game, type, subject, details);
   fbMsg.textContent = "Opened! Hit Submit on GitHub to send it.";
   window.open(url, "_blank", "noopener");
 });
