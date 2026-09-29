@@ -19,7 +19,14 @@ const GAME_NAMES = {
   gravity: "Gravity Balls",
   spiro: "Spirograph",
   facts: "Useless Facts",
-  orchard: "Orchard Go"
+  orchard: "Orchard Go",
+  magnet: "Magnet Mess",
+  ice: "Ice Cube",
+  coin: "Coin Flip",
+  cheese: "Cheese Thief",
+  machine: "Completely Normal Machine",
+  onebutton: "One Button",
+  penguin: "Penguin Parkour"
 };
 
 const fbGame = document.querySelector("#fbGame");

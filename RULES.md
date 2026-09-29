@@ -59,6 +59,13 @@ chrome eats more viewport height than developers expect.
    to the private sheet inbox (see feedback-server.gs). No popups, no new
    windows, no accounts. The reporter's own history lives in localStorage.
 
+9. **Every shipped game must appear in the feedback form.** When you add a
+   new card to `index.html` (`data-game="…"`), immediately add a matching
+   `<option value="…">` to the Game `<select>` in `feedback.html` (keep the
+   list in shelf order, same values as `data-game`/`gameSlugs`). This keeps
+   bug reports routable — missing entries are a ship-blocker just like a
+   failing viewport check.
+
 ## Testing checklist (manual — no headless browser in this repo)
 
 - 360×640 phone portrait: every game opens with zero scrollbars.
