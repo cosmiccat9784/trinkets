@@ -43,6 +43,7 @@ Progress:
 - Anonymous feedback: Send anonymously posts to a Google Sheet via Apps Script (feedback-server.gs holds the server code); GitHub stays as the public option.
 - Feedback went anonymous-only: GitHub path and dev inbox removed, single sheet inbox, no popups or new windows.
 - Added Weird category (Facts moved in) plus 5 games: Magnet Mess, Ice Cube (BFS-verified pars), Coin Flip (persistent stats), Cheese Thief (5 kitchens), Completely Normal Machine (10 persistent discoveries).
+- Ice Cube slides with animation; Magnet spacebar fixed (was natively triggering focused X); Cheese Thief rebuilt as true stealth (cones, LOS furniture, suspicion, patrols, cat AI); Gravity Balls moved Arcade to Toys.
 - Gradient Mixer second endpoint is now a predictable dark shade of the chosen color instead of a hue rotation; range inputs claim horizontal touch gestures.
 
 TODO:

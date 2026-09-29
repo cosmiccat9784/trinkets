@@ -894,6 +894,7 @@ body.embed {
 }
 
 .ice-grid {
+  position: relative;
   display: grid;
   grid-template-columns: repeat(6, minmax(0, 1fr));
   gap: 6px;
@@ -902,6 +903,14 @@ body.embed {
   touch-action: none;
   user-select: none;
   -webkit-user-select: none;
+}
+
+.ice-ghost {
+  position: absolute;
+  z-index: 2;
+  display: grid;
+  place-items: center;
+  pointer-events: none;
 }
 
 .ice-cell {

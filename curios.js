@@ -261,7 +261,6 @@ function startMagnetMess() {
 
   function keydown(e) {
     if (e.code === "Space") {
-      if (document.activeElement && document.activeElement.tagName === "BUTTON") return;
       e.preventDefault();
       flip();
     }
@@ -390,6 +389,8 @@ function startIceCube() {
   let boardsCleared = 0;
   let boardNum = 0;
   let won = false;
+  let animating = false;
+  let hideCube = false;
   let history = [];
 
   function newBoard() {
@@ -412,10 +413,12 @@ function startIceCube() {
   }
 
   function slide(dir) {
-    if (won || movesLeft <= 0) return;
+    if (won || movesLeft <= 0 || animating) return;
     const [dx, dy] = DIRS[dir];
     const [nx, ny] = iceSlide(board, cx, cy, dx, dy);
     if (nx === cx && ny === cy) return;
+    const ox = cx;
+    const oy = cy;
     history.push({ x: cx, y: cy, left: movesLeft });
     if (history.length > 200) history.shift();
     cx = nx;
@@ -429,7 +432,42 @@ function startIceCube() {
     } else if (movesLeft <= 0) {
       message.textContent = "Melted into a puddle. Reset and try again.";
     }
+    animateSlide(ox, oy);
+  }
+
+  function animateSlide(ox, oy) {
+    animating = true;
+    hideCube = true;
     render();
+    const first = grid.querySelector(".ice-cell");
+    const cw = first ? first.getBoundingClientRect().width : 48;
+    const gap = 6;
+    const dist = Math.abs(cx - ox) + Math.abs(cy - oy);
+    const dur = Math.min(650, 110 + dist * 90);
+    const ghost = document.createElement("div");
+    ghost.className = "ice-ghost";
+    const inner = document.createElement("div");
+    inner.className = "ice-cube" + (won ? " landed" : "");
+    const shrink = budget > 0 ? 0.55 + 0.45 * (movesLeft / budget) : 1;
+    inner.style.transform = `scale(${shrink.toFixed(2)})`;
+    ghost.append(inner);
+    ghost.style.width = cw + "px";
+    ghost.style.height = cw + "px";
+    ghost.style.transition = "none";
+    ghost.style.left = (ox * (cw + gap)) + "px";
+    ghost.style.top = (oy * (cw + gap)) + "px";
+    grid.append(ghost);
+    requestAnimationFrame(() => {
+      ghost.style.transition = `left ${dur}ms linear, top ${dur}ms linear`;
+      ghost.style.left = (cx * (cw + gap)) + "px";
+      ghost.style.top = (cy * (cw + gap)) + "px";
+    });
+    setTimeout(() => {
+      ghost.remove();
+      hideCube = false;
+      animating = false;
+      render();
+    }, dur + 60);
   }
 
   function render() {
@@ -445,7 +483,7 @@ function startIceCube() {
           cell.classList.remove("f");
           cell.classList.add("t");
         }
-        if (x === cx && y === cy) {
+        if (x === cx && y === cy && !hideCube) {
           const cube = document.createElement("div");
           cube.className = "ice-cube" + (won ? " landed" : "");
           const shrink = budget > 0 ? 0.55 + 0.45 * (movesLeft / budget) : 1;
@@ -498,6 +536,7 @@ function startIceCube() {
     btn.addEventListener("click", () => slide(btn.dataset.ice));
   });
   document.querySelector("#iceUndo").addEventListener("click", () => {
+    if (animating) return;
     const prev = history.pop();
     if (!prev) return;
     cx = prev.x;
@@ -508,6 +547,7 @@ function startIceCube() {
     render();
   });
   document.querySelector("#iceReset").addEventListener("click", () => {
+    if (animating) return;
     cx = startX;
     cy = startY;
     movesLeft = budget;
@@ -516,7 +556,10 @@ function startIceCube() {
     message.textContent = "Slide the cube onto the gold ring before it melts.";
     render();
   });
-  document.querySelector("#iceNext").addEventListener("click", newBoard);
+  document.querySelector("#iceNext").addEventListener("click", () => {
+    if (animating) return;
+    newBoard();
+  });
   document.addEventListener("keydown", keydown);
   activeCleanup = () => {
     document.removeEventListener("keydown", keydown);
@@ -839,49 +882,47 @@ function startCheeseThief() {
 
   const LEVELS = [
     {
-      hint: "Drag the mouse. Grab cheese. Get home. Mind the light.",
+      hint: "Drag to sneak. Grab cheese. Get home. Mind the sweeping light.",
       cheese: [{ x: 620, y: 90 }, { x: 620, y: 390 }, { x: 360, y: 240 }],
       hole: { x: 70, y: 410 },
-      lights: [{ cx: 360, cy: 240, ax: 250, ay: 140, w: 0.45, phase: 0, r: 74 }],
-      cat: null, vacuum: null, chef: null, plates: false
-    },
-    {
-      hint: "The cat sleeps. Probably. Don't wake it.",
-      cheese: [{ x: 630, y: 80 }, { x: 630, y: 400 }, { x: 360, y: 120 }, { x: 200, y: 400 }],
-      hole: { x: 70, y: 410 },
-      lights: [{ cx: 360, cy: 240, ax: 260, ay: 150, w: 0.55, phase: 1, r: 70 }],
-      cat: { x: 590, y: 90, r: 26, wake: 86 },
-      vacuum: null, chef: null, plates: false
-    },
-    {
-      hint: "The vacuum fears nothing and sees everything.",
-      cheese: [{ x: 630, y: 80 }, { x: 630, y: 400 }, { x: 360, y: 240 }, { x: 120, y: 90 }],
-      hole: { x: 70, y: 410 },
-      lights: [{ cx: 360, cy: 240, ax: 240, ay: 130, w: 0.6, phase: 2, r: 66 }],
+      furniture: [{ x: 300, y: 180, w: 120, h: 40 }],
+      lamps: [{ x: 360, y: 240, range: 210, half: 0.42, speed: 0.5, phase: 0 }],
+      chefs: [],
       cat: null,
-      vacuum: { x1: 120, x2: 600, y: 300, speed: 130 },
-      chef: null, plates: false
-    },
-    {
-      hint: "The chef patrols. His eyes are everywhere his hat points.",
-      cheese: [{ x: 640, y: 70 }, { x: 640, y: 410 }, { x: 360, y: 240 }, { x: 120, y: 240 }],
-      hole: { x: 70, y: 410 },
-      lights: [{ cx: 360, cy: 240, ax: 220, ay: 120, w: 0.6, phase: 0, r: 62 }],
-      cat: null, vacuum: null,
-      chef: { path: [{ x: 120, y: 100 }, { x: 600, y: 100 }, { x: 600, y: 380 }, { x: 120, y: 380 }], speed: 95, vision: 115 },
+      vacuum: null,
       plates: false
     },
     {
-      hint: "Everything is faster. Also: falling plates.",
+      hint: "The cat naps. Probably. Don't wake it.",
+      cheese: [{ x: 630, y: 80 }, { x: 630, y: 400 }, { x: 360, y: 120 }, { x: 200, y: 400 }],
+      hole: { x: 70, y: 410 },
+      furniture: [{ x: 140, y: 160, w: 120, h: 40 }, { x: 440, y: 280, w: 120, h: 40 }],
+      lamps: [{ x: 360, y: 240, range: 200, half: 0.4, speed: 0.6, phase: 1 }],
+      chefs: [],
+      cat: { x: 590, y: 90, r: 26, wake: 86 },
+      vacuum: null,
+      plates: false
+    },
+    {
+      hint: "The chef patrols. Watch the dotted path — and his eyes.",
+      cheese: [{ x: 640, y: 70 }, { x: 640, y: 410 }, { x: 360, y: 240 }, { x: 120, y: 240 }],
+      hole: { x: 70, y: 410 },
+      furniture: [{ x: 240, y: 60, w: 40, h: 140 }, { x: 440, y: 280, w: 40, h: 140 }, { x: 300, y: 380, w: 120, h: 40 }],
+      lamps: [{ x: 360, y: 240, range: 190, half: 0.38, speed: 0.55, phase: 0 }],
+      chefs: [{ path: [{ x: 150, y: 120 }, { x: 570, y: 120 }, { x: 570, y: 340 }, { x: 150, y: 340 }], speed: 95, range: 150, half: 0.5 }],
+      cat: null,
+      vacuum: null,
+      plates: false
+    },
+    {
+      hint: "Full house. Everything is faster. Also: falling plates.",
       cheese: [{ x: 640, y: 70 }, { x: 640, y: 410 }, { x: 360, y: 120 }, { x: 360, y: 360 }, { x: 120, y: 90 }],
       hole: { x: 70, y: 410 },
-      lights: [
-        { cx: 250, cy: 240, ax: 170, ay: 160, w: 0.8, phase: 0, r: 64 },
-        { cx: 480, cy: 240, ax: 170, ay: 160, w: 0.7, phase: 2.4, r: 64 }
-      ],
+      furniture: [{ x: 240, y: 60, w: 40, h: 140 }, { x: 440, y: 280, w: 40, h: 140 }],
+      lamps: [{ x: 360, y: 240, range: 200, half: 0.4, speed: 0.85, phase: 0 }],
+      chefs: [{ path: [{ x: 200, y: 80 }, { x: 520, y: 80 }, { x: 520, y: 400 }, { x: 200, y: 400 }], speed: 120, range: 160, half: 0.5 }],
       cat: { x: 120, y: 390, r: 26, wake: 86 },
       vacuum: { x1: 140, x2: 580, y: 240, speed: 160 },
-      chef: { path: [{ x: 200, y: 80 }, { x: 520, y: 80 }, { x: 520, y: 400 }, { x: 200, y: 400 }], speed: 120, vision: 120 },
       plates: true
     }
   ];
@@ -894,6 +935,9 @@ function startCheeseThief() {
   let raf = 0;
   let last = performance.now();
   let time = 0;
+  let sus = 0;
+  let spotX = 0;
+  let spotY = 0;
   let plateTimer = 0;
   let telegraphs = [];
   let splats = [];
@@ -903,25 +947,76 @@ function startCheeseThief() {
   function startLevel(index) {
     const def = LEVELS[index];
     state = {
-      player: { x: def.hole.x, y: def.hole.y - 60, vx: 0, vy: 0 },
-      cheese: def.cheese.map((c) => ({ ...c, home: { ...c }, taken: false })),
+      player: { x: def.hole.x, y: def.hole.y - 60 },
+      cheese: def.cheese.map((c) => ({ ...c, home: { ...c }, taken: false, delivered: false })),
       carried: -1,
-      exposure: 0,
       catAwake: 0,
-      chefAt: 0,
-      chefPos: def.chef ? { ...def.chef.path[0] } : null
+      catHome: def.cat ? { ...def.cat } : null,
+      catPos: def.cat ? { x: def.cat.x, y: def.cat.y } : null,
+      chefLeg: 0,
+      chefPos: def.chefs.length ? { ...def.chefs[0].path[0] } : null,
+      chefFace: Math.PI / 2
     };
+    sus = 0;
     telegraphs = [];
     splats = [];
     cleared = false;
     plateTimer = 2;
     nextBtn.hidden = true;
+    for (const chef of def.chefs) {
+      chef.leg = 0;
+      chef.pos = { ...chef.path[0] };
+      chef.face = Math.PI / 2;
+    }
     message.textContent = def.hint;
     render();
   }
 
   function levelDef() {
     return LEVELS[levelIndex];
+  }
+
+  function collideFurniture(p, r) {
+    for (const f of levelDef().furniture) {
+      const cx = Math.max(f.x, Math.min(p.x, f.x + f.w));
+      const cy = Math.max(f.y, Math.min(p.y, f.y + f.h));
+      const dx = p.x - cx;
+      const dy = p.y - cy;
+      const d = Math.hypot(dx, dy);
+      if (d < r) {
+        if (d === 0) {
+          p.y = f.y - r;
+        } else {
+          p.x = cx + (dx / d) * r;
+          p.y = cy + (dy / d) * r;
+        }
+      }
+    }
+  }
+
+  function losClear(x1, y1, x2, y2) {
+    const furniture = levelDef().furniture;
+    const d = Math.hypot(x2 - x1, y2 - y1);
+    const steps = Math.max(1, Math.ceil(d / 8));
+    for (let i = 1; i < steps; i++) {
+      const x = x1 + ((x2 - x1) * i) / steps;
+      const y = y1 + ((y2 - y1) * i) / steps;
+      for (const f of furniture) {
+        if (x > f.x && x < f.x + f.w && y > f.y && y < f.y + f.h) return false;
+      }
+    }
+    return true;
+  }
+
+  function inCone(px, py, ex, ey, facing, half, range) {
+    const dx = px - ex;
+    const dy = py - ey;
+    const d = Math.hypot(dx, dy);
+    if (d > range) return false;
+    let a = Math.atan2(dy, dx) - facing;
+    while (a > Math.PI) a -= Math.PI * 2;
+    while (a < -Math.PI) a += Math.PI * 2;
+    return Math.abs(a) < half;
   }
 
   function catchMouse(reason) {
@@ -936,7 +1031,13 @@ function startCheeseThief() {
     }
     state.player.x = levelDef().hole.x;
     state.player.y = levelDef().hole.y - 60;
-    state.exposure = 0;
+    sus = 0;
+    telegraphs = [];
+    if (state.catPos && state.catHome) {
+      state.catPos.x = state.catHome.x;
+      state.catPos.y = state.catHome.y;
+      state.catAwake = 0;
+    }
     if (strikes >= 3) {
       const result = recordScore("cheese", score, "high");
       message.textContent = `Caught thrice! Final score: ${score}.` + (result.isNew && score > 0 ? " New best!" : ` Best: ${result.best}.`);
@@ -962,65 +1063,82 @@ function startCheeseThief() {
     }
     p.x = Math.max(18, Math.min(W - 18, p.x));
     p.y = Math.max(18, Math.min(H - 18, p.y));
+    collideFurniture(p, 14);
 
-    let lit = false;
-    for (const l of def.lights) {
-      l.lx = l.cx + Math.cos(time * l.w + l.phase) * l.ax;
-      l.ly = l.cy + Math.sin(time * l.w * 1.3 + l.phase) * l.ay;
-      if (!cleared && Math.hypot(p.x - l.lx, p.y - l.ly) < l.r) lit = true;
+    let seen = false;
+    for (const lamp of def.lamps) {
+      const ang = time * lamp.speed + lamp.phase;
+      lamp.angle = ang;
+      if (!cleared && inCone(p.x, p.y, lamp.x, lamp.y, ang, lamp.half, lamp.range) && losClear(lamp.x, lamp.y, p.x, p.y)) {
+        seen = true;
+        spotX = lamp.x;
+        spotY = lamp.y;
+      }
     }
-    if (lit) state.exposure = Math.min(1, state.exposure + dt * 1.6);
-    else state.exposure = Math.max(0, state.exposure - dt * 2.2);
-    if (state.exposure >= 1 && !cleared) {
+    for (const chef of def.chefs) {
+      if (!chef.leg) chef.leg = 0;
+      if (!chef.pos) chef.pos = { ...chef.path[0] };
+      if (!cleared) {
+        const target = chef.path[Math.floor(chef.leg) % chef.path.length];
+        const dx = target.x - chef.pos.x;
+        const dy = target.y - chef.pos.y;
+        const d = Math.hypot(dx, dy);
+        if (d < 10) {
+          chef.leg += 1;
+        } else {
+          chef.pos.x += (dx / d) * chef.speed * dt;
+          chef.pos.y += (dy / d) * chef.speed * dt;
+          chef.face = Math.atan2(dy, dx);
+        }
+        if (inCone(p.x, p.y, chef.pos.x, chef.pos.y, chef.face || 0, chef.half, chef.range) && losClear(chef.pos.x, chef.pos.y, p.x, p.y)) {
+          seen = true;
+          spotX = chef.pos.x;
+          spotY = chef.pos.y;
+        }
+      }
+    }
+    if (seen && !cleared) sus = Math.min(1, sus + dt * 1.4);
+    else sus = Math.max(0, sus - dt * 1.1);
+    if (sus >= 1 && !cleared) {
       catchMouse("Spotted!");
       return;
     }
 
     if (def.vacuum && !cleared) {
       const v = def.vacuum;
-      v.x = v.x === undefined ? v.x1 : v.x;
-      v.dir = v.dir === undefined ? 1 : v.dir;
+      if (v.x === undefined) {
+        v.x = v.x1;
+        v.dir = 1;
+      }
       v.x += v.dir * v.speed * dt;
       if (v.x > v.x2) { v.x = v.x2; v.dir = -1; }
       if (v.x < v.x1) { v.x = v.x1; v.dir = 1; }
-      v.y = v.y;
       if (Math.hypot(p.x - v.x, p.y - v.y) < 34) {
         catchMouse("Vacuumed!");
         return;
       }
     }
 
-    if (def.chef && !cleared) {
-      const c = def.chef;
-      const target = c.path[Math.floor(state.chefAt) % c.path.length];
-      const dx = target.x - state.chefPos.x;
-      const dy = target.y - state.chefPos.y;
-      const d = Math.hypot(dx, dy);
-      if (d < 8) {
-        state.chefAt += 1;
-      } else {
-        state.chefPos.x += (dx / d) * c.speed * dt;
-        state.chefPos.y += (dy / d) * c.speed * dt;
-      }
-      if (Math.hypot(p.x - state.chefPos.x, p.y - state.chefPos.y) < c.vision) {
-        catchMouse("The chef saw you!");
-        return;
-      }
-    }
-
-    if (def.cat && !cleared) {
+    if (def.cat && state.catPos && !cleared) {
       const c = def.cat;
-      if (Math.hypot(p.x - c.x, p.y - c.y) < c.wake) state.catAwake = 3;
+      if (Math.hypot(p.x - state.catPos.x, p.y - state.catPos.y) < c.wake) {
+        state.catAwake = 4;
+      }
       if (state.catAwake > 0) {
         state.catAwake -= dt;
-        const dx = p.x - c.x;
-        const dy = p.y - c.y;
+        const dx = p.x - state.catPos.x;
+        const dy = p.y - state.catPos.y;
         const d = Math.max(1, Math.hypot(dx, dy));
-        c.x += (dx / d) * 175 * dt;
-        c.y += (dy / d) * 175 * dt;
-        if (d < 26) {
+        state.catPos.x += (dx / d) * 190 * dt;
+        state.catPos.y += (dy / d) * 190 * dt;
+        collideFurniture(state.catPos, c.r);
+        if (d < c.r + 14) {
           catchMouse("The cat got you!");
           return;
+        }
+        if (state.catAwake <= 0) {
+          state.catPos.x = state.catHome.x;
+          state.catPos.y = state.catHome.y;
         }
       }
     }
@@ -1092,6 +1210,15 @@ function startCheeseThief() {
     });
   }
 
+  function drawCone(x, y, ang, half, range, color) {
+    ctx.fillStyle = color;
+    ctx.beginPath();
+    ctx.moveTo(x, y);
+    ctx.arc(x, y, range, ang - half, ang + half);
+    ctx.closePath();
+    ctx.fill();
+  }
+
   function draw() {
     const def = levelDef();
     ctx.fillStyle = "#4a3524";
@@ -1110,18 +1237,47 @@ function startCheeseThief() {
       ctx.lineTo(W, y);
       ctx.stroke();
     }
+    for (const f of def.furniture) {
+      ctx.fillStyle = "#7a5c3e";
+      ctx.strokeStyle = "#2e1f14";
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.roundRect(f.x, f.y, f.w, f.h, 10);
+      ctx.fill();
+      ctx.stroke();
+      ctx.fillStyle = "rgba(255,255,255,0.12)";
+      ctx.fillRect(f.x + 8, f.y + 8, f.w - 16, 6);
+    }
+    if (def.chefs && def.chefs.length) {
+      for (const chef of def.chefs) {
+        ctx.strokeStyle = "rgba(255,255,255,0.2)";
+        ctx.lineWidth = 2;
+        ctx.setLineDash([6, 8]);
+        ctx.beginPath();
+        chef.path.forEach((wp, i) => {
+          if (i === 0) ctx.moveTo(wp.x, wp.y);
+          else ctx.lineTo(wp.x, wp.y);
+        });
+        ctx.closePath();
+        ctx.stroke();
+        ctx.setLineDash([]);
+      }
+    }
     ctx.fillStyle = "#0c0c14";
     ctx.beginPath();
     ctx.arc(def.hole.x, def.hole.y, 24, Math.PI, 0);
     ctx.fill();
     ctx.fillRect(def.hole.x - 24, def.hole.y - 4, 48, 8);
-    for (const l of def.lights) {
-      const grad = ctx.createRadialGradient(l.lx, l.ly, 6, l.lx, l.ly, l.r);
-      grad.addColorStop(0, "rgba(255,240,180,0.85)");
-      grad.addColorStop(1, "rgba(255,240,180,0)");
-      ctx.fillStyle = grad;
+    for (const lamp of def.lamps) {
+      const ang = lamp.angle === undefined ? lamp.phase : lamp.angle;
+      drawCone(lamp.x, lamp.y, ang, lamp.half, lamp.range, "rgba(255,240,180,0.28)");
+      ctx.fillStyle = "#394354";
       ctx.beginPath();
-      ctx.arc(l.lx, l.ly, l.r, 0, Math.PI * 2);
+      ctx.arc(lamp.x, lamp.y, 10, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = "#ffe9a8";
+      ctx.beginPath();
+      ctx.arc(lamp.x, lamp.y, 5, 0, Math.PI * 2);
       ctx.fill();
     }
     for (const t of telegraphs) {
@@ -1157,20 +1313,20 @@ function startCheeseThief() {
       ctx.stroke();
     });
     const p = state.player;
-    if (def.cat) {
+    if (def.cat && state.catPos) {
       const c = def.cat;
       ctx.fillStyle = "#e8913a";
-      ctx.beginPath();
-      ctx.arc(c.x, c.y, c.r, 0, Math.PI * 2);
-      ctx.fill();
       ctx.strokeStyle = "#7a4a21";
       ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(state.catPos.x, state.catPos.y, c.r, 0, Math.PI * 2);
+      ctx.fill();
       ctx.stroke();
       ctx.fillStyle = "#fff";
       ctx.font = "bold 16px sans-serif";
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
-      ctx.fillText(state.catAwake > 0 ? "!" : "z", c.x, c.y - c.r - 10);
+      ctx.fillText(state.catAwake > 0 ? "!" : "z", state.catPos.x, state.catPos.y - c.r - 10);
     }
     if (def.vacuum) {
       const v = def.vacuum;
@@ -1186,22 +1342,19 @@ function startCheeseThief() {
       ctx.arc(v.x, v.y, 5, 0, Math.PI * 2);
       ctx.fill();
     }
-    if (def.chef && state.chefPos) {
+    for (const chef of def.chefs) {
+      if (!chef.pos) continue;
+      drawCone(chef.pos.x, chef.pos.y, chef.face || 0, chef.half, chef.range, "rgba(255,107,107,0.18)");
       ctx.fillStyle = "#fafafa";
       ctx.strokeStyle = "#394354";
       ctx.lineWidth = 2;
       ctx.beginPath();
-      ctx.arc(state.chefPos.x, state.chefPos.y, 16, 0, Math.PI * 2);
+      ctx.arc(chef.pos.x, chef.pos.y, 16, 0, Math.PI * 2);
       ctx.fill();
       ctx.stroke();
       ctx.fillStyle = "#fafafa";
-      ctx.fillRect(state.chefPos.x - 10, state.chefPos.y - 34, 20, 12);
-      ctx.strokeRect(state.chefPos.x - 10, state.chefPos.y - 34, 20, 12);
-      ctx.strokeStyle = "rgba(255,107,107,0.35)";
-      ctx.lineWidth = 2;
-      ctx.beginPath();
-      ctx.arc(state.chefPos.x, state.chefPos.y, def.chef.vision, 0, Math.PI * 2);
-      ctx.stroke();
+      ctx.fillRect(chef.pos.x - 10, chef.pos.y - 34, 20, 12);
+      ctx.strokeRect(chef.pos.x - 10, chef.pos.y - 34, 20, 12);
     }
     ctx.fillStyle = "#9aa3b2";
     ctx.strokeStyle = "#0f1320";
@@ -1221,8 +1374,13 @@ function startCheeseThief() {
     ctx.moveTo(p.x + 12, p.y + 8);
     ctx.quadraticCurveTo(p.x + 24, p.y + 12, p.x + 20, p.y + 24);
     ctx.stroke();
-    if (state.exposure > 0) {
-      ctx.strokeStyle = `rgba(255,80,80,${state.exposure})`;
+    if (sus > 0) {
+      ctx.fillStyle = `rgba(255,80,80,${Math.min(1, sus + 0.2)})`;
+      ctx.font = "bold 26px sans-serif";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText(sus > 0.5 ? "!" : "?", spotX, spotY - 24);
+      ctx.strokeStyle = `rgba(255,80,80,${sus})`;
       ctx.lineWidth = 4;
       ctx.beginPath();
       ctx.arc(p.x, p.y, 20, 0, Math.PI * 2);
@@ -1258,12 +1416,14 @@ function startCheeseThief() {
     const p = toCanvas(e);
     state.player.x = Math.max(18, Math.min(W - 18, p.x));
     state.player.y = Math.max(18, Math.min(H - 18, p.y));
+    collideFurniture(state.player, 14);
   });
   canvas.addEventListener("pointermove", (e) => {
     if (!dragging || cleared) return;
     const p = toCanvas(e);
     state.player.x = Math.max(18, Math.min(W - 18, p.x));
     state.player.y = Math.max(18, Math.min(H - 18, p.y));
+    collideFurniture(state.player, 14);
   });
   const stopDrag = () => { dragging = false; };
   canvas.addEventListener("pointerup", stopDrag);
