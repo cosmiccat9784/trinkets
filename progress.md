@@ -35,6 +35,7 @@ Progress:
 - Domino chain rebuilt on contact physics: next domino starts on touch (~30°) with momentum transfer, pusher leans instead of passing through; proven by simulation (12-chain topples in order in ~2s, max overlap 3.4px).
 - Comet Catch gained rare green comets worth 25 points with matching trails, popups, difficulty scaling, and end-burst.
 - Added Orchard Go (Tic-Tac-Go adaptation): push oranges into a line of three, crabapple X-lines lose instantly, infinite undo, move-count bests, daily-seeded first board plus 11 procedural boards proven solvable by solution-replay test (120/120).
+- Orchard Go: 4 crabapples and 40 boards per visit; fixed setup X-lines that made perfect solutions end in simultaneous win+lose (win now takes precedence); re-proven 520/520 across seed families.
 - Gradient Mixer second endpoint is now a predictable dark shade of the chosen color instead of a hue rotation; range inputs claim horizontal touch gestures.
 
 TODO:

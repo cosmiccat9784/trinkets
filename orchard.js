@@ -67,7 +67,7 @@ function tryGenOrchard(rand) {
   const taken = new Set(reserved);
   const xTiles = [];
   guard = 0;
-  while (xTiles.length < 3 && guard++ < 300) {
+  while (xTiles.length < 4 && guard++ < 300) {
     const x = 1 + Math.floor(rand() * 5);
     const y = 1 + Math.floor(rand() * 5);
     const k = orchKey(x, y);
@@ -75,7 +75,8 @@ function tryGenOrchard(rand) {
     taken.add(k);
     xTiles.push({ x, y });
   }
-  if (xTiles.length < 3) return null;
+  if (xTiles.length < 4) return null;
+  if (findOrchardLine(xTiles)) return null;
 
   const atTile = (x, y) =>
     oTiles.concat(xTiles).find((t) => t.x === x && t.y === y) || null;
@@ -135,7 +136,7 @@ function genOrchardLevel(rand) {
     walls: [],
     player: { x: 3, y: 2 },
     oTiles: [{ x: 2, y: 3 }, { x: 4, y: 3 }],
-    xTiles: [{ x: 1, y: 1 }, { x: 5, y: 1 }, { x: 3, y: 5 }],
+    xTiles: [{ x: 1, y: 1 }, { x: 5, y: 1 }, { x: 3, y: 5 }, { x: 1, y: 5 }],
     solution: [[0, 1]]
   };
 }
@@ -167,7 +168,7 @@ function startOrchardGo() {
     `
   );
 
-  const ORCH_COUNT = 12;
+  const ORCH_COUNT = 40;
   const today = new Date().toISOString().slice(0, 10);
   let levels = [];
   let orchIndex = 0;
@@ -270,6 +271,15 @@ function startOrchardGo() {
   }
 
   function afterMove() {
+    const oLine = findOrchardLine([{ ...player }, ...oTiles.map((t) => ({ ...t }))]);
+    if (oLine) {
+      won = true;
+      winCells = oLine;
+      const result = recordScore("orchard", moves, "low");
+      message.textContent = `Orchard complete in ${moves} moves!` + (result.isNew ? " New best!" : ` Best: ${result.best}.`);
+      render();
+      return;
+    }
     const xLine = findOrchardLine(xTiles);
     if (xLine) {
       lost = true;
@@ -278,15 +288,7 @@ function startOrchardGo() {
       render();
       return;
     }
-    const oLine = findOrchardLine([{ ...player }, ...oTiles.map((t) => ({ ...t }))]);
-    if (oLine) {
-      won = true;
-      winCells = oLine;
-      const result = recordScore("orchard", moves, "low");
-      message.textContent = `Orchard complete in ${moves} moves!` + (result.isNew ? " New best!" : ` Best: ${result.best}.`);
-    } else {
-      message.textContent = "Shove oranges into a line of three. Crabapples must never line up.";
-    }
+    message.textContent = "Shove oranges into a line of three. Crabapples must never line up.";
     render();
   }
 
