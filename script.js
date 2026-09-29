@@ -94,6 +94,28 @@ window.addEventListener("hashchange", () => {
   if (id && id !== activeGameId) showGame(id);
 });
 
+const KONAMI = ["arrowup", "arrowup", "arrowdown", "arrowdown", "arrowleft", "arrowright", "arrowleft", "arrowright", "b", "a", "enter"];
+let konamiIndex = 0;
+document.addEventListener("keydown", (e) => {
+  if (e.repeat) return;
+  const tag = document.activeElement && document.activeElement.tagName;
+  if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT" || gameModal.classList.contains("open")) {
+    konamiIndex = 0;
+    return;
+  }
+  const k = e.key.toLowerCase();
+  if (k === KONAMI[konamiIndex]) {
+    konamiIndex += 1;
+  } else {
+    konamiIndex = k === KONAMI[0] ? 1 : 0;
+  }
+  if (konamiIndex >= KONAMI.length) {
+    konamiIndex = 0;
+    window.__oneButtonKonami = true;
+    showGame("onebutton");
+  }
+});
+
 window.addEventListener("DOMContentLoaded", () => {
   const id = slugToGame(location.hash.slice(1));
   if (id) showGame(id);

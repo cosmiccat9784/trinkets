@@ -2681,6 +2681,12 @@ function startOneButton() {
   document.addEventListener("keydown", keydown);
   document.addEventListener("keyup", keyup);
   bestLabel.textContent = `Best: ${best} m`;
+  if (window.__oneButtonKonami) {
+    window.__oneButtonKonami = false;
+    chaos = 100;
+    showBanner("KONAMI ACCEPTED. CHAOS.");
+    message.textContent = "Cheater. Respect.";
+  }
   setSnapshot({ mode: "playing", game: "One Button", dist: 0, best, chaos: 0 });
   activeCleanup = () => {
     cancelAnimationFrame(raf);
