@@ -2299,6 +2299,152 @@ body.modal-open {
   text-align: right;
 }
 
+.orch-grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 6px;
+  width: min(100%, 400px, calc(100dvh - 500px));
+  margin: 0 auto;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.orch-cell {
+  aspect-ratio: 1;
+  border-radius: 10px;
+}
+
+.orch-cell.f {
+  background: #fffdf6;
+  border: 2px solid rgba(39, 49, 63, 0.14);
+}
+
+.orch-cell.w {
+  background: var(--ink);
+}
+
+.orch-cell.o {
+  position: relative;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #ffe0ae, #ff9f2e 70%);
+  border: 3px solid var(--line);
+}
+
+.orch-cell.o::after {
+  content: "";
+  position: absolute;
+  top: -5px;
+  right: 8%;
+  width: 34%;
+  height: 22%;
+  background: var(--mint);
+  border: 2px solid var(--line);
+  border-radius: 50% 50% 50% 4px;
+  transform: rotate(24deg);
+}
+
+.orch-cell.p {
+  position: relative;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 38% 40%, var(--ink) 0 6%, transparent 7%),
+    radial-gradient(circle at 62% 40%, var(--ink) 0 6%, transparent 7%),
+    radial-gradient(circle at 35% 30%, #ffe0ae, #ff9f2e 70%);
+  border: 3px solid var(--line);
+}
+
+.orch-cell.p::after {
+  content: "";
+  position: absolute;
+  top: -5px;
+  right: 8%;
+  width: 34%;
+  height: 22%;
+  background: var(--mint);
+  border: 2px solid var(--line);
+  border-radius: 50% 50% 50% 4px;
+  transform: rotate(24deg);
+}
+
+.orch-cell.x {
+  position: relative;
+  background: #fff8ea;
+  border: 3px solid var(--line);
+}
+
+.orch-cell.x::before,
+.orch-cell.x::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 64%;
+  height: 14%;
+  background: var(--coral);
+  border-radius: 99px;
+  transform: translate(-50%, -50%) rotate(45deg);
+}
+
+.orch-cell.x::after {
+  transform: translate(-50%, -50%) rotate(-45deg);
+}
+
+.orch-cell.win {
+  box-shadow: 0 0 0 3px var(--gold), 0 0 14px var(--gold);
+}
+
+.orch-cell.doomed {
+  animation: doom-pulse 0.5s ease infinite alternate;
+}
+
+@keyframes doom-pulse {
+  0% { transform: scale(1); box-shadow: 4px 4px 0 var(--line); }
+  100% { transform: scale(1.08); box-shadow: 4px 4px 0 var(--line), 0 0 14px var(--coral); }
+}
+
+.orchard-art {
+  position: relative;
+  background: #e7f4dc;
+  overflow: hidden;
+}
+
+.orch-dot {
+  position: absolute;
+  top: calc(50% - 17px);
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #ffe0ae, #ff9f2e 70%);
+  border: 3px solid var(--line);
+}
+
+.od1 { left: 20%; }
+.od2 { left: calc(50% - 17px); animation: od-bounce 1.6s ease-in-out infinite; }
+.od3 { right: 20%; }
+
+@keyframes od-bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+
+.orch-ex {
+  position: absolute;
+  right: 14%;
+  bottom: 14%;
+  width: 32px;
+  height: 32px;
+  display: grid;
+  place-items: center;
+  background: #fff8ea;
+  border: 3px solid var(--line);
+  border-radius: 8px;
+  color: var(--coral);
+  font-size: 1.3rem;
+  font-weight: 900;
+  transform: rotate(8deg);
+}
+
 .finish-pulse {
   animation: finish-bounce 0.6s ease infinite alternate;
 }
@@ -2738,6 +2884,11 @@ footer p {
   .bw-sheet {
     width: min(100%, 640px, calc((100vh - 380px) * 1.75));
   }
+
+  .orch-grid {
+    width: min(100%, 400px, calc(100vh - 500px));
+  }
+}
 }
 
 @media (prefers-reduced-motion: reduce) {

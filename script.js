@@ -59,7 +59,8 @@ const gameSlugs = {
   zen: "zen_sand",
   gravity: "gravity_balls",
   spiro: "spirograph",
-  facts: "useless_facts"
+  facts: "useless_facts",
+  orchard: "orchard_go"
 };
 
 function slugToGame(slug) {
