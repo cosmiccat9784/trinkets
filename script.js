@@ -2669,6 +2669,8 @@ function startToybox() {
 
     const dominoPalette = [["#ffd9d9", "#e88"], ["#ffedbe", "#d9b64f"], ["#c9efe6", "#4fae9c"], ["#cfe0f5", "#5b84c4"], ["#ddd0f5", "#8a68c8"]];
     let lastDown = -1;
+    const DOM_H = 40;
+    const DOM_W = 10;
 
     function buildChain() {
       dominos.length = 0;
@@ -2697,21 +2699,47 @@ function startToybox() {
       toy.querySelector("#dominoLabel").textContent = "Domino chain · " + down + "/" + dominos.length + " down";
     }
 
+    function topPoint(d) {
+      return {
+        x: d.x + DOM_H * Math.sin(d.angle),
+        y: (h - 5) - DOM_H * Math.cos(d.angle)
+      };
+    }
+
     function physics(dt) {
-      for (let i = 0; i < dominos.length; i++) {
-        const d = dominos[i];
+      for (const d of dominos) {
         if (d.falling && !d.fallen) {
           d.angVel += 4.2 * dt;
           d.angle += d.angVel * dt;
-          if (d.angle >= Math.PI / 2.2) {
-            d.angle = Math.PI / 2.2;
-            d.fallen = true;
-            d.falling = false;
-            if (i + 1 < dominos.length && !dominos[i + 1].fallen) {
-              dominos[i + 1].falling = true;
-              dominos[i + 1].angVel = 1.7;
+        }
+      }
+      for (let pass = 0; pass < 3; pass++) {
+        for (let i = 0; i < dominos.length - 1; i++) {
+          const a = dominos[i];
+          const b = dominos[i + 1];
+          if ((!a.falling && !a.fallen) || (b.fallen && b.angle >= Math.PI / 2.2)) continue;
+          const lean = Math.sin(Math.min(b.angle, 0.6)) * DOM_H * 0.15;
+          const faceX = b.x - DOM_W / 2 + lean;
+          const t = topPoint(a);
+          if (t.x > faceX && t.y > (h - 5) - DOM_H) {
+            if (!b.fallen) {
+              b.falling = true;
+              b.angVel = Math.max(b.angVel, a.angVel * 0.9);
+            }
+            const ratio = Math.max(-1, Math.min(1, (faceX - a.x) / DOM_H));
+            const clamped = Math.asin(ratio);
+            if (clamped < a.angle) {
+              a.angle = Math.max(0, clamped);
+              a.angVel *= 0.4;
             }
           }
+        }
+      }
+      for (const d of dominos) {
+        if (d.falling && !d.fallen && d.angle >= Math.PI / 2.2) {
+          d.angle = Math.PI / 2.2;
+          d.fallen = true;
+          d.falling = false;
         }
       }
     }
