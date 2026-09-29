@@ -2916,9 +2916,9 @@ function start2048() {
         let row = [...grid[r]];
         if (dir === "right") row.reverse();
         const sl = slide(row);
-        if (dir === "right") sl.reverse();
-        if (sl.some((v, i) => v !== oldRow[i])) moved = true;
-        grid[r] = sl;
+        const final = dir === "right" ? [...sl].reverse() : sl;
+        if (final.some((v, i) => v !== oldRow[i])) moved = true;
+        grid[r] = final;
         const rowTiles = tiles.filter((t) => t.r === r).sort((a, b) => a.c - b.c);
         if (dir === "right") rowTiles.reverse();
         const lineTiles = processLine(rowTiles, sl, (i) => [r, dir === "right" ? 3 - i : i]);
@@ -2930,9 +2930,9 @@ function start2048() {
         let col = [...oldCol];
         if (dir === "down") col.reverse();
         const sl = slide(col);
-        if (dir === "down") sl.reverse();
-        if (sl.some((v, i) => v !== oldCol[i])) moved = true;
-        for (let r = 0; r < 4; r++) grid[r][c] = sl[r];
+        const final = dir === "down" ? [...sl].reverse() : sl;
+        if (final.some((v, i) => v !== oldCol[i])) moved = true;
+        for (let r = 0; r < 4; r++) grid[r][c] = final[r];
         const colTiles = tiles.filter((t) => t.c === c).sort((a, b) => a.r - b.r);
         if (dir === "down") colTiles.reverse();
         const lineTiles = processLine(colTiles, sl, (i) => [dir === "down" ? 3 - i : i, c]);

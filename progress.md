@@ -29,6 +29,7 @@ Progress:
 - Added footer build tag showing the running script version so stale-cache reports are instantly diagnosable; re-bumped script to v12 after a same-URL content change slipped through.
 - Gravity Balls is now customizable: Size, Speed, and Max Balls sliders plus color swatches (Mix default); Slow-mo toggle retired in favor of the Speed slider.
 - Stats band is now live: local high scores persist per game (comet, bash, 2048 best, clue, maze best escape, forge progress, wrap chain, spiro total) with New best callouts; band shows tiny games, personal bests, saved picks, facts learned.
+- Fixed 2048 right/down moves placing tiles mirrored and mispairing merges (tile objects desynced from grid); proven with 6000-trial fuzz test against the shipped code (old logic failed 2361).
 - Gradient Mixer second endpoint is now a predictable dark shade of the chosen color instead of a hue rotation; range inputs claim horizontal touch gestures.
 
 TODO:
