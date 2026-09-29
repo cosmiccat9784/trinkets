@@ -3,7 +3,7 @@ const FEEDBACK_LOG_KEY = "trinkets-feedback-log";
 // Anonymous inbox: paste your Google Apps Script web-app URL between the quotes.
 // (See feedback-server.gs for the 5-minute setup.) Leave empty to hide the
 // anonymous option until then.
-const FEEDBACK_SHEET_URL = "";
+const FEEDBACK_SHEET_URL = "https://script.google.com/macros/s/AKfycbx5mjh-z38RvN9M7o_mAyfVq70TOsZoUwIQjylAvdXlIX5hGpPSHCm-K-qRVEvgRAclOg/exec";
 const GAME_NAMES = {
   "": "Whole arcade",
   switchback: "Switchback Tiles",
