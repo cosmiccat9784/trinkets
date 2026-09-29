@@ -24,6 +24,7 @@ Progress:
 - iPhone crash fix: Switchback tiles converted from PNG images to inline SVG (no more per-tap image decode storm), puzzle history capped at one board, fit pass switched from zoom to transform scale; maze hint hidden and toy heights reduced on small screens; how-to-play collapses to one column; vh fallbacks for browsers without dvh.
 - Modal header is now sticky so the X button never scrolls away on tall games like Toybox.
 - Toybox double-width toys forced a phantom second column on phones; narrow screens now force single-column stacking.
+- Toybox pagination now reflows on viewport resize/rotation, keeping the first visible toy stable, with its resize listener cleaned up on close.
 
 TODO:
 - Manual in-browser playtest recommended from the already-open file URL.

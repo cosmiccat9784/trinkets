@@ -2661,9 +2661,8 @@ function startToybox() {
   })();
 
   const allToys = [...grid.children];
-  const toysPerPage = grid.clientWidth < 560 ? 2 : 4;
+  let toysPerPage = grid.clientWidth < 560 ? 2 : 4;
   let toyPage = 0;
-  const toyPageCount = Math.max(1, Math.ceil(allToys.length / toysPerPage));
   const pager = document.createElement("div");
   pager.className = "toybox-pager";
   pager.innerHTML = `<button class="game-action toybox-mini" id="toyPrev" type="button">‹ Prev</button><span class="toybox-page-label" id="toyPageLabel"></span><button class="game-action toybox-mini" id="toyNext" type="button">Next ›</button>`;
@@ -2671,18 +2670,38 @@ function startToybox() {
   const prevBtn = pager.querySelector("#toyPrev");
   const nextBtn = pager.querySelector("#toyNext");
   const pageLabel = pager.querySelector("#toyPageLabel");
+  function toyPageCount() {
+    return Math.max(1, Math.ceil(allToys.length / toysPerPage));
+  }
   function showToyPage(n) {
-    toyPage = Math.max(0, Math.min(toyPageCount - 1, n));
+    toyPage = Math.max(0, Math.min(toyPageCount() - 1, n));
     allToys.forEach((toy, i) => {
       toy.classList.toggle("toybox-hidden", Math.floor(i / toysPerPage) !== toyPage);
     });
-    pageLabel.textContent = `Page ${toyPage + 1} of ${toyPageCount}`;
+    pageLabel.textContent = `Page ${toyPage + 1} of ${toyPageCount()}`;
     prevBtn.disabled = toyPage === 0;
-    nextBtn.disabled = toyPage === toyPageCount - 1;
+    nextBtn.disabled = toyPage === toyPageCount() - 1;
     fitGameShell();
   }
   prevBtn.addEventListener("click", () => showToyPage(toyPage - 1));
   nextBtn.addEventListener("click", () => showToyPage(toyPage + 1));
+  let toyResizeTimer = 0;
+  function onToyResize() {
+    clearTimeout(toyResizeTimer);
+    toyResizeTimer = setTimeout(() => {
+      if (!grid.isConnected) return;
+      const want = grid.clientWidth < 560 ? 2 : 4;
+      if (want === toysPerPage) return;
+      const firstVisible = toyPage * toysPerPage;
+      toysPerPage = want;
+      showToyPage(Math.floor(firstVisible / toysPerPage));
+    }, 200);
+  }
+  window.addEventListener("resize", onToyResize);
+  cleanups.push(() => {
+    window.removeEventListener("resize", onToyResize);
+    clearTimeout(toyResizeTimer);
+  });
   showToyPage(0);
 
   setSnapshot({
