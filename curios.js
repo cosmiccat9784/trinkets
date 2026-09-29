@@ -1672,6 +1672,7 @@ function startOneButton() {
         <div class="game-topline">
           <span class="game-stat" id="oneScore">0 m</span>
           <span class="game-stat" id="oneBest">Best: 0 m</span>
+          <span class="game-stat" id="oneChaos">CHAOS 0%</span>
         </div>
         <canvas class="one-canvas" id="oneCanvas" width="720" height="480"></canvas>
         <div class="game-actions">
@@ -1693,6 +1694,7 @@ function startOneButton() {
   const PH = 38;
   const scoreLabel = document.querySelector("#oneScore");
   const bestLabel = document.querySelector("#oneBest");
+  const chaosLabel = document.querySelector("#oneChaos");
   const message = document.querySelector("#oneMsg");
   const pressBtn = document.querySelector("#oneBtn");
 
@@ -1726,32 +1728,140 @@ function startOneButton() {
   let speed = 280;
   let g = 1;
   let gravMul = 1;
+  let jumpMul = 1;
+  let chaos = 0;
+  let shownTiers = {};
   let player = { y: FLOOR - PH / 2, vy: 0, grounded: true, coyote: 0, buffer: 0 };
   let obstacles = [];
   let parts = [];
+  let ghosts = [];
+  let ghostT = 0;
   let nextSpawn = 300;
   let banner = null;
   let flavorT = 16;
   let eventT = 9;
   let moleT = 14;
   let warnT = 0;
-  let unlocks = { fly: false, vote: false, legs: false, fast: false };
   let lastDodgeMsg = 0;
+  let cam = { zoom: 1, zoomT: 1, rot: 0, rotT: 0, shake: 0 };
+  let pressMode = "green";
+  let modeT = 14;
+  let holding = false;
+  let holdT = 0;
+  let jumpPower = 1;
+  let lastTapT = 0;
+  let tapCount = 0;
+  let delayQueue = [];
+  let delayT = 0;
+  let reverseT = 0;
+  let bpm = 100;
+  let beatT = 0;
+  let beatPulse = 0;
+  let tempoMul = 1;
+  let tempoT = 0;
+  let lieScoreT = 0;
+  let fakeScore = 0;
+  let liarQueue = [];
+  let liarT = 0;
+  let frozen = null;
+  let flipMode = 0;
+  let flipT = 0;
+  let decoys = [];
+  let uiDanceT = 0;
+  let textShakeT = 0;
+  let flashWhite = 0;
+  let teleportT = 8;
+  let dodgeX = 0;
+  let dodgeY = 0;
 
   function showBanner(text) {
     banner = { text, t: 2.4 };
   }
 
   function jumpAttempt() {
-    if (dead) return;
+    if (dead || frozen) return;
     if (player.grounded || player.coyote > 0) {
-      player.vy = -950 * g;
+      player.vy = -950 * g * jumpPower;
+      jumpPower = 1;
       player.grounded = false;
       player.coyote = 0;
       player.buffer = 0;
     } else {
       player.buffer = 0.12;
     }
+  }
+
+  function pressDown() {
+    if (dead || frozen) return;
+    const now = performance.now();
+    if (delayT > 0) {
+      delayQueue.push(now + 500);
+      return;
+    }
+    if (reverseT > 0) {
+      if (!player.grounded) {
+        player.vy = 1400 * g;
+        player.buffer = 0;
+      } else if (now - lastDodgeMsg > 2500) {
+        lastDodgeMsg = now;
+        message.textContent = "no. down, not up.";
+      }
+      return;
+    }
+    if (pressMode === "red") {
+      if (!player.grounded) {
+        player.vy *= 0.3;
+        cam.shake = Math.min(14, cam.shake + 6);
+      } else if (now - lastDodgeMsg > 2500) {
+        lastDodgeMsg = now;
+        message.textContent = "red means NO.";
+      }
+      return;
+    }
+    if (pressMode === "blue") {
+      if (now - lastTapT < 350) {
+        tapCount = 0;
+        jumpAttempt();
+      } else {
+        tapCount = 1;
+        if (now - lastDodgeMsg > 2500) {
+          lastDodgeMsg = now;
+          message.textContent = "twice. TWO.";
+        }
+      }
+      lastTapT = now;
+      return;
+    }
+    if (pressMode === "purple") {
+      if (now - lastTapT > 600) tapCount = 0;
+      tapCount += 1;
+      lastTapT = now;
+      if (tapCount >= 3) {
+        tapCount = 0;
+        jumpAttempt();
+      } else if (now - lastDodgeMsg > 2500) {
+        lastDodgeMsg = now;
+        message.textContent = "three. THREE.";
+      }
+      return;
+    }
+    if (pressMode === "yellow") {
+      holding = true;
+      holdT = 0;
+      return;
+    }
+    jumpAttempt();
+  }
+
+  function pressUp() {
+    if (!holding) return;
+    holding = false;
+    if (pressMode !== "yellow" || dead || frozen) {
+      jumpPower = 1;
+      return;
+    }
+    jumpPower = holdT >= 0.45 ? 1.55 : 0.45;
+    jumpAttempt();
   }
 
   function burst(x, y, n, color) {
@@ -1772,7 +1882,7 @@ function startOneButton() {
     message.textContent = QUIPS[Math.floor(Math.random() * QUIPS.length)] + (result.isNew && d > 0 ? ` New best: ${d} m!` : ` Best: ${best} m.`);
     bestLabel.textContent = `Best: ${best} m`;
     burst(PX, player.y, 18, "#ff6b6b");
-    setSnapshot({ mode: "ended", game: "One Button", dist: d, best });
+    setSnapshot({ mode: "ended", game: "One Button", dist: d, best, chaos: Math.floor(chaos) });
   }
 
   function resetRun() {
@@ -1781,55 +1891,116 @@ function startOneButton() {
     speed = 280;
     g = 1;
     gravMul = 1;
+    jumpMul = 1;
+    chaos = 0;
+    shownTiers = {};
     obstacles = [];
     parts = [];
+    ghosts = [];
     nextSpawn = 300;
     banner = null;
     flavorT = 16;
     eventT = 9;
     moleT = 14;
     warnT = 0;
-    unlocks = { fly: false, vote: false, legs: false, fast: false };
+    pressMode = "green";
+    modeT = 14;
+    holding = false;
+    jumpPower = 1;
+    tapCount = 0;
+    delayQueue = [];
+    delayQueue = [];
+    delayT = 0;
+    reverseT = 0;
+    bpm = 100;
+    beatT = 0;
+    tempoMul = 1;
+    tempoT = 0;
+    lieScoreT = 0;
+    liarQueue = [];
+    liarT = 0;
+    frozen = null;
+    flipMode = 0;
+    flipT = 0;
+    uiDanceT = 0;
+    textShakeT = 0;
+    flashWhite = 0;
+    cam.zoom = 1;
+    cam.zoomT = 1;
+    cam.rot = 0;
+    cam.rotT = 0;
+    cam.shake = 0;
+    clearDecoys();
     player = { y: FLOOR - PH / 2, vy: 0, grounded: true, coyote: 0, buffer: 0 };
     pressBtn.style.transform = "";
+    pressBtn.style.opacity = "";
+    pressBtn.style.rotate = "";
+    setPressLook();
+    message.classList.remove("tshake");
     message.textContent = "One button. Press to jump. That's the whole game. Probably.";
   }
 
+  function chaosTier() {
+    if (chaos >= 100) return 6;
+    if (chaos >= 70) return 5;
+    if (chaos >= 50) return 4;
+    if (chaos >= 40) return 3;
+    if (chaos >= 30) return 2;
+    if (chaos >= 20) return 1;
+    return 0;
+  }
+
+  function announceTier(tier) {
+    if (shownTiers[tier]) return;
+    shownTiers[tier] = true;
+    if (tier === 1) showBanner("SOMETHING IS WRONG");
+    else if (tier === 2) showBanner("DO NOT TRUST THE GAPS");
+    else if (tier === 3) showBanner("GRAVITY IS NEGOTIABLE");
+    else if (tier === 4) showBanner("THE CAMERA IS DRUNK");
+    else if (tier === 5) showBanner("THE BUTTON IS THE ENEMY");
+    else if (tier === 6) {
+      showBanner("CHAOS. GOOD LUCK.");
+      message.textContent = "GOOD LUCK.";
+    }
+  }
+
   function spawnPattern() {
-    const tier = dist >= 600 ? 3 : dist >= 300 ? 2 : dist >= 150 ? 1 : 0;
+    const tier = chaosTier();
+    const ci = Math.min(chaos, 120) / 100;
     const roll = Math.random();
     const side = Math.random() < 0.75 ? g : -g;
-    if (roll < 0.34) {
-      obstacles.push({ kind: "block", x: W + 40, w: 30 + Math.random() * 26, h: 36 + Math.random() * 48, side });
-    } else if (roll < 0.58) {
-      obstacles.push({ kind: "pit", x: W + 40, w: 90 + Math.random() * 110, side });
-    } else if (roll < 0.8 && tier >= 1) {
+    const micro = tier >= 5 && Math.random() < 0.3;
+    if (roll < 0.24) {
+      const h = micro ? 24 + Math.random() * 20 : 36 + Math.random() * 48;
+      obstacles.push({ kind: "block", x: W + 40, w: 30 + Math.random() * 26, h, side });
+    } else if (roll < 0.42) {
+      const w = micro ? 60 + Math.random() * 40 : 90 + Math.random() * 110;
+      obstacles.push({ kind: "pit", x: W + 40, w, side });
+    } else if (roll < 0.56 && tier >= 1) {
       const low = Math.random() < 0.6;
       obstacles.push({ kind: "fly", x: W + 40, r: 14 + Math.random() * 5, low, side, phase: Math.random() * 6 });
+    } else if (roll < 0.66 && tier >= 2) {
+      obstacles.push({ kind: "fake", x: W + 40, w: 30 + Math.random() * 26, h: 36 + Math.random() * 48, side });
+    } else if (roll < 0.74 && tier >= 2) {
+      obstacles.push({ kind: "fakepit", x: W + 40, w: 90 + Math.random() * 90, side });
+    } else if (roll < 0.84 && tier >= 1) {
+      const fast = (0.5 + Math.random()) * (80 + ci * 220);
+      obstacles.push({ kind: "block", x: W + 40, w: 30, h: 40 + Math.random() * 40, side, vx: -fast, sine: 14 + ci * 26, sfreq: 2 + Math.random() * 2, sphase: Math.random() * 6, flipT: 1 + Math.random() * 2 });
+    } else if (roll < 0.9 && tier >= 4) {
+      obstacles.push({ kind: "block", x: -60, w: 30, h: 40 + Math.random() * 40, side, vx: speed * (1.2 + ci * 0.6) });
+    } else if (roll < 0.95 && tier >= 4) {
+      obstacles.push({ kind: "fall", x: 200 + Math.random() * (W - 200), y: -40, w: 30, h: 30 + Math.random() * 30, vy: 260 + ci * 320 });
     } else {
       obstacles.push({ kind: "block", x: W + 40, w: 30, h: 36 + Math.random() * 40, side: -side });
+    }
+    if (tier >= 5 && Math.random() < 0.3) {
+      const h = 30 + Math.random() * 40;
+      obstacles.push({ kind: "block", x: W + 120 + Math.random() * 60, w: 28, h, side });
     }
   }
 
   function checkUnlocks() {
-    if (!unlocks.fly && dist >= 150) {
-      unlocks.fly = true;
-      showBanner("BIRDS. (they are blocks.)");
-    }
-    if (!unlocks.vote && dist >= 300) {
-      unlocks.vote = true;
-      eventT = 4;
-      showBanner("GRAVITY VOTES BEGIN SOON");
-    }
-    if (!unlocks.legs && dist >= 450) {
-      unlocks.legs = true;
-      showBanner("THE BUTTON HAS LEGS NOW");
-      message.textContent = "The button dodges. SPACE still loves you.";
-    }
-    if (!unlocks.fast && dist >= 600) {
-      unlocks.fast = true;
-      showBanner("FASTER. NO REFUNDS.");
-    }
+    announceTier(chaosTier());
   }
 
   function overFloor(x) {
@@ -1846,11 +2017,22 @@ function startOneButton() {
     return base + lift + Math.sin(time * 3 + o.phase) * 22;
   }
 
+  function blockRect(o) {
+    const ox = o.x + (o.sine ? Math.sin(time * o.sfreq + o.sphase) * o.sine : 0);
+    const by = o.side === 1 ? FLOOR - o.h : CEIL;
+    return { x: ox, y: by, w: o.w, h: o.h };
+  }
+
   function collides(o) {
+    if (o.kind === "fake" || o.kind === "fakepit") return false;
     if (o.kind === "block") {
-      const by = o.side === 1 ? FLOOR - o.h : CEIL;
+      const r = blockRect(o);
+      return PX + PW / 2 > r.x && PX - PW / 2 < r.x + r.w &&
+        player.y + PH / 2 > r.y && player.y - PH / 2 < r.y + r.h;
+    }
+    if (o.kind === "fall") {
       return PX + PW / 2 > o.x && PX - PW / 2 < o.x + o.w &&
-        player.y + PH / 2 > by && player.y - PH / 2 < by + o.h;
+        player.y + PH / 2 > o.y && player.y - PH / 2 < o.y + o.h;
     }
     if (o.kind === "fly") {
       const fy = flyY(o);
@@ -1861,6 +2043,109 @@ function startOneButton() {
       return dx * dx + dy * dy < (o.r + 12) * (o.r + 12) * 0.5;
     }
     return false;
+  }
+
+  function setPressLook() {
+    if (pressMode === "green") {
+      pressBtn.style.background = "";
+      pressBtn.textContent = "PRESS";
+    } else {
+      const looks = {
+        red: ["#ff6b6b", "DON'T"],
+        blue: ["#4f8fcf", "PRESS x2"],
+        yellow: ["#f6c445", "HOLD"],
+        purple: ["#6a4c93", "PRESS x3"]
+      };
+      const look = looks[pressMode] || looks.green;
+      pressBtn.style.background = look[0];
+      pressBtn.textContent = look[1];
+    }
+  }
+
+  function updateButtonChaos(dt, ci, tier) {
+    if (tier < 4) return;
+    if (tier >= 6) {
+      dodgeX += (Math.random() - 0.5) * 300 * dt;
+      dodgeY += (Math.random() - 0.5) * 120 * dt;
+      dodgeX = Math.max(-160, Math.min(160, dodgeX));
+      dodgeY = Math.max(-50, Math.min(50, dodgeY));
+    }
+    teleportT -= dt;
+    if (teleportT <= 0) {
+      teleportT = 5 + Math.random() * 5;
+      if (tier >= 4 && Math.random() < 0.5) {
+        pressBtn.style.transition = "none";
+        dodgeX = Math.round((Math.random() - 0.5) * 280);
+        dodgeY = Math.round((Math.random() - 0.5) * 80);
+        void pressBtn.offsetWidth;
+        pressBtn.style.transition = "";
+      }
+    }
+    const s = Math.max(0.3, 1 - Math.max(0, chaos - 60) * 0.007);
+    const o = chaos >= 75 ? Math.max(0.15, 1 - (chaos - 75) * 0.02) : 1;
+    const r = tier >= 5 ? Math.sin(time * 2) * 10 : 0;
+    pressBtn.style.transform = `translate(${Math.round(dodgeX)}px, ${Math.round(dodgeY)}px) rotate(${r.toFixed(1)}deg) scale(${s.toFixed(3)})`;
+    pressBtn.style.opacity = o.toFixed(2);
+  }
+
+  function clearDecoys() {
+    for (const d of decoys) d.el.remove();
+    decoys = [];
+    const pause = document.querySelector("#onePause");
+    if (pause) pause.remove();
+    const settings = document.querySelector("#oneSettings");
+    if (settings) settings.remove();
+  }
+
+  function syncDecoys(n) {
+    const actions = pressBtn.parentElement;
+    while (decoys.length < n) {
+      const b = document.createElement("button");
+      b.type = "button";
+      b.className = "game-action one-decoy";
+      b.textContent = Math.random() < 0.5 ? "PRESS?" : "press";
+      b.addEventListener("click", () => {
+        message.textContent = "wrong button.";
+        cam.shake = Math.min(14, cam.shake + 5);
+      });
+      actions.append(b);
+      decoys.push({ el: b, wt: Math.random() });
+    }
+    while (decoys.length > n) {
+      const d = decoys.pop();
+      d.el.remove();
+    }
+  }
+
+  function addFakeChrome() {
+    const actions = pressBtn.parentElement;
+    const pause = document.createElement("button");
+    pause.type = "button";
+    pause.id = "onePause";
+    pause.className = "game-action toybox-mini";
+    pause.textContent = "Pause";
+    pause.addEventListener("click", () => {
+      message.textContent = "PAUSE FAILED";
+      cam.shake = Math.min(14, cam.shake + 4);
+    });
+    const settings = document.createElement("button");
+    settings.type = "button";
+    settings.id = "oneSettings";
+    settings.className = "game-action toybox-mini";
+    settings.textContent = "Settings";
+    settings.addEventListener("click", () => {
+      message.textContent = "settings are a social construct.";
+    });
+    actions.append(pause, settings);
+  }
+
+  function chaosLabelText() {
+    if (chaos < 100) return `CHAOS ${Math.floor(chaos)}%`;
+    if (chaos < 137) return "CHAOS 100%";
+    if (chaos < 248) return "CHAOS 137%";
+    if (chaos < 999) return "CHAOS 248%";
+    if (chaos < 9999) return "CHAOS 999%";
+    return Math.floor(time * 2) % 2 === 0 ? "CHAOS ?????" : "CHAOS YES";
   }
 
   function update(dt) {
@@ -1875,11 +2160,25 @@ function startOneButton() {
       if (deadT <= 0) resetRun();
       return;
     }
-    dist += (speed * dt) / 50;
-    speed = Math.min(640, 280 + dist * 0.55) * (unlocks.fast ? 1.15 : 1);
+    if (frozen) {
+      frozen.t -= dt;
+      updateParts(dt);
+      if (frozen.t <= 0) {
+        if (frozen.after) showBanner(frozen.after);
+        chaos += frozen.bonus;
+        frozen = null;
+      }
+      return;
+    }
+    chaos += dt * (0.35 + chaos * 0.004);
+    const ci = Math.min(chaos, 120) / 100;
+    const tier = chaosTier();
+    dist += (speed * tempoMul * dt) / 50;
+    speed = (Math.min(640, 280 + dist * 0.55) + ci * 60) * tempoMul;
     checkUnlocks();
+    chaosLabel.textContent = chaosLabelText();
 
-    if (unlocks.vote) {
+    if (tier >= 3) {
       eventT -= dt;
       if (eventT <= 0 && warnT <= 0) {
         warnT = 2;
@@ -1892,22 +2191,25 @@ function startOneButton() {
         g *= -1;
         player.vy = 0;
         showBanner(g === 1 ? "GRAVITY: FLOOR. boring. safe." : "REVERSED. good luck.");
-        eventT = (unlocks.fast ? 8 : 11) + Math.random() * 4;
+        eventT = Math.max(3, (tier >= 5 ? 8 : 11) - ci * 5) + Math.random() * 4;
       }
     }
-    if (dist >= 500) {
+    if (tier >= 3) {
       moleT -= dt;
       if (moleT <= 0) {
-        if (gravMul === 1) {
-          if (Math.random() < 0.5) {
-            gravMul = 0.45;
-            showBanner("MOON GRAVITY. wheee.");
-          } else {
-            gravMul = 1.8;
-            showBanner("LEAD BOOTS. good luck up there.");
-          }
+        gravMul = 1;
+        jumpMul = 1;
+        const r = Math.random();
+        if (r < 0.35) {
+          gravMul = 0.45;
+          showBanner("MOON GRAVITY. wheee.");
+        } else if (r < 0.6) {
+          gravMul = 1.8;
+          showBanner("LEAD BOOTS. good luck up there.");
+        } else if (r < 0.75) {
+          jumpMul = 0.6 + Math.random() * 1.0;
+          showBanner("LEGS: MYSTERY.");
         } else {
-          gravMul = 1;
           showBanner("gravity: normal-ish.");
         }
         moleT = 12 + Math.random() * 6;
@@ -1919,9 +2221,134 @@ function startOneButton() {
       if (!banner) showBanner(FLAVOR[Math.floor(Math.random() * FLAVOR.length)]);
     }
 
+    if (tier >= 5) {
+      bpm = Math.max(100, 100 + Math.floor((chaos - 80) / 10) * 10);
+      beatT += dt * (bpm / 60);
+      if (beatT >= 1) {
+        beatT -= 1;
+        beatPulse = 1;
+      }
+      beatPulse = Math.max(0, beatPulse - dt * 3);
+      tempoT -= dt;
+      if (tempoT <= 0) {
+        const r = Math.random();
+        if (r < 0.3) {
+          tempoMul = 2;
+          showBanner("DOUBLE TIME.");
+        } else if (r < 0.55) {
+          tempoMul = 0.5;
+          showBanner("half-time. breathe.");
+        } else {
+          tempoMul = 1;
+        }
+        tempoT = 5 + Math.random() * 5;
+      }
+      if (Math.random() < dt * 0.12) {
+        bpm = 100 + Math.floor(Math.random() * 9) * 10;
+        showBanner("♪ " + bpm + " BPM");
+      }
+    } else {
+      tempoMul = 1;
+      beatPulse = 0;
+    }
+
+    if (tier >= 5) {
+      modeT -= dt;
+      if (modeT <= 0) {
+        const modes = ["green", "red", "blue", "yellow", "purple"];
+        pressMode = modes[(modes.indexOf(pressMode) + 1) % modes.length];
+        modeT = 11;
+        setPressLook();
+        if (pressMode === "red") showBanner("RED MEANS NO.");
+        else if (pressMode === "blue") showBanner("BLUE MEANS TWICE.");
+        else if (pressMode === "yellow") showBanner("YELLOW MEANS HOLD.");
+        else if (pressMode === "purple") showBanner("PURPLE MEANS THRICE. obviously.");
+        else showBanner("GREEN MEANS GO.");
+      }
+    }
+    if (holding && pressMode === "yellow") holdT += dt;
+
+    const nowMs = performance.now();
+    while (delayQueue.length && delayQueue[0] <= nowMs) {
+      delayQueue.shift();
+      jumpAttempt();
+    }
+    if (reverseT > 0) reverseT -= dt;
+    if (tier >= 4 && reverseT <= 0 && Math.random() < dt * 0.05) {
+      reverseT = 5;
+      showBanner("INPUT REVERSAL. sorry.");
+    }
+    if (tier >= 5 && delayT <= 0 && Math.random() < dt * 0.06) {
+      delayT = 8;
+      showBanner("INPUT IS... delayed. wait for it.");
+    }
+    if (delayT > 0) delayT -= dt;
+
+    if (tier >= 4 && lieScoreT <= 0 && Math.random() < dt * 0.08) {
+      lieScoreT = 3;
+      fakeScore = Math.floor(dist) + Math.floor((Math.random() - 0.4) * 60);
+    }
+    if (lieScoreT > 0) lieScoreT -= dt;
+
+    if (tier >= 4 && liarT <= 0 && liarQueue.length === 0 && Math.random() < dt * 0.06) {
+      liarQueue = ["YOU'RE DOING GREAT!", "ARE YOU SURE?", "NO."];
+      liarT = 0;
+    }
+    if (liarQueue.length) {
+      liarT -= dt;
+      if (liarT <= 0) {
+        message.textContent = liarQueue.shift();
+        liarT = 1.5;
+      }
+    }
+    if (tier >= 4 && !shownTiers.fakebtns) {
+      shownTiers.fakebtns = true;
+      addFakeChrome();
+    }
+    if (tier >= 4 && Math.random() < dt * 0.02) {
+      frozen = { t: 1.4, bonus: 0, after: "JUST KIDDING. keep going." };
+      showBanner("GAME OVER");
+    }
+    if (tier >= 5 && Math.random() < dt * 0.012) {
+      frozen = { t: 2.2, bonus: 5, after: "Phase 2 begins." };
+      showBanner("CONGRATULATIONS! YOU WIN!");
+    }
+
+    const zoomBase = tier >= 3 ? 1 + 0.08 * Math.sin(time * 0.5) : 1;
+    cam.zoomT = zoomBase;
+    if (tier >= 5 && Math.random() < dt * 0.1) {
+      cam.zoomT = 0.8 + Math.random() * 0.45;
+    }
+    cam.zoom += (cam.zoomT - cam.zoom) * Math.min(1, dt * 2);
+    if (tier >= 4 && Math.random() < dt * 0.08) {
+      const steps = [5, 10, 15];
+      cam.rotT = (steps[Math.floor(Math.random() * steps.length)] * Math.PI) / 180;
+    }
+    if (tier >= 5 && Math.random() < dt * 0.05) {
+      const big = [90, 180, 270][Math.floor(Math.random() * 3)];
+      cam.rotT = (big * Math.PI) / 180;
+      showBanner("ROTATED " + big + "°. enjoy.");
+    }
+    if (tier >= 3 && Math.random() < dt * 0.1) cam.rotT = 0;
+    cam.rot += (cam.rotT - cam.rot) * Math.min(1, dt * 1.5);
+    if (tier >= 5 && flipT <= 0 && Math.random() < dt * 0.06) {
+      flipMode = Math.random() < 0.6 ? 1 : 2;
+      flipT = 4 + Math.random() * 2;
+      showBanner(flipMode === 1 ? "MIRRORED. no reason." : "UPSIDE DOWN. it's fine.");
+    }
+    if (flipT > 0) {
+      flipT -= dt;
+      if (flipT <= 0) flipMode = 0;
+    }
+    cam.shake = Math.max(0, cam.shake - dt * 26);
+    if (tier >= 3) cam.shake = Math.max(cam.shake, ci * 2);
+    if (tier >= 4 && Math.random() < dt * 0.05) flashWhite = 0.12;
+    if (flashWhite > 0) flashWhite -= dt;
+
+    const FY = FLOOR + (tier >= 1 ? Math.sin(time * 0.8) * 10 : 0);
     player.vy += 2600 * g * gravMul * dt;
     player.y += player.vy * dt;
-    const groundY = g === 1 ? FLOOR : CEIL;
+    const groundY = g === 1 ? FY : CEIL;
     const supported = overFloor(PX);
     if (supported && (g === 1 ? player.y + PH / 2 >= groundY : player.y - PH / 2 <= groundY)) {
       player.y = g === 1 ? groundY - PH / 2 : groundY + PH / 2;
@@ -1940,7 +2367,21 @@ function startOneButton() {
     for (let i = obstacles.length - 1; i >= 0; i--) {
       const o = obstacles[i];
       o.x -= speed * dt;
-      if (o.x < -140) {
+      if (o.vx) o.x += o.vx * dt;
+      if (o.vy) o.y += o.vy * dt;
+      if (o.flipT !== undefined) {
+        o.flipT -= dt;
+        if (o.flipT <= 0) {
+          o.flipT = 1 + Math.random() * 2;
+          o.vx = -(o.vx || 0) || 80 + Math.random() * 120;
+          if (Math.random() < 0.15) showBanner("SIKE.");
+        }
+      }
+      if ((o.vx || o.vy || o.sine) && Math.random() < dt * 18) {
+        const tr = o.kind === "fly" ? { x: o.x, y: flyY(o) } : blockRect(o);
+        parts.push({ x: tr.x + (tr.w || 0) / 2, y: tr.y + (tr.h || 0) / 2, vx: 0, vy: 0, life: 0.3, max: 0.3, color: "rgba(160,170,200,0.5)", grav: 0 });
+      }
+      if (o.x < -140 || o.y > H + 80) {
         obstacles.splice(i, 1);
         continue;
       }
@@ -1960,11 +2401,51 @@ function startOneButton() {
     nextSpawn -= speed * dt;
     if (nextSpawn <= 0) {
       spawnPattern();
-      nextSpawn = 280 + Math.random() * 260 + speed * 0.3;
+      nextSpawn = Math.max(140, 280 + Math.random() * 260 + speed * 0.3 - ci * 120);
     }
     updateParts(dt);
+
+    ghostT -= dt;
+    if (tier >= 4 && ghostT <= 0) {
+      ghostT = 0.09;
+      ghosts.push({ x: PX, y: player.y, t: 0.35 });
+      if (ghosts.length > 12) ghosts.shift();
+    }
+    for (let i = ghosts.length - 1; i >= 0; i--) {
+      ghosts[i].t -= dt;
+      if (ghosts[i].t <= 0) ghosts.splice(i, 1);
+    }
+
+    if (tier >= 4) {
+      uiDanceT -= dt;
+      if (uiDanceT <= 0) {
+        uiDanceT = 6 + Math.random() * 4;
+        const jx = () => Math.round((Math.random() - 0.5) * 14) + "px";
+        scoreLabel.style.transform = `translate(${jx()},${jx()})`;
+        bestLabel.style.transform = `translate(${jx()},${jx()})`;
+        chaosLabel.style.transform = `translate(${jx()},${jx()})`;
+        setTimeout(() => {
+          scoreLabel.style.transform = "";
+          bestLabel.style.transform = "";
+          chaosLabel.style.transform = "";
+        }, 900);
+      }
+      message.classList.add("tshake");
+    }
+    syncDecoys(tier >= 6 ? 4 : tier >= 5 ? 2 : 0);
+    for (const d of decoys) {
+      d.wt -= dt;
+      if (d.wt <= 0) {
+        d.wt = 0.5 + Math.random() * 1.5;
+        d.el.style.transform = `translate(${Math.round((Math.random() - 0.5) * 160)}px,${Math.round((Math.random() - 0.5) * 40)}px) rotate(${Math.round((Math.random() - 0.5) * 20)}deg)`;
+      }
+    }
+    updateButtonChaos(dt, ci, tier);
     scoreLabel.textContent = `${Math.floor(dist)} m`;
-    setSnapshot({ mode: "playing", game: "One Button", dist: Math.floor(dist), best });
+    if (lieScoreT > 0) scoreLabel.textContent = `SCORE: ${fakeScore}`;
+    else if (tier >= 4) scoreLabel.textContent = `${Math.floor(dist)} m`;
+    chaosLabel.textContent = chaosLabelText();
+    setSnapshot({ mode: "playing", game: "One Button", dist: Math.floor(dist), best, chaos: Math.floor(chaos) });
   }
 
   function updateParts(dt) {
@@ -1972,12 +2453,15 @@ function startOneButton() {
     for (const p of parts) {
       p.x += p.vx * dt;
       p.y += p.vy * dt;
-      p.vy += 1400 * dt;
+      p.vy += (p.grav === undefined ? 1400 : p.grav) * dt;
       p.life -= dt;
     }
   }
 
   function draw() {
+    const tier = chaosTier();
+    const FY = FLOOR + (tier >= 1 ? Math.sin(time * 0.8) * 10 : 0);
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
     const sky = ctx.createLinearGradient(0, 0, 0, H);
     sky.addColorStop(0, "#2b3a67");
     sky.addColorStop(0.6, "#6b4a6e");
@@ -1985,11 +2469,20 @@ function startOneButton() {
     ctx.fillStyle = sky;
     ctx.fillRect(0, 0, W, H);
     ctx.fillStyle = "rgba(255,255,255,0.5)";
+    const drift = tier >= 4 ? time * 14 : 0;
     for (let i = 0; i < 40; i++) {
-      const sx = (i * 173 + 40) % W;
+      const sx = (i * 173 + 40 + drift) % W;
       const sy = (i * 97 + 20) % 300;
       ctx.fillRect(sx, sy, 2, 2);
     }
+    const shx = (Math.random() - 0.5) * cam.shake;
+    const shy = (Math.random() - 0.5) * cam.shake;
+    const fx = flipMode === 1 ? -1 : 1;
+    const fy = flipMode === 2 ? -1 : 1;
+    ctx.translate(W / 2 + shx, H / 2 + shy);
+    ctx.rotate(cam.rot);
+    ctx.scale(cam.zoom * fx, cam.zoom * fy);
+    ctx.translate(-W / 2, -H / 2);
     ctx.fillStyle = "rgba(20,16,32,0.6)";
     ctx.beginPath();
     for (let x = 0; x <= W; x += 8) {
@@ -2001,37 +2494,53 @@ function startOneButton() {
     ctx.lineTo(0, H);
     ctx.fill();
     ctx.fillStyle = "#54402c";
-    ctx.fillRect(0, FLOOR, W, H - FLOOR);
+    ctx.fillRect(0, FY, W, H - FY);
     ctx.fillRect(0, 0, W, CEIL);
     ctx.fillStyle = "#f6c445";
-    ctx.fillRect(0, FLOOR - 4, W, 4);
+    ctx.fillRect(0, FY - 4, W, 4);
     ctx.fillRect(0, CEIL, W, 4);
     for (const o of obstacles) {
-      if (o.kind === "pit") {
-        const py = o.side === 1 ? FLOOR : 0;
-        const ph = o.side === 1 ? H - FLOOR : CEIL;
+      if (o.kind === "pit" || o.kind === "fakepit") {
+        const py = o.side === 1 ? FY : 0;
+        const ph = o.side === 1 ? H - FY : CEIL;
         ctx.fillStyle = "#0c0a14";
         ctx.fillRect(o.x, py, o.w, ph);
         ctx.fillStyle = "#f6c445";
         for (let sx = o.x + 6; sx < o.x + o.w - 6; sx += 18) {
           ctx.fillRect(sx, py + (o.side === 1 ? -8 : ph + 2), 10, 6);
         }
-      } else if (o.kind === "block") {
-        const by = o.side === 1 ? FLOOR - o.h : CEIL;
+      } else if (o.kind === "block" || o.kind === "fake") {
+        const r = blockRect(o);
+        const pu = tier >= 4 ? 1 + 0.05 * Math.sin(time * 6 + o.x * 0.02) : 1;
+        const pw = r.w * pu;
+        const ph = r.h * pu;
+        const px2 = r.x + (r.w - pw) / 2;
+        const py2 = r.y + (r.h - ph) / 2;
+        if (o.kind === "fake") ctx.globalAlpha = 0.35;
         ctx.fillStyle = "#2fbf71";
         ctx.strokeStyle = "#0f1320";
         ctx.lineWidth = 3;
         ctx.beginPath();
-        ctx.roundRect(o.x, by, o.w, o.h, 6);
+        ctx.roundRect(px2, py2, pw, ph, 6);
+        ctx.fill();
+        ctx.stroke();
+        ctx.globalAlpha = 1;
+      } else if (o.kind === "fall") {
+        ctx.fillStyle = "#2fbf71";
+        ctx.strokeStyle = "#0f1320";
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.roundRect(o.x, o.y, o.w, o.h, 6);
         ctx.fill();
         ctx.stroke();
       } else if (o.kind === "fly") {
         const fy = flyY(o);
+        const pu = tier >= 4 ? 1 + 0.05 * Math.sin(time * 6 + o.x * 0.02) : 1;
         ctx.fillStyle = "#6a4c93";
         ctx.strokeStyle = "#0f1320";
         ctx.lineWidth = 3;
         ctx.beginPath();
-        ctx.arc(o.x, fy, o.r, 0, Math.PI * 2);
+        ctx.arc(o.x, fy, o.r * pu, 0, Math.PI * 2);
         ctx.fill();
         ctx.stroke();
         ctx.fillStyle = "#fff";
@@ -2041,6 +2550,12 @@ function startOneButton() {
         ctx.fill();
       }
     }
+    for (const gh of ghosts) {
+      ctx.globalAlpha = Math.max(0, gh.t / 0.35) * 0.4;
+      ctx.fillStyle = "#ff6b6b";
+      ctx.fillRect(gh.x - PW / 2, gh.y - PH / 2, PW, PH);
+    }
+    ctx.globalAlpha = 1;
     ctx.save();
     ctx.translate(PX, player.y);
     if (g === -1) ctx.rotate(Math.PI);
@@ -2069,7 +2584,30 @@ function startOneButton() {
       ctx.fillRect(p.x - 3, p.y - 3, 6, 6);
     }
     ctx.globalAlpha = 1;
-    if (banner) {
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    if (beatPulse > 0 && tier >= 5) {
+      ctx.strokeStyle = `rgba(246,196,69,${(beatPulse * 0.5).toFixed(2)})`;
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.arc(W / 2, H / 2, 60 + (1 - beatPulse) * 120, 0, Math.PI * 2);
+      ctx.stroke();
+    }
+    if (flashWhite > 0) {
+      ctx.fillStyle = `rgba(255,255,255,${Math.min(0.6, flashWhite * 4).toFixed(2)})`;
+      ctx.fillRect(0, 0, W, H);
+    }
+    if (frozen) {
+      ctx.fillStyle = "rgba(8,6,14,0.72)";
+      ctx.fillRect(0, 0, W, H);
+      ctx.fillStyle = "#fff";
+      ctx.font = "bold 44px sans-serif";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText(frozen.bonus > 0 ? "CONGRATULATIONS! YOU WIN!" : "GAME OVER", W / 2, H / 2 - 16);
+      ctx.font = "bold 20px sans-serif";
+      ctx.fillStyle = "#f6c445";
+      ctx.fillText(frozen.bonus > 0 ? "Phase 2 begins." : "JUST KIDDING.", W / 2, H / 2 + 30);
+    } else if (banner) {
       ctx.font = "bold 24px sans-serif";
       ctx.textAlign = "center";
       const tw = ctx.measureText(banner.text).width + 44;
@@ -2091,26 +2629,48 @@ function startOneButton() {
     raf = requestAnimationFrame(tick);
   }
 
+  let lastPtr = 0;
   function keydown(e) {
-    if (e.repeat) return;
     if (e.code === "Space" || e.code === "ArrowUp" || e.code === "KeyW") {
       e.preventDefault();
-      jumpAttempt();
+      if (e.type === "keyup") {
+        pressUp();
+        return;
+      }
+      if (e.repeat) return;
+      pressDown();
+    }
+  }
+  function keyup(e) {
+    if (e.code === "Space" || e.code === "ArrowUp" || e.code === "KeyW") {
+      pressUp();
     }
   }
 
   canvas.addEventListener("pointerdown", (e) => {
     e.preventDefault();
-    jumpAttempt();
+    lastPtr = performance.now();
+    pressDown();
   });
-  pressBtn.addEventListener("click", jumpAttempt);
+  canvas.addEventListener("pointerup", () => pressUp());
+  canvas.addEventListener("pointercancel", () => pressUp());
+  pressBtn.addEventListener("pointerdown", (e) => {
+    e.preventDefault();
+    lastPtr = performance.now();
+    pressDown();
+  });
+  pressBtn.addEventListener("pointerup", () => pressUp());
+  pressBtn.addEventListener("pointercancel", () => pressUp());
+  pressBtn.addEventListener("click", () => {
+    if (performance.now() - lastPtr < 600) return;
+    pressDown();
+    pressUp();
+  });
   pressBtn.addEventListener("pointerenter", () => {
-    if (!unlocks.legs) return;
+    if (chaos < 60) return;
     if (Math.random() < 0.45) {
-      const dx = Math.round((Math.random() - 0.5) * 280);
-      const dy = Math.round((Math.random() - 0.5) * 80);
-      pressBtn.style.transition = "transform 0.18s ease";
-      pressBtn.style.transform = `translate(${dx}px, ${dy}px)`;
+      dodgeX = Math.round((Math.random() - 0.5) * 280);
+      dodgeY = Math.round((Math.random() - 0.5) * 80);
       const now = performance.now();
       if (now - lastDodgeMsg > 3000) {
         lastDodgeMsg = now;
@@ -2119,11 +2679,13 @@ function startOneButton() {
     }
   });
   document.addEventListener("keydown", keydown);
+  document.addEventListener("keyup", keyup);
   bestLabel.textContent = `Best: ${best} m`;
-  setSnapshot({ mode: "playing", game: "One Button", dist: 0, best });
+  setSnapshot({ mode: "playing", game: "One Button", dist: 0, best, chaos: 0 });
   activeCleanup = () => {
     cancelAnimationFrame(raf);
     document.removeEventListener("keydown", keydown);
+    document.removeEventListener("keyup", keyup);
   };
   last = performance.now();
   raf = requestAnimationFrame(tick);
