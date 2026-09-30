@@ -6,6 +6,10 @@ const IKEA_PRODUCTS = [
   { name: "SÖDERHAMN", type: "Sofa" },
   { name: "FRIHETEN", type: "Sofa" },
   { name: "UPPLAND", type: "Sofa" },
+  { name: "KARLSTAD", type: "Sofa" },
+  { name: "BACKSÄLEN", type: "Sofa" },
+  { name: "PÄRUP", type: "Sofa" },
+  { name: "NYHAMN", type: "Sofa" },
   // Bed
   { name: "MALM", type: "Bed" },
   { name: "TARVA", type: "Bed" },
@@ -13,6 +17,9 @@ const IKEA_PRODUCTS = [
   { name: "UTÅKER", type: "Bed" },
   { name: "STORÅ", type: "Bed" },
   { name: "SLATTUM", type: "Bed" },
+  { name: "SAGSTUA", type: "Bed" },
+  { name: "NESTTUN", type: "Bed" },
+  { name: "GURSKEN", type: "Bed" },
   // Chair
   { name: "INGOLF", type: "Chair" },
   { name: "NORDMYRA", type: "Chair" },
@@ -20,11 +27,18 @@ const IKEA_PRODUCTS = [
   { name: "MILLBERGET", type: "Chair" },
   { name: "MAMMUT", type: "Chair" },
   { name: "KYRRE", type: "Chair" },
+  { name: "TOBIAS", type: "Chair" },
+  { name: "STEFAN", type: "Chair" },
+  { name: "NOLMYRA", type: "Chair" },
+  { name: "ODDVAR", type: "Chair" },
+  { name: "BEKVÄM", type: "Chair" },
   // Armchair
   { name: "POÄNG", type: "Armchair" },
   { name: "STRANDMON", type: "Armchair" },
   { name: "VEDBO", type: "Armchair" },
   { name: "EKENÄSET", type: "Armchair" },
+  { name: "TULLSTA", type: "Armchair" },
+  { name: "PELLO", type: "Armchair" },
   // Table
   { name: "LACK", type: "Table" },
   { name: "DOCKSTA", type: "Table" },
@@ -33,12 +47,18 @@ const IKEA_PRODUCTS = [
   { name: "LINNMON", type: "Table" },
   { name: "NORDVIKEN", type: "Table" },
   { name: "TRULSTORP", type: "Table" },
+  { name: "INGATORP", type: "Table" },
+  { name: "STORNÄS", type: "Table" },
+  { name: "BJURSTA", type: "Table" },
+  { name: "LERHAMN", type: "Table" },
   // Desk
   { name: "MICKE", type: "Desk" },
   { name: "BEKANT", type: "Desk" },
   { name: "LAGKAPTEN", type: "Desk" },
   { name: "ALEX", type: "Desk" },
   { name: "TROTTEN", type: "Desk" },
+  { name: "THYGE", type: "Desk" },
+  { name: "GALANT", type: "Desk" },
   // Shelf
   { name: "BILLY", type: "Shelf" },
   { name: "KALLAX", type: "Shelf" },
@@ -46,21 +66,40 @@ const IKEA_PRODUCTS = [
   { name: "MOSSLANDA", type: "Shelf" },
   { name: "BERGSHULT", type: "Shelf" },
   { name: "VITTSJÖ", type: "Shelf" },
+  { name: "EKET", type: "Shelf" },
+  { name: "VALJE", type: "Shelf" },
+  { name: "ALGOT", type: "Shelf" },
   // Dresser
   { name: "HEMNES", type: "Dresser" },
   { name: "NORDLI", type: "Dresser" },
   { name: "SONGESAND", type: "Dresser" },
   { name: "KOPPANG", type: "Dresser" },
+  { name: "KULLEN", type: "Dresser" },
+  { name: "RAST", type: "Dresser" },
   // Wardrobe
   { name: "PAX", type: "Wardrobe" },
   { name: "RAKKESTAD", type: "Wardrobe" },
   { name: "TRYSIL", type: "Wardrobe" },
+  { name: "ELVARLI", type: "Wardrobe" },
   // Lamp
   { name: "RANARP", type: "Lamp" },
   { name: "HEKTAR", type: "Lamp" },
   { name: "TERTIAL", type: "Lamp" },
   { name: "NOT", type: "Lamp" },
   { name: "ARÖD", type: "Lamp" },
+  { name: "FADO", type: "Lamp" },
+  { name: "LERSTA", type: "Lamp" },
+  { name: "KNIXHULT", type: "Lamp" },
+  // Frame
+  { name: "RIBBA", type: "Frame" },
+  { name: "FISKBO", type: "Frame" },
+  { name: "SANNAHED", type: "Frame" },
+  { name: "LOMVIKEN", type: "Frame" },
+  // Rug
+  { name: "STOENSE", type: "Rug" },
+  { name: "VINDUM", type: "Rug" },
+  { name: "LOHALS", type: "Rug" },
+  { name: "TANUM", type: "Rug" },
 ];
 
 const IKEA_TYPES = [...new Set(IKEA_PRODUCTS.map((p) => p.type))];
@@ -76,6 +115,8 @@ const IKEA_EMOJI = {
   Dresser: "🗄️",
   Wardrobe: "🚪",
   Lamp: "💡",
+  Frame: "🖼️",
+  Rug: "🧶",
 };
 
 const IKEA_ROUNDS = 10;
@@ -99,7 +140,7 @@ function startIkeaGuess() {
           </div>
           <div class="choice-list ikea-choices" id="ikeaChoices"></div>
           <div class="game-actions">
-            <button class="game-action" id="ikeaHint" type="button">Hint (50/50)</button>
+            <button class="game-action" id="ikeaHint" type="button">💡 Hint</button>
             <button class="game-action" id="ikeaSkip" type="button">Skip</button>
             <button class="game-action" id="ikeaRestart" type="button">New run</button>
           </div>
@@ -122,7 +163,7 @@ function startIkeaGuess() {
   let streak = 0;
   let bestStreak = 0;
   let correctCount = 0;
-  let hintUsed = false;
+  let hintStage = 0;
   let locked = false;
   let currentOptions = [];
   let advanceTimer = 0;
@@ -151,8 +192,11 @@ function startIkeaGuess() {
       return;
     }
     locked = false;
-    hintUsed = false;
-    if (hintBtn) hintBtn.disabled = false;
+    hintStage = 0;
+    if (hintBtn) {
+      hintBtn.disabled = false;
+      hintBtn.textContent = "💡 Hint";
+    }
     const product = deck[index];
     currentOptions = shuffleArray([product.type, ...pickDistractors(product.type)]);
     nameEl.textContent = product.name;
@@ -265,17 +309,23 @@ function startIkeaGuess() {
   }
 
   function useHint() {
-    if (locked || hintUsed || index >= deck.length) return;
-    hintUsed = true;
-    if (hintBtn) hintBtn.disabled = true;
+    if (locked || hintStage >= 2 || index >= deck.length) return;
     const product = deck[index];
-    const wrongBtns = [...choicesEl.children].filter((b) => b.dataset.type !== product.type);
-    shuffleArray(wrongBtns);
-    wrongBtns.slice(0, 2).forEach((b) => {
-      b.disabled = true;
-      b.classList.add("dim");
-    });
-    msgEl.textContent = `Hint: ${product.name} is NOT ${wrongBtns.slice(0, 2).map((b) => b.dataset.type).join(" or ")}.`;
+    if (hintStage === 0) {
+      hintStage = 1;
+      if (hintBtn) hintBtn.textContent = "💡 Hint again";
+      msgEl.textContent = `💡 Hint: ${product.name} is ${article(product.type)} ${product.type[0]}${"·".repeat(Math.max(0, product.type.length - 1))} (${product.type.length} letters, starts with ${product.type[0]}).`;
+    } else {
+      hintStage = 2;
+      if (hintBtn) hintBtn.disabled = true;
+      const wrongBtns = [...choicesEl.children].filter((b) => b.dataset.type !== product.type);
+      shuffleArray(wrongBtns);
+      wrongBtns.slice(0, 2).forEach((b) => {
+        b.disabled = true;
+        b.classList.add("dim");
+      });
+      msgEl.textContent = `💡 Hint: ${product.name} is NOT ${wrongBtns.slice(0, 2).map((b) => b.dataset.type).join(" or ")}.`;
+    }
   }
 
   function skip() {
