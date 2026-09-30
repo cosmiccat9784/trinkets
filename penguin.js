@@ -91,8 +91,9 @@ function penguinIntro(n){
   if(n===2) return "New: BOING PAD! Pink pads bounce you sky-high. Land in the center for max pop!";
   if(n===3) return "New: CRUMBLE! Brown blocks crack and fall 0.5s after you land — keep moving! Don't look back.";
   if(n===4) return "New: MOVING! Yellow platforms shuttle back and forth — ride them, time your leap.";
-  if(n===5) return "Mixed bag! Ice + BOING together. Try sliding onto a bounce for extra distance.";
-  if(n===6) return "Crumble + moving combo. The ground doesn't want you here.";
+  if(n===5) return "Mixed bag! Blue ICE + pink BOING together — both guaranteed ahead. Slide onto a bounce for extra distance.";
+  if(n===6) return "New combo: brown CRUMBLE + yellow MOVING platforms ahead — keep moving, time your leap!";
+  if(n===7) return "Moving day: yellow shuttles carry you. Ride, then hop!";
   if(n===9) return "Tight gaps: gaps stretch. Hold run, use full jump arc.";
   if(n===14) return "High climb: vertical stacks. BOINGs are your ladders now.";
   if(n===19) return "Eyes up — platforms hide above. Listen for the coin shimmer.";
@@ -201,6 +202,7 @@ const PENGUIN_LEVELS = [
     platforms: [
       { x: 0, y: 440, w: 2500, h: 40, type: "normal" },
       { x: 150, y: 360, w: 120, h: 16, type: "moving", move: { min: 150, max: 350, speed: 55 } },
+      { x: 340, y: 345, w: 90, h: 16, type: "normal" },
       { x: 480, y: 310, w: 110, h: 16, type: "ice" },
       { x: 680, y: 260, w: 120, h: 16, type: "bouncy" },
       { x: 900, y: 330, w: 100, h: 16, type: "crumble" },
@@ -213,7 +215,7 @@ const PENGUIN_LEVELS = [
       { x: 2260, y: 260, w: 120, h: 16, type: "moving", move: { min: 2260, max: 2380, speed: 45 } }
     ],
     coins: [
-      { x: 210, y: 320 }, { x: 535, y: 270 }, { x: 740, y: 220 }, { x: 950, y: 290 }, { x: 1150, y: 240 }, { x: 1400, y: 200 }, { x: 1605, y: 270 }, { x: 1780, y: 230 }, { x: 1970, y: 300 }, { x: 2170, y: 260 }, { x: 2320, y: 220 }
+      { x: 210, y: 320 }, { x: 385, y: 305 }, { x: 535, y: 270 }, { x: 740, y: 220 }, { x: 950, y: 290 }, { x: 1150, y: 240 }, { x: 1400, y: 200 }, { x: 1605, y: 270 }, { x: 1780, y: 230 }, { x: 1970, y: 300 }, { x: 2170, y: 260 }, { x: 2320, y: 220 }
     ],
     flag: { x: 2400, y: 440 }
   }
@@ -236,7 +238,7 @@ var CHAMPION_ROAD = {
     { x: 1680, y: 330, w: 76, h:16, type:"ice" },
     { x: 1860, y: 285, w: 64, h:16, type:"crumble" },
     { x: 2020, y: 350, w: 88, h:16, type:"normal" },
-    { x: 2200, y: 260, w: 84, h:16, type:"bouncy" },
+    { x: 2200, y: 280, w: 84, h:16, type:"bouncy" },
     { x: 2380, y: 320, w: 72, h:16, type:"moving", move:{min:2360,max:2550,speed:85} },
     { x: 2580, y: 280, w: 76, h:16, type:"ice" },
     { x: 2750, y: 360, w: 60, h:16, type:"crumble" },
@@ -252,87 +254,152 @@ var CHAMPION_ROAD = {
     { x: 4480, y: 395, w: 136, h:16, type:"normal" }
   ],
   coins: [
-    {x:305,y:300},{x:472,y:245},{x:636,y:290},{x:808,y:220},{x:1020,y:270},{x:1174,y:320},{x:1342,y:240},{x:1580,y:200},{x:1718,y:290},{x:1892,y:245},{x:2064,y:310},{x:2242,y:220},{x:2472,y:280},{x:2618,y:240},{x:2780,y:320},{x:2950,y:265},{x:3180,y:210},{x:3325,y:290},{x:3483,y:245},{x:3662,y:300},{x:3840,y:220},{x:4068,y:270},{x:4216,y:245},{x:4392,y:300}
+    {x:305,y:300},{x:472,y:245},{x:636,y:290},{x:808,y:220},{x:1020,y:270},{x:1174,y:320},{x:1342,y:240},{x:1580,y:200},{x:1718,y:290},{x:1892,y:245},{x:2064,y:310},{x:2242,y:240},{x:2472,y:280},{x:2618,y:240},{x:2780,y:320},{x:2950,y:265},{x:3180,y:210},{x:3325,y:290},{x:3483,y:245},{x:3662,y:300},{x:3840,y:220},{x:4068,y:270},{x:4216,y:245},{x:4392,y:300}
   ],
   flag: { x: 4520, y: 395 }
 };
 
+// Physics limits (MOVE=260, JUMP=680, GRAV=2250 → height ~103px, distance ~157px):
+// keep edge gaps 55–110 and vertical steps small so EVERY level is beatable.
+function penguinPickType(index, rand) {
+  var r = rand();
+  var iceChance = Math.min(0.24, 0.10 + index * 0.0008);
+  var bouncyChance = Math.min(0.20, 0.08 + index * 0.0006);
+  var crumbleChance = index < 6 ? 0 : Math.min(0.20, 0.05 + (index - 6) * 0.0009);
+  var movingChance = index < 6 ? 0 : Math.min(0.18, 0.04 + (index - 6) * 0.0007);
+  if (index === 5) return rand() < 0.5 ? "ice" : "bouncy";
+  if (r < iceChance) return "ice";
+  if (r < iceChance + bouncyChance) return "bouncy";
+  if (r < iceChance + bouncyChance + crumbleChance) return "crumble";
+  if (r < iceChance + bouncyChance + crumbleChance + movingChance) return "moving";
+  return "normal";
+}
+
+function penguinForceTypes(platforms, index, rand, required) {
+  // guarantee at least the required types appear (for intro honesty)
+  // early tutorial levels (5,6,7) force into slots 1-2 so they're visible on the first screen
+  var early = (index === 5 || index === 6 || index === 7);
+  required.forEach(function(need, ri){
+    var has = platforms.some(function(p){ return p.type === need; });
+    if (!has && platforms.length) {
+      var candidates = [];
+      if (early) {
+        // first screens: prefer platform 1 then 2 (right after spawn)
+        var order = [1 + ri, 2 - ri, 1, 2, 3];
+        for (var o = 0; o < order.length; o++) {
+          var oi = order[o];
+          if (oi >= 1 && oi < platforms.length - 1) { candidates.push(oi); break; }
+        }
+        if (!candidates.length) candidates.push(1);
+      } else {
+        for (var i = 1; i < platforms.length - 1; i++) {
+          if (platforms[i].type === "normal") candidates.push(i);
+        }
+        if (!candidates.length) {
+          for (var j = 1; j < platforms.length - 1; j++) candidates.push(j);
+        }
+      }
+      var pick = candidates[Math.floor(rand() * candidates.length)];
+      // don't convert the same slot twice when forcing two types
+      if (early && required.length > 1 && platforms[pick].type !== "normal" && platforms[pick].type !== "ice" && platforms[pick].type !== "bouncy") {
+        pick = Math.min(platforms.length - 2, pick + 1);
+      }
+      platforms[pick].type = need;
+      if (need === "moving") {
+        var mp = platforms[pick];
+        var range = 50 + rand() * 40;
+        mp.move = { min: Math.max(0, mp.x - range / 2), max: mp.x + mp.w + range / 2, speed: 45 + rand() * 25 + Math.min(30, index * 0.15) };
+      } else {
+        delete platforms[pick].move;
+      }
+    }
+  });
+  return platforms;
+}
+
 function genProcLevel(index, rand) {
-  var procIdx = index - PENGUIN_LEVELS.length;
-  // progressive width: 1700 + n*7.5 + wiggle, caps around 4200 before champion
-  var width = 1680 + Math.floor(index * 8.5 + rand()*110);
-  if (width > 4300) width = 4300 + Math.floor(rand()*40);
   var start = { x: 80, y: 360 };
-  var count = 7 + Math.floor(index * 0.13 + rand()*2);
-  if (count > 38) count = 38 + Math.floor(rand()*3);
+  var count = 7 + Math.floor(index * 0.10 + rand() * 2);
+  if (count > 30) count = 30 + Math.floor(rand() * 3);
   if (count < 7) count = 7;
   var platforms = [];
-  var lastX = 140;
-  var lastY = 340 + (rand()-0.5)*40;
-  for (var i=0;i<count;i++) {
-    var w = 78 + rand()*68;
-    if (index > 120 && w > 90) w -= 12; // later levels tighter
-    if (index > 180 && w > 82) w -= 10;
-    var gapBase = 108 + rand()*74;
-    var gapBonus = Math.min(58, index*0.22);
-    var gap = gapBase + gapBonus;
-    // widen gap if vertical change is large (need run)
-    var y = 235 + rand()*150;
-    if (i>0) {
-      if (Math.abs(y - lastY) > 88) y = lastY + (rand()<0.5? -58: 58);
-      y = Math.max(205, Math.min(395, y));
-      if (Math.abs(y - lastY) > 70) gap -= 18;
-    }
-    var x = lastX + gap;
-    if (x + w > width - 140) { x = width - 140 - w; }
-    if (x < lastX + 40) x = lastX + 40;
-    // type distribution ramps with index
-    var r = rand();
-    var type = "normal";
-    var iceChance = Math.min(0.26, 0.10 + index*0.0009);
-    var bouncyChance = Math.min(0.22, 0.07 + index*0.0007);
-    var crumbleChance = Math.min(0.24, 0.06 + index*0.00085);
-    var movingChance = Math.min(0.20, 0.04 + index*0.00065);
-    // early game forced distributions to keep intros clean
-    if (index===5) type = rand()<0.5?"ice":"bouncy";
-    else if (index < 10) {
-      if (r < iceChance) type="ice";
-      else if (r < iceChance + bouncyChance*0.7) type="bouncy";
-      else type="normal";
-    } else {
-      if (r < iceChance) type="ice";
-      else if (r < iceChance + bouncyChance) type="bouncy";
-      else if (r < iceChance + bouncyChance + crumbleChance) type="crumble";
-      else if (r < iceChance + bouncyChance + crumbleChance + movingChance) type="moving";
-      else type="normal";
-    }
-    // ensure not too many crumbles in a row
-    if (i>1 && platforms.length>=2 && platforms[platforms.length-1].type==="crumble" && platforms[platforms.length-2].type==="crumble" && type==="crumble" && rand()<0.7) type="normal";
+  // spawn island anchor
+  var lastRight = 32 + 130; // spawn island 32..162 at y395
+  var lastY = 395;
+  for (var i = 0; i < count; i++) {
+    // platform width: generous early, tighter late (never below 72)
+    var w = 95 + rand() * 55;
+    if (index > 60) w -= 8;
+    if (index > 120) w -= 8;
+    if (index > 180) w -= 6;
+    if (w < 72) w = 72 + rand() * 10;
+    // vertical step: small, always within jump height (~103px)
+    var dy = (rand() * 2 - 1) * (42 + Math.min(22, index * 0.08));
+    if (i < 3) dy = Math.max(-50, Math.min(40, dy)); // gentle start
+    var y = lastY + dy;
+    y = Math.max(215, Math.min(390, y));
+    // edge gap sized by vertical change: up = shorter, down = longer
+    var climb = lastY - y; // positive = going up
+    var maxGap = climb > 40 ? 88 : climb > 0 ? 100 : climb > -40 ? 110 : 118;
+    var minGap = 55;
+    // later levels push toward max, never beyond
+    var push = Math.min(14, index * 0.06);
+    var gap = minGap + rand() * (maxGap - minGap - 6) + push * rand();
+    if (gap > maxGap) gap = maxGap;
+    if (gap < minGap) gap = minGap;
+    var x = lastRight + gap;
+    var type = penguinPickType(index, rand);
     var p = { x: x, y: y, w: w, h: 16, type: type };
-    if (type==="moving") {
-      var range = 56 + rand()*86;
-      var extraSpeed = Math.min(38, index*0.18);
-      p.move = { min: Math.max(0, x - range/2), max: Math.min(width- w, x + range/2), speed: 42 + rand()*36 + extraSpeed };
+    if (type === "moving") {
+      var range = 50 + rand() * 40; // small range keeps it reachable
+      var extraSpeed = Math.min(30, index * 0.15);
+      p.move = { min: Math.max(0, x - range / 2), max: x + w + range / 2, speed: 45 + rand() * 25 + extraSpeed };
     }
     platforms.push(p);
-    lastX = x + w;
+    lastRight = x + w;
     lastY = y;
-    if (lastX > width - 180) break;
   }
-  // coins: one per platform + extra for harder levels
-  var coins = [];
-  for (var j=0;j<platforms.length;j++) {
-    var pl = platforms[j];
-    if (rand()<0.82) {
-      coins.push({ x: pl.x + pl.w/2, y: pl.y - 26 });
-      if (index>30 && rand()<0.18) coins.push({ x: pl.x + pl.w*0.22, y: pl.y - 46 });
-      if (index>90 && rand()<0.08) coins.push({ x: pl.x + pl.w*0.78, y: pl.y - 46 });
+  // avoid 3 crumbles in a row (unfair)
+  for (var c = 2; c < platforms.length; c++) {
+    if (platforms[c].type === "crumble" && platforms[c-1].type === "crumble" && platforms[c-2].type === "crumble") {
+      platforms[c].type = "normal";
+      delete platforms[c].move;
     }
   }
-  while (coins.length > 14) coins.splice(Math.floor(rand()*coins.length),1);
-  var minCoins = index < 20 ? 6 : index < 80 ? 7 : index < 160 ? 8 : 10;
-  while (coins.length < minCoins) coins.push({ x: 260 + rand()*(width-480), y: 220 + rand()*80 });
-  var flag = { x: width - 86, y: 440 };
+  // guarantee promised mechanics so intros never lie
+  if (index === 5) penguinForceTypes(platforms, index, rand, ["ice", "bouncy"]);
+  else if (index === 6) penguinForceTypes(platforms, index, rand, ["crumble", "moving"]);
+  else if (index === 7) penguinForceTypes(platforms, index, rand, ["moving"]);
+  else if (index === 9) penguinForceTypes(platforms, index, rand, ["ice"]);
+  else if (index === 14) penguinForceTypes(platforms, index, rand, ["bouncy"]);
+  else if (index === 74) penguinForceTypes(platforms, index, rand, ["ice", "ice"]);
+  else if (index === 99) penguinForceTypes(platforms, index, rand, ["crumble"]);
+  else if (index === 124) penguinForceTypes(platforms, index, rand, ["bouncy", "bouncy"]);
+  else if (index === 174) penguinForceTypes(platforms, index, rand, ["crumble"]);
+  // flag island placed a reachable hop from the last platform
+  var last = platforms[platforms.length - 1];
+  var flagGap = 70 + rand() * 25;
+  var flagX = last.x + last.w + flagGap;
+  var flagY = Math.max(300, Math.min(395, last.y + (rand() * 60 - 20)));
+  var width = Math.ceil(flagX + 170);
+  // coins: one above each platform (always reachable), extras on easy arcs
+  var coins = [];
+  for (var j = 0; j < platforms.length; j++) {
+    var pl = platforms[j];
+    if (rand() < 0.9) {
+      coins.push({ x: pl.x + pl.w / 2, y: pl.y - 28 });
+      if (pl.type === "bouncy" && rand() < 0.7) coins.push({ x: pl.x + pl.w / 2, y: pl.y - 90 });
+    }
+  }
+  while (coins.length > 14) coins.splice(Math.floor(rand() * coins.length), 1);
+  var minCoins = index < 20 ? 6 : index < 80 ? 7 : 8;
+  var guard = 0;
+  while (coins.length < minCoins && guard++ < 40) {
+    var pi = Math.floor(rand() * platforms.length);
+    var pp = platforms[pi];
+    coins.push({ x: pp.x + 20 + rand() * (pp.w - 40), y: pp.y - 30 - rand() * 20 });
+  }
+  var flag = { x: flagX, y: flagY };
   return { width: width, height: 480, start: start, platforms: platforms, coins: coins, flag: flag };
 }
 
@@ -533,6 +600,25 @@ function startPenguinParkour() {
     if (!hasFlagPlat) {
       platforms.push({ x: level.flag.x - 68, y: 395, w: 136, h: 16, type: "normal", origX: level.flag.x - 68, alive:true, crumbleT:0 });
     }
+    // stepping stone: if the hop onto the flag island is wider than a jump, bridge it
+    // (handcrafted levels were built for floor-walking; lava needs a stepper)
+    platforms.sort(function(a, b){ return a.x - b.x; });
+    (function bridgeFlagGap(){
+      var flagLeft = level.flag.x - 68;
+      var best = null;
+      for (var bi = 0; bi < platforms.length; bi++) {
+        var bp = platforms[bi];
+        if (bp.x + bp.w <= flagLeft && (!best || bp.x + bp.w > best.x + best.w)) best = bp;
+      }
+      if (!best) return;
+      var gap = flagLeft - (best.x + best.w);
+      if (gap > 105) {
+        var midX = best.x + best.w + Math.floor((gap - 90) / 2);
+        var midY = Math.max(300, Math.min(390, Math.round((best.y + 395) / 2)));
+        platforms.push({ x: midX, y: midY, w: 90, h: 16, type: "normal", origX: midX, alive: true, crumbleT: 0 });
+        platforms.sort(function(a, b){ return a.x - b.x; });
+      }
+    })();
     coins = level.coins.map(function(c){ return { x:c.x, y:c.y, r:11, taken:false, phase: Math.random()*Math.PI*2 }; });
     var flagBaseY = hasFlagPlat ? level.flag.y : 395;
     flag = { x: level.flag.x, y: flagBaseY, w: 26, h: 70 };
@@ -1129,20 +1215,27 @@ function startPenguinParkour() {
         ctx.fillStyle = "rgba(42,52,66,0.08)";
         ctx.fillRect(wx+8, wy+8, pl.w-16, 2);
       } else if (pl.type==="ice") {
-        ctx.fillStyle = "#cfeeff";
-        ctx.strokeStyle = "#4f8fcf";
+        ctx.fillStyle = "#a8d8ff";
+        ctx.strokeStyle = "#1e4a7a";
         ctx.lineWidth = 2.5;
         ctx.beginPath(); ctx.roundRect(wx, wy, pl.w, pl.h, 6); ctx.fill(); ctx.stroke();
         // shine
-        ctx.fillStyle = "rgba(255,255,255,0.85)";
+        ctx.fillStyle = "rgba(255,255,255,0.9)";
         ctx.fillRect(wx+3, wy, pl.w-6, 4);
         // ice cracks
-        ctx.strokeStyle = "rgba(79,143,207,0.35)";
+        ctx.strokeStyle = "rgba(30,74,122,0.4)";
         ctx.lineWidth = 1.2;
         ctx.beginPath();
         ctx.moveTo(wx+ pl.w*0.3, wy+5); ctx.lineTo(wx+ pl.w*0.45, wy+ pl.h-2);
         ctx.moveTo(wx+ pl.w*0.65, wy+4); ctx.lineTo(wx+ pl.w*0.55, wy+ pl.h-3);
         ctx.stroke();
+        // snowflake label so ice is unmistakable
+        ctx.fillStyle = "#1e4a7a";
+        ctx.font = "bold 10px sans-serif";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        var iceLabel = pl.w > 110 ? "❄ ❄ ❄" : pl.w > 70 ? "❄ ❄" : "❄";
+        ctx.fillText(iceLabel, wx + pl.w / 2, wy + pl.h / 2 + 0.5);
       } else if (pl.type==="bouncy") {
         ctx.fillStyle = "#ffb3d1";
         ctx.strokeStyle = "#d93d7d";
