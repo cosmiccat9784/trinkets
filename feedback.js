@@ -26,7 +26,9 @@ const GAME_NAMES = {
   cheese: "Cheese Thief",
   machine: "Completely Normal Machine",
   onebutton: "One Button",
-  penguin: "Penguin Parkour"
+  penguin: "Penguin Parkour",
+  defence: "Penguin Defence",
+  spider: "Spider"
 };
 
 const fbGame = document.querySelector("#fbGame");

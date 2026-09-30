@@ -69,7 +69,8 @@ const gameSlugs = {
   onebutton: "one_button",
   penguin: "penguin_parkour",
   penguinDefence: "penguin_defence",
-  defence: "penguin_defence"
+  defence: "penguin_defence",
+  spider: "spider"
 };
 
 function slugToGame(slug) {
@@ -333,6 +334,11 @@ function embedStatText(snap) {
     if (typeof snap.lives === "number") parts.push("Lives " + snap.lives);
     if (typeof snap.coins === "number") parts.push("Fish " + snap.coins);
     if (typeof snap.cold === "number") parts.push("Cold " + snap.cold + "%");
+  }
+  if (snap.game === "Spider") {
+    if (typeof snap.dist === "number") parts.push(snap.dist + " m");
+    if (typeof snap.combo === "number") parts.push("Combo x" + snap.combo);
+    if (typeof snap.perfects === "number") parts.push("Perfects " + snap.perfects);
   }
   return parts.join(" · ");
 }
