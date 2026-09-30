@@ -348,6 +348,40 @@ footer {
   background: var(--mint);
 }
 
+.view-toggle .material-symbols-outlined {
+  font-size: 20px;
+}
+
+.view-toggle .view-toggle-label {
+  margin-left: 6px;
+}
+
+/* ── Shelf list view ── */
+.game-grid.list-view {
+  grid-template-columns: 1fr;
+}
+
+.game-grid.list-view .game-card {
+  grid-template-columns: 132px 1fr;
+  grid-template-rows: none;
+  min-height: 0;
+}
+
+.game-grid.list-view .game-art {
+  min-height: 132px;
+  border-bottom: none;
+  border-right: 3px solid var(--line);
+  overflow: hidden;
+}
+
+.game-grid.list-view .game-content {
+  padding: 14px 16px;
+}
+
+.game-grid.list-view .game-content p:not(.tag) {
+  display: none;
+}
+
 .game-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));

@@ -163,6 +163,35 @@ filters.forEach((button) => {
   });
 });
 
+(function initShelfView() {
+  const grid = document.querySelector("#gameGrid");
+  const toggle = document.querySelector("#viewToggle");
+  if (!grid || !toggle) return;
+  const KEY = "trinkets-shelf-view";
+  const icon = toggle.querySelector(".material-symbols-outlined");
+  const label = toggle.querySelector(".view-toggle-label");
+  function apply(view) {
+    const list = view === "list";
+    grid.classList.toggle("list-view", list);
+    toggle.setAttribute("aria-pressed", String(list));
+    if (icon) icon.textContent = list ? "grid_view" : "view_list";
+    if (label) label.textContent = list ? "Grid" : "List";
+    toggle.title = list ? "Switch to grid view" : "Switch to list view";
+  }
+  let saved = null;
+  try {
+    saved = localStorage.getItem(KEY);
+  } catch (err) {}
+  apply(saved === "list" ? "list" : "grid");
+  toggle.addEventListener("click", () => {
+    const next = grid.classList.contains("list-view") ? "grid" : "list";
+    try {
+      localStorage.setItem(KEY, next);
+    } catch (err) {}
+    apply(next);
+  });
+})();
+
 function readSavedIds() {
   let saved = [];
   try {
