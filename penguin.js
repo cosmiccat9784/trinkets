@@ -1226,15 +1226,15 @@ function startPenguinParkour() {
 
     ctx.restore();
 
-    // vignette when dead
+    // vignette when dead — lava!
     if (dead) {
-      ctx.fillStyle = "rgba(79,143,207,"+(0.18 + (0.55 - deadTimer)*0.2)+")";
+      ctx.fillStyle = "rgba(255,72,20,"+(0.26 + (0.55 - deadTimer)*0.22)+")";
       ctx.fillRect(0,0,W,H);
       ctx.fillStyle = "#fff";
       ctx.font = "bold 28px monospace";
       ctx.textAlign="center";
       ctx.textBaseline="middle";
-      ctx.fillText("BRR! Respawning…", W/2, H/2);
+      ctx.fillText("SIZZLE! Respawning…", W/2, H/2);
     }
     if (won) {
       ctx.fillStyle = levelIndex === TOTAL_PENGUIN_LEVELS - 1 ? "rgba(255,241,150,0.92)" : "rgba(255,255,255,0.82)";
