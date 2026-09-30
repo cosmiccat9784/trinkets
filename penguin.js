@@ -590,6 +590,7 @@ function startPenguinParkour() {
 
   var isSecretLevel = false;
   var secretReturnIndex = 0;
+  var secretTaken = null; // loot already grabbed this vault entry — survives restarts so the vault can't be re-farmed
 
   function buildLevel(n) {
     if (n === SECRET_LEVEL_INDEX) {
@@ -648,8 +649,19 @@ function startPenguinParkour() {
     levelIndex = n;
     if (isSecretLevel) {
       // don't overwrite auto-save resume with secret — keep return point
+      // keep already-looted coins gone so Restart can't re-farm the vault
+      if (secretTaken && secretTaken.length === coins.length) {
+        var kept = 0;
+        for (var ski = 0; ski < coins.length; ski++) {
+          if (secretTaken[ski]) { coins[ski].taken = true; kept++; }
+        }
+        levelCoinsCollected = kept;
+      } else {
+        secretTaken = [];
+        for (var sj = 0; sj < coins.length; sj++) secretTaken.push(false);
+      }
       updateUI();
-      msg.textContent = "★ SECRET COIN VAULT ★ — grab it all! Reach the flag to return.";
+      msg.textContent = "★ SECRET COIN VAULT ★ — grab it all! Reach the flag to return." + (levelCoinsCollected > 0 ? " (" + levelCoinsCollected + " already pocketed — loot stays looted.)" : "");
       document.querySelector("#penguinNext").hidden = true;
       return;
     }
@@ -970,6 +982,7 @@ function startPenguinParkour() {
       var dist = Math.hypot(ddx, ddy);
       if (dist < 18 + PW/3) {
         cc.taken = true;
+        if (isSecretLevel && secretTaken && coi < secretTaken.length) secretTaken[coi] = true;
         levelCoinsCollected++;
         data.coins++;
         if (data.coins > data.bestCoins) data.bestCoins = data.coins;
@@ -993,9 +1006,9 @@ function startPenguinParkour() {
       var prLeft = player.x - PW/2, prRight = player.x+PW/2, prTop = player.y - PH/2, prBottom = player.y+PH/2;
       if (prRight > flagLeft && prLeft < flagRight && prBottom > flagTop && prTop < flagBottom) {
         won = true;
-        // bonus for collecting all?
+        // bonus for collecting all? (never in the vault — one loot per entry, no bonus farming)
         var bonus = 0;
-        if (levelCoinsCollected === coins.length) bonus = coins.length * 2;
+        if (!isSecretLevel && levelCoinsCollected === coins.length) bonus = coins.length * 2;
         if (bonus>0) { data.coins += bonus; for(var b=0;b<bonus;b++) popups.push({ x: flag.x, y: flag.y- 90 - b*7, vy:-18, life:0.9, max:0.9, text:"+"+bonus+" perfect!" }); saveData(); }
         if (isSecretLevel) {
           try { savePenguinData(data); } catch(e){}
@@ -1927,6 +1940,7 @@ function startPenguinParkour() {
           data.secretUnlocked = true;
           data.secretLastUsed = Date.now();
           try { savePenguinData(data); } catch(e){}
+          secretTaken = null; // fresh vault — loot tracked from here so restarts can't re-farm
           cheatSay("★ UNLOCKED! Coin vault opening… ★", true);
           if (pinDisplay) {
             pinDisplay.classList.add("unlocked");
