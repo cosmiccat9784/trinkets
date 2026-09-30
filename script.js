@@ -78,7 +78,8 @@ const gameSlugs = {
   penguin: "penguin_parkour",
   penguinDefence: "penguin_defence",
   defence: "penguin_defence",
-  spider: "spider"
+  spider: "spider",
+  ikea: "ikea_guess"
 };
 
 function slugToGame(slug) {
@@ -347,6 +348,10 @@ function embedStatText(snap) {
     if (typeof snap.dist === "number") parts.push(snap.dist + " m");
     if (typeof snap.combo === "number") parts.push("Combo x" + snap.combo);
     if (typeof snap.perfects === "number") parts.push("Perfects " + snap.perfects);
+  }
+  if (snap.game === "Guess the IKEA Product") {
+    if (typeof snap.round === "number") parts.push("Round " + snap.round);
+    if (typeof snap.streak === "number") parts.push("Streak " + snap.streak);
   }
   return parts.join(" · ");
 }
