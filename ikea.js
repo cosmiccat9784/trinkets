@@ -140,7 +140,7 @@ function startIkeaGuess() {
           </div>
           <div class="choice-list ikea-choices" id="ikeaChoices"></div>
           <div class="game-actions">
-            <button class="game-action" id="ikeaHint" type="button">💡 Hint</button>
+            <button class="game-action" id="ikeaHint" type="button">💡 Hint (-2)</button>
             <button class="game-action" id="ikeaSkip" type="button">Skip</button>
             <button class="game-action" id="ikeaRestart" type="button">New run</button>
           </div>
@@ -195,7 +195,7 @@ function startIkeaGuess() {
     hintStage = 0;
     if (hintBtn) {
       hintBtn.disabled = false;
-      hintBtn.textContent = "💡 Hint";
+      hintBtn.textContent = "💡 Hint (-2)";
     }
     const product = deck[index];
     currentOptions = shuffleArray([product.type, ...pickDistractors(product.type)]);
@@ -311,10 +311,12 @@ function startIkeaGuess() {
   function useHint() {
     if (locked || hintStage >= 2 || index >= deck.length) return;
     const product = deck[index];
+    score = Math.max(0, score - 2);
+    scoreEl.textContent = `Score: ${score}`;
     if (hintStage === 0) {
       hintStage = 1;
-      if (hintBtn) hintBtn.textContent = "💡 Hint again";
-      msgEl.textContent = `💡 Hint: ${product.name} is ${article(product.type)} ${product.type[0]}${"·".repeat(Math.max(0, product.type.length - 1))} (${product.type.length} letters, starts with ${product.type[0]}).`;
+      if (hintBtn) hintBtn.textContent = "💡 Hint again (-2)";
+      msgEl.textContent = `💡 Hint (-2 pts): ${product.name} is ${article(product.type)} ${product.type[0]}${"·".repeat(Math.max(0, product.type.length - 1))} (${product.type.length} letters, starts with ${product.type[0]}).`;
     } else {
       hintStage = 2;
       if (hintBtn) hintBtn.disabled = true;
@@ -324,8 +326,16 @@ function startIkeaGuess() {
         b.disabled = true;
         b.classList.add("dim");
       });
-      msgEl.textContent = `💡 Hint: ${product.name} is NOT ${wrongBtns.slice(0, 2).map((b) => b.dataset.type).join(" or ")}.`;
+      msgEl.textContent = `💡 Hint (-2 pts): ${product.name} is NOT ${wrongBtns.slice(0, 2).map((b) => b.dataset.type).join(" or ")}.`;
     }
+    setSnapshot({
+      mode: "playing",
+      game: "Guess the IKEA Product",
+      score,
+      round: index + 1,
+      streak,
+      name: product.name,
+    });
   }
 
   function skip() {
