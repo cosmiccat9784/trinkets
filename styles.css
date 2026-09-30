@@ -1340,6 +1340,76 @@ body.embed {
   50% { transform: translateY(-18px); }
 }
 
+.spider-canvas {
+  display: block;
+  width: min(100%, 720px, calc((100dvh - 460px) * 3 / 2));
+  aspect-ratio: 3 / 2;
+  margin: 0 auto;
+  border: 3px solid var(--line);
+  border-radius: 12px;
+  box-shadow: 8px 8px 0 var(--line);
+  cursor: pointer;
+  touch-action: none;
+  background: #1b2340;
+}
+
+.spider-art {
+  position: relative;
+  background: linear-gradient(180deg, #1b2340 0%, #2b3a67 50%, #1b2340 100%);
+  overflow: hidden;
+}
+
+.spider-art-floor,
+.spider-art-ceil {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 5px;
+  background: var(--gold);
+}
+
+.spider-art-floor { bottom: 30px; }
+.spider-art-ceil { top: 30px; }
+
+.spider-art-spider {
+  position: absolute;
+  left: 22%;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #ff8f8f, #e14b4b 75%);
+  border: 3px solid var(--line);
+  animation: spider-swap 1.8s ease-in-out infinite;
+}
+
+.spider-art-spike {
+  position: absolute;
+  width: 0;
+  height: 0;
+  border-left: 11px solid transparent;
+  border-right: 11px solid transparent;
+}
+
+.spider-art-spike.up {
+  bottom: 35px;
+  border-bottom: 22px solid var(--coral);
+  filter: drop-shadow(2px 2px 0 var(--line));
+}
+
+.spider-art-spike.down {
+  top: 35px;
+  border-top: 22px solid var(--coral);
+  filter: drop-shadow(2px 2px 0 var(--line));
+}
+
+.spider-art-spike.s1 { left: 52%; }
+.spider-art-spike.s2 { left: 72%; }
+
+@keyframes spider-swap {
+  0%, 100% { bottom: 38px; top: auto; }
+  50% { top: 38px; bottom: auto; }
+}
+
 /* ── Penguin Parkour ── */
 .penguin-art {
   position: relative;
@@ -1848,14 +1918,13 @@ body.embed {
 .defence-art::before {
   content: "";
   position: absolute;
-  left: -6%;
-  right: -6%;
-  top: 44%;
-  height: 3px;
-  background: #eef3f7;
-  box-shadow: 0 8px 0 #d6e2ef, 0 16px 0 #eef3f7, 0 24px 0 #d6e2ef;
-  transform: rotate(-2deg);
-  opacity: 0.95;
+  left: -8%;
+  right: -8%;
+  top: 32%;
+  height: 38%;
+  background: linear-gradient(180deg, rgba(25,33,43,0.08) 0%, transparent 60%);
+  clip-path: polygon(0 58%, 14% 38%, 22% 52%, 34% 34%, 46% 50%, 62% 32%, 74% 52%, 88% 36%, 100% 56%, 100% 100%, 0 100%);
+  opacity: 0.42;
 }
 .defence-art::after {
   content: "";
@@ -1863,22 +1932,33 @@ body.embed {
   left: 0;
   right: 0;
   bottom: 0;
-  height: 28px;
+  height: 22px;
   background: linear-gradient(180deg, #ffffff 0%, #d6e2ef 100%);
-  border-top: 3px solid var(--line);
+  border-top: 2px solid var(--line);
+}
+.defence-art-grid {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(rgba(42,52,66,0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(42,52,66,0.04) 1px, transparent 1px);
+  background-size: 28px 28px;
+  opacity: 0.55;
 }
 .defence-art-path {
   position: absolute;
-  left: 8%;
-  right: 12%;
-  top: 50%;
-  height: 8px;
-  background: #eef3f7;
-  border: 2px solid var(--line);
+  background: #ffffff;
+  border: 2px solid #2a3442;
+  box-shadow: 2px 2px 0 var(--line);
   border-radius: 999px;
-  transform: translateY(-50%) rotate(-1deg);
-  box-shadow: 3px 3px 0 var(--line);
 }
+.defence-art-path.seg1 { left: 2%; width: 28%; top: 20%; height: 10px; }
+.defence-art-path.seg2 { left: 28%; top: 20%; width: 10px; height: 38%; border-radius: 6px; }
+.defence-art-path.seg3 { left: 28%; top: 58%; width: 30%; height: 10px; }
+.defence-art-path.seg4 { left: 56%; top: 20%; width: 10px; height: 42%; border-radius: 6px; }
+.defence-art-path.seg5 { left: 56%; width: 26%; top: 20%; height: 10px; }
+.defence-art-path.seg6 { left: 80%; top: 20%; width: 10px; height: 42%; border-radius: 6px; }
+.defence-art-path.seg7 { left: 80%; top: 62%; width: 14%; height: 10px; border-radius: 999px 6px 6px 999px; }
 .defence-art-tower {
   position: absolute;
   width: 26px;
@@ -1891,19 +1971,20 @@ body.embed {
   font-size: 14px;
   line-height: 1;
 }
-.defence-art-tower.t1 { left: 14%; bottom: 38px; background: #64aee0; animation: defence-bob 2s ease-in-out infinite; }
-.defence-art-tower.t2 { left: 34%; bottom: 68px; background: #fffdf6; animation: defence-bob 2s ease-in-out infinite 0.4s; }
-.defence-art-tower.t3 { right: 26%; bottom: 44px; background: #f7f0d8; animation: defence-bob 2s ease-in-out infinite 0.8s; }
+.defence-art-tower.t1 { left: 14%; top: 36%; background: #8fb7d6; animation: defence-bob 2s ease-in-out infinite; }
+.defence-art-tower.t2 { left: 44%; top: 42%; background: #f7f0d8; animation: defence-bob 2s ease-in-out infinite 0.4s; }
+.defence-art-tower.t3 { left: 68%; top: 38%; background: #fffdf6; animation: defence-bob 2s ease-in-out infinite 0.8s; }
+.defence-art-tower.t4 { left: 42%; top: 72%; background: #ffca7a; animation: defence-bob 2s ease-in-out infinite 1.1s; }
 .defence-art-penguin {
   position: absolute;
-  left: 46%;
-  bottom: 34px;
-  width: 38px;
-  height: 44px;
+  left: 50%;
+  top: 46%;
+  width: 36px;
+  height: 42px;
   background: radial-gradient(circle at 35% 22%, #2a3a52 0%, #1e2a3a 68%);
   border: 2px solid var(--line);
   border-radius: 50% / 58%;
-  box-shadow: 3px 3px 0 var(--line);
+  box-shadow: 3px 3px 0 var(--line), 0 0 12px rgba(160,220,255,0.45);
   display: grid;
   place-items: center;
   animation: defence-penguin-pulse 1.6s ease-in-out infinite;
@@ -1926,32 +2007,70 @@ body.embed {
   line-height: 1;
   z-index: 1;
 }
+.defence-art-base {
+  position: absolute;
+  right: 6%;
+  top: 62%;
+  width: 26px;
+  height: 16px;
+  background: #fff;
+  border: 2px solid var(--line);
+  border-radius: 9px 9px 3px 3px;
+  box-shadow: 2px 2px 0 var(--line);
+  transform: translateY(-50%);
+}
+.defence-art-base::before {
+  content: "";
+  position: absolute;
+  left: 4px;
+  right: 4px;
+  top: 5px;
+  height: 2px;
+  background: var(--line);
+  border-radius: 99px;
+  opacity: 0.35;
+}
+.defence-art-base::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: -8px;
+  width: 3px;
+  height: 10px;
+  background: var(--line);
+}
 .defence-art-enemy {
   position: absolute;
-  width: 16px;
-  height: 16px;
+  width: 14px;
+  height: 14px;
   border-radius: 50%;
-  background: #ff6b6b;
   border: 2px solid var(--line);
-  top: 49%;
-  animation: defence-march 4.2s linear infinite;
+  box-shadow: 1px 1px 0 rgba(0,0,0,0.12);
+  animation: defence-march 4.8s linear infinite;
+  z-index: 3;
 }
-.defence-art-enemy.e1 { left: 6%; animation-delay: 0s; background: #6b8db5; }
-.defence-art-enemy.e2 { left: 6%; animation-delay: 1.1s; background: #43c6ac; width: 13px; height: 13px; }
-.defence-art-enemy.e3 { left: 6%; animation-delay: 2.2s; background: #a8b2c4; width: 18px; height: 18px; }
+.defence-art-enemy.e1 { background: #ff6b35; animation-delay: 0s; }
+.defence-art-enemy.e2 { background: #6b7cff; animation-delay: 1.2s; width: 12px; height: 12px; }
+.defence-art-enemy.e3 { background: #8a5a2b; animation-delay: 2.4s; width: 13px; height: 13px; }
 @keyframes defence-bob {
   0%, 100% { transform: translateY(0); }
   50% { transform: translateY(-5px); }
 }
 @keyframes defence-penguin-pulse {
-  0%, 100% { transform: scale(1) rotate(-1deg); box-shadow: 3px 3px 0 var(--line), 0 0 0 rgba(255,159,46,0); }
-  50% { transform: scale(1.06) rotate(1deg); box-shadow: 3px 3px 0 var(--line), 0 0 16px rgba(255,159,46,0.55); }
+  0%, 100% { transform: translate(-50%, -50%) scale(1) rotate(-1deg); box-shadow: 3px 3px 0 var(--line), 0 0 0 rgba(160,220,255,0); }
+  50% { transform: translate(-50%, -50%) scale(1.06) rotate(1deg); box-shadow: 3px 3px 0 var(--line), 0 0 16px rgba(160,220,255,0.6); }
 }
 @keyframes defence-march {
-  0% { transform: translate(0, -50%); opacity: 0; }
-  8% { opacity: 1; }
-  90% { opacity: 1; }
-  100% { transform: translate(220px, -50%); opacity: 0; }
+  0% { left: -4%; top: 20%; opacity: 0; }
+  6% { opacity: 1; }
+  14% { left: 30%; top: 20%; }
+  28% { left: 30%; top: 58%; }
+  40% { left: 58%; top: 58%; }
+  54% { left: 58%; top: 20%; }
+  66% { left: 82%; top: 20%; }
+  80% { left: 82%; top: 62%; }
+  92% { left: 96%; top: 62%; opacity: 1; }
+  100% { left: 106%; top: 62%; opacity: 0; }
 }
 
 .defence-canvas {
@@ -4518,6 +4637,10 @@ footer p {
 
   .one-canvas {
     width: min(100%, 720px, calc((100vh - 420px) * 3 / 2));
+  }
+
+  .spider-canvas {
+    width: min(100%, 720px, calc((100vh - 460px) * 3 / 2));
   }
 
   .coin-canvas {
