@@ -68,20 +68,21 @@ function startPenguinDefence() {
     boss:   { hp:420, speed:40, reward:85, radius:23, color:"#8a0f1f", stroke:"#1a0408", eye:"#ffd700", name:"BOSS" }
   };
 
-  // waypoints - pixel center path
+  // waypoints — aligned to grid cell centers so path sits cleanly inside tiles
+  // COLS=12 (60px), ROWS=8 (54px), center = c*60+30, r*54+27
   var WAYPOINTS = [
-    { x:-30, y: 96 },
-    { x:132, y: 96 },
-    { x:132, y:324 },
-    { x:354, y:324 },
-    { x:354, y:108 },
-    { x:570, y:108 },
-    { x:570, y:312 },
-    { x:750, y:312 }
+    { x:-30, y: 81 },   // off-screen left, row 1
+    { x:150, y: 81 },   // (2,1)
+    { x:150, y:297 },   // (2,5)
+    { x:390, y:297 },   // (6,5)
+    { x:390, y: 81 },   // (6,1)
+    { x:570, y: 81 },   // (9,1)
+    { x:570, y:297 },   // (9,5)
+    { x:750, y:297 }    // off-screen right, row 5
   ];
 
-  // colony (igloo) at last waypoint
-  var COLONY = { x: 682, y:312, r:34 };
+  // colony (igloo) just before exit — sits on its own ice tile
+  var COLONY = { x: 690, y:297, r:34 };
 
   // state
   var money = START_MONEY;
@@ -133,19 +134,19 @@ function startPenguinDefence() {
     }catch(e){}
   }
 
-  // build grid occupancy
+  // build grid occupancy — only path cells are blocked, no fuzzy overlap
   var blocked = [];
   function buildBlocked() {
     blocked = [];
     for (var r=0;r<ROWS;r++) for (var c=0;c<COLS;c++) {
       var cx = c*CELL_W + CELL_W/2;
       var cy = r*CELL_H + CELL_H/2;
-      var isBlocked = pointToPathDist(cx, cy) < (PATH_W/2 + 18);
-      // also block colony area
-      if (Math.hypot(cx - COLONY.x, cy - COLONY.y) < 42) isBlocked = true;
+      // tight threshold so only cells whose centre is near the road are blocked → no "path in middle of tile" bleed
+      var isBlocked = pointToPathDist(cx, cy) < (PATH_W/2 + 7);
+      // colony pad is reserved — block its 2×2 footprint
+      if (Math.hypot(cx - COLONY.x, cy - COLONY.y) < 36) isBlocked = true;
       blocked.push(isBlocked);
     }
-    // ensure at least some buildable cells exist: if blocked too many, relax? not needed with chosen waypoints
   }
 
   function pointToPathDist(px, py) {
