@@ -12,12 +12,16 @@ function startPenguinDefence() {
         '<span class="game-stat" id="defScore">Score 0</span>' +
       '</div>' +
       '<p class="game-message" id="defMsg">Place seals, owls, bears &amp; foxes to defend the colony. Survive the waves!</p>' +
-      '<div class="defence-stage" id="defStage">' +
-        '<canvas class="defence-canvas" id="defenceCanvas" width="720" height="432"></canvas>' +
-        '<div class="defence-cold-banner" id="defColdBanner" hidden><span class="def-cold-icon">\u2744\uFE0F</span><span id="defColdText">THE ICE IS THICKENING...</span><span class="def-cold-icon">\u2744\uFE0F</span></div>' +
+      '<div class="defence-main" id="defMain">' +
+        '<div class="defence-stage" id="defStage">' +
+          '<canvas class="defence-canvas" id="defenceCanvas" width="720" height="432"></canvas>' +
+          '<div class="defence-cold-banner" id="defColdBanner" hidden><span class="def-cold-icon">\u2744\uFE0F</span><span id="defColdText">THE ICE IS THICKENING...</span><span class="def-cold-icon">\u2744\uFE0F</span></div>' +
+        '</div>' +
+        '<div class="defence-sidebar" id="defSidebar">' +
+          '<div class="defence-shop" id="defShop"></div>' +
+          '<div class="defence-info" id="defInfo" hidden></div>' +
+        '</div>' +
       '</div>' +
-      '<div class="defence-shop" id="defShop"></div>' +
-      '<div class="defence-info" id="defInfo" hidden></div>' +
       '<div class="game-actions">' +
         '<button class="game-action" id="defNextWave" type="button">Start wave</button>' +
         '<button class="game-action" id="defSpeed" type="button" title="Toggle speed">\u23E9 1\u00D7</button>' +

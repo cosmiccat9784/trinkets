@@ -2342,6 +2342,43 @@ body.embed {
 .def-badge { display: inline-flex; align-items: center; min-height: 38px; padding: 0 12px; background: #ffd700; border: 2px solid var(--line); border-radius: 999px; font-weight: 900; font-size: 0.84rem; }
 .def-mini { min-height: 32px; padding: 0 10px; font-size: 0.8rem; }
 
+/* Defence sidebar: shop lives beside canvas so the game never resizes when shop/info changes */
+.defence-main {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 220px;
+  gap: 12px;
+  align-items: start;
+  width: min(100%, 940px);
+  margin: 0 auto;
+}
+.defence-sidebar {
+  display: grid;
+  gap: 10px;
+  align-content: start;
+  min-width: 0;
+  position: sticky;
+  top: 8px;
+}
+.defence-sidebar .defence-shop {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 8px;
+  width: 100%;
+  margin: 0;
+}
+.defence-sidebar .defence-info {
+  width: 100%;
+  margin: 0;
+}
+@media (max-width: 860px) {
+  .defence-main { grid-template-columns: 1fr; }
+  .defence-sidebar { position: static; }
+  .defence-sidebar .defence-shop { grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); }
+}
+@media (max-width: 520px) {
+  .defence-sidebar .defence-shop { grid-template-columns: 1fr 1fr; gap: 6px; }
+}
+
 .feedback-wrap {
   display: grid;
   gap: 18px;
@@ -4674,4 +4711,124 @@ footer p {
   html {
     scroll-behavior: auto;
   }
+}
+
+/* ── Guess the IKEA Product ── */
+.ikea-art {
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 8px;
+  background: #0058a3;
+  overflow: hidden;
+  padding: 16px;
+}
+
+.ikea-tag {
+  display: inline-block;
+  padding: 6px 16px;
+  background: #ffdb00;
+  border: 3px solid var(--line);
+  box-shadow: 4px 4px 0 var(--line);
+  color: #0058a3;
+  font-weight: 900;
+  font-size: 1.5rem;
+  letter-spacing: 0.04em;
+  transform: rotate(-2deg);
+  animation: ikea-bob 2.4s ease-in-out infinite;
+}
+
+.ikea-tag.small {
+  font-size: 0.95rem;
+  padding: 4px 12px;
+}
+
+.ikea-tag.t2 {
+  transform: rotate(2deg);
+  animation-delay: 0.5s;
+}
+
+.ikea-tag.t3 {
+  transform: rotate(-1deg);
+  animation-delay: 1s;
+}
+
+@keyframes ikea-bob {
+  0%, 100% { translate: 0 0; }
+  50% { translate: 0 -6px; }
+}
+
+.ikea-name {
+  display: grid;
+  place-items: center;
+  min-height: 76px;
+  padding: 10px 14px;
+  background: #0058a3;
+  border: 3px solid var(--line);
+  border-radius: 8px;
+  box-shadow: 5px 5px 0 var(--line);
+  color: #ffdb00;
+  font-size: clamp(1.9rem, 6vw, 2.8rem);
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  text-align: center;
+}
+
+.ikea-choices {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+@media (max-width: 560px) {
+  .ikea-choices {
+    grid-template-columns: 1fr;
+  }
+}
+
+.choice-button.good {
+  background: var(--mint);
+}
+
+.choice-button.bad {
+  background: var(--coral);
+  color: #fff;
+}
+
+.choice-button.dim {
+  opacity: 0.45;
+}
+
+.choice-button:disabled {
+  cursor: default;
+}
+
+.ikea-opt-num {
+  display: inline-grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  margin-right: 8px;
+  background: var(--ink);
+  border-radius: 6px;
+  color: #fff;
+  font-size: 0.85rem;
+  flex: 0 0 auto;
+}
+
+.ikea-opt-emoji {
+  margin-right: 6px;
+}
+
+.ikea-final {
+  display: grid;
+  gap: 8px;
+  padding: 12px 14px;
+  background: var(--cream);
+  border: 2px dashed var(--line);
+  border-radius: 8px;
+  font-weight: 700;
+}
+
+.ikea-final p {
+  margin: 0;
+  color: var(--ink);
 }
