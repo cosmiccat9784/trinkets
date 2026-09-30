@@ -66,6 +66,12 @@ chrome eats more viewport height than developers expect.
    bug reports routable — missing entries are a ship-blocker just like a
    failing viewport check.
 
+10. **"New" badges expire after 7 days, automatically.** New cards get
+    `data-added="YYYY-MM-DD"` (the ship date) plus `· New` in the card tag;
+    `expireNewBadges()` in `script.js` strips the badge once the card is
+    older than 7 days. Never hard-remove someone else's fresh badge by hand
+    — the timer does it.
+
 ## Testing checklist (manual — no headless browser in this repo)
 
 - 360×640 phone portrait: every game opens with zero scrollbars.

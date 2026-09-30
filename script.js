@@ -134,6 +134,19 @@ window.addEventListener("DOMContentLoaded", () => {
   if (id) showGame(id);
 });
 
+// "New" badges expire 7 days after the card's data-added date (YYYY-MM-DD).
+// New games: add data-added="<today>" alongside "· New" in the card tag.
+(function expireNewBadges() {
+  const WEEK_MS = 7 * 24 * 60 * 60 * 1000;
+  const now = Date.now();
+  document.querySelectorAll('.game-card[data-added]').forEach((card) => {
+    const added = Date.parse(card.dataset.added + "T00:00:00");
+    if (Number.isNaN(added) || now - added <= WEEK_MS) return;
+    const tag = card.querySelector(".tag");
+    if (tag) tag.textContent = tag.textContent.replace(/ · New/i, "");
+  });
+})();
+
 filters.forEach((button) => {
   button.addEventListener("click", () => {
     const filter = button.dataset.filter;
