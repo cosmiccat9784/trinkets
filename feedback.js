@@ -28,7 +28,8 @@ const GAME_NAMES = {
   onebutton: "One Button",
   penguin: "Penguin Parkour",
   defence: "Penguin Defence",
-  spider: "Spider"
+  spider: "Spider",
+  ikea: "Guess the IKEA Product"
 };
 
 const fbGame = document.querySelector("#fbGame");
