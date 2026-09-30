@@ -6,7 +6,15 @@ const PENGUINS = [
   { id: "emperor", name: "Emperor", price: 35, body: "#1f314f", belly: "#fff0a0", beak: "#f6c445", foot: "#f6c445", eye: "#0f1320", hat: "crown", scarf: "#f6c445", desc: "Golden belly, royal glide" },
   { id: "ninja", name: "Ninja", price: 50, body: "#1a1e24", belly: "#cbd6e6", beak: "#3a3a3a", foot: "#3a3a3a", eye: "#ff2d2d", hat: "headband", scarf: "#ff6b6b", desc: "Silent flaps" },
   { id: "astro", name: "Astro", price: 65, body: "#eaf2ff", belly: "#d6ecff", beak: "#ff9f2e", foot: "#4f8fcf", eye: "#0f1320", hat: "helmet", scarf: null, desc: "Low-gravity trained" },
-  { id: "viking", name: "Viking", price: 80, body: "#6b4a2f", belly: "#fff8ea", beak: "#ff9f2e", foot: "#ff9f2e", eye: "#0f1320", hat: "viking", scarf: "#4f8fcf", desc: "Horns help with headbutts" }
+  { id: "viking", name: "Viking", price: 80, body: "#6b4a2f", belly: "#fff8ea", beak: "#ff9f2e", foot: "#ff9f2e", eye: "#0f1320", hat: "viking", scarf: "#4f8fcf", desc: "Horns help with headbutts" },
+  { id: "chef", name: "Chef", price: 95, body: "#fffaf0", belly: "#ffe8c8", beak: "#ff9f2e", foot: "#8a5a2b", eye: "#2b1a0e", hat: "chef", scarf: "#ff6b6b", desc: "Serves fish-coins fresh" },
+  { id: "pirate", name: "Pirate", price: 115, body: "#1a2530", belly: "#e8d5a8", beak: "#ff9f2e", foot: "#6b4a2f", eye: "#0f1320", hat: "pirate", scarf: "#cc1a00", desc: "Arrr, parkour!" },
+  { id: "snowflake", name: "Frost", price: 135, body: "#d6f0ff", belly: "#ffffff", beak: "#4f8fcf", foot: "#4f8fcf", eye: "#1e4a7a", hat: "snowflake", scarf: "#a8d6ff", desc: "Never melts, always slides" },
+  { id: "disco", name: "Disco", price: 155, body: "#6a4cff", belly: "#ffe9ff", beak: "#ffd166", foot: "#ff6b9d", eye: "#1a0a2e", hat: "disco", scarf: "#ffd166", desc: "Grooves between jumps" },
+  { id: "ghost", name: "Ghost", price: 180, body: "#e8eef6", belly: "#ffffff", beak: "#cbd6e6", foot: "#cbd6e6", eye: "#4a5a7a", hat: "ghost", scarf: null, desc: "Boo! Slightly translucent" },
+  { id: "knight", name: "Knight", price: 210, body: "#8a9ab0", belly: "#d6e2ef", beak: "#ff9f2e", foot: "#2a3442", eye: "#0f1a2a", hat: "knight", scarf: "#cc1a00", desc: "Armor adds +1 bravery" },
+  { id: "robot", name: "Robo", price: 240, body: "#c0c8d4", belly: "#e8f0ff", beak: "#ff9f2e", foot: "#4a5a6b", eye: "#00ffaa", hat: "robot", scarf: "#ff6b6b", desc: "Beep boop waddle" },
+  { id: "waddles", name: "Waddles", price: 500, body: "#1e2a3a", belly: "#fff8ea", beak: "#ff9f2e", foot: "#ff9f2e", eye: "#1a0a12", hat: "waddles", scarf: "#ffd166", desc: "PERFECTLY CIRCULAR. SOOOOO CUTE. The ultimate.", circular: true }
 ];
 
 function penguinById(id) {
@@ -30,6 +38,73 @@ function loadPenguinData() {
 }
 function savePenguinData(d) {
   try { localStorage.setItem(PENGUIN_KEY, JSON.stringify(d)); } catch(e){}
+}
+
+var TOTAL_PENGUIN_LEVELS = 250;
+
+// ——— seeded RNG for deterministic levels ———
+function penguinHash(s){
+  var h = 2166136261;
+  for(var i=0;i<s.length;i++){ h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); }
+  return h >>> 0;
+}
+function penguinRNG(seed){
+  var a = seed >>> 0;
+  return function(){
+    a |= 0; a = (a + 0x6d2b79f5) | 0;
+    var t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+// ——— level titles & intros ———
+var PENGUIN_BIOMES = [
+  "Tutorial Meadows", "Icy Heights", "Bouncy Bay", "Crumble Canyon", "Sky Peak",
+  "Ember Embankment", "Frosted Flats", "Pop Plateau", "Shatter Shelf", "Drift Docks",
+  "Magma Marsh", "Glacier Glide", "Rebound Ridge", "Fragile Frontier", "Hover Heights",
+  "Scalding Steps", "Permafrost Pass", "Spring Spire", "Dust Dunes", "Wind Walk",
+  "Ashen Ascent", "Chill Chasm", "Bounce Bastion", "Crackling Crest", "Soaring Strait",
+  "Inferno Incline", "Tundra Terrace", "Pogo Pinnacle", "Crumble Causeway", "Glide Gallery",
+  "Ember Estuary", "Hoarfrost Hollows", "Trampoline Terrace", "Quake Quay", "Aerial Arcade",
+  "Blazing Bluff", "Snowdrift Summit", "Boing Bridge", "Fracture Field", "Zephyr Zone"
+];
+var PENGUIN_TITLES = [];
+for(var ti=0; ti<TOTAL_PENGUIN_LEVELS; ti++){
+  if(ti < 5) { PENGUIN_TITLES.push(PENGUIN_BIOMES[ti]); continue; }
+  if(ti === TOTAL_PENGUIN_LEVELS-1) { PENGUIN_TITLES.push("Champion Road"); continue; }
+  var base = PENGUIN_BIOMES[5 + (ti % (PENGUIN_BIOMES.length-5))];
+  var tier = Math.floor(ti / 25);
+  var suffix = tier===0 ? "" : tier===1 ? " II" : tier===2 ? " III" : tier===3 ? " IV" : tier===4 ? " V" : " ●".repeat(Math.min(tier-4,3));
+  // add variation for loop
+  var variant = (ti % 17 === 0) ? " — Deep Heat" : (ti % 13 === 0) ? " — Thin Air" : (ti % 11 === 0) ? " — Whiteout" : "";
+  PENGUIN_TITLES.push(base + suffix + variant);
+}
+function penguinIntro(n){
+  // n zero-based
+  if(n===0) return "THE FLOOR IS LAVA! Stay on the platforms. Arrow keys / A D to move, Space to jump. Grab coins, reach the flag!";
+  if(n===1) return "New: ICE! Blue platforms are slippery — you'll slide after stopping. Feather your inputs.";
+  if(n===2) return "New: BOING PAD! Pink pads bounce you sky-high. Land in the center for max pop!";
+  if(n===3) return "New: CRUMBLE! Brown blocks crack and fall 0.5s after you land — keep moving! Don't look back.";
+  if(n===4) return "New: MOVING! Yellow platforms shuttle back and forth — ride them, time your leap.";
+  if(n===5) return "Mixed bag! Ice + BOING together. Try sliding onto a bounce for extra distance.";
+  if(n===6) return "Crumble + moving combo. The ground doesn't want you here.";
+  if(n===9) return "Tight gaps: gaps stretch. Hold run, use full jump arc.";
+  if(n===14) return "High climb: vertical stacks. BOINGs are your ladders now.";
+  if(n===19) return "Eyes up — platforms hide above. Listen for the coin shimmer.";
+  if(n===24) return "All mechanics at once. Read the colors: blue=ice, pink=boing, brown=crumble, yellow=move.";
+  if(n===29) return "Hot and cold: lava glows brighter. The heat makes you wobble (it’s style).";
+  if(n===39) return "Rhythm section: moving platforms sync to 1.2s. Find the beat.";
+  if(n===49) return "Halfway hump! Levels get longer and gaps get meaner. You’ve got this.";
+  if(n===74) return "Ice storm: almost everything is blue. Tap to micro-adjust.";
+  if(n===99) return "Triple threat: triple crumble chains. Don't hesitate.";
+  if(n===124) return "Bounce maze: chain 3 BOINGs to reach the flag island.";
+  if(n===149) return "Sky labyrinth: 30+ platforms. Map it with your eyes first.";
+  if(n===174) return "Crumble gauntlet: one safe step, one fall. Memorize.";
+  if(n===199) return "Final stretch: champion’s antechamber. Only the cleanest runs survive.";
+  if(n===248) return "The penultimate test. One more coin, one more perfect landing.";
+  if(n===249) return "CHAMPION ROAD — The ultimate. Every mechanic, no forgiveness. The floor is still lava. Become legend, Waddles awaits.";
+  return null;
 }
 
 // Hand-crafted 5 levels then procedural after
@@ -140,65 +215,135 @@ const PENGUIN_LEVELS = [
   }
 ];
 
-function genProcLevel(index) {
-  // index is zero-based level number beyond handcrafted length
+// ——— champion road: hand-crafted finale ———
+var CHAMPION_ROAD = {
+  width: 4600, height: 480,
+  start: { x: 80, y: 360 },
+  platforms: [
+    { x: 80-48, y: 395, w: 112, h:16, type:"normal" },
+    { x: 260, y: 340, w: 90, h:16, type:"ice" },
+    { x: 430, y: 285, w: 84, h:16, type:"bouncy" },
+    { x: 600, y: 330, w: 72, h:16, type:"crumble" },
+    { x: 760, y: 260, w: 96, h:16, type:"moving", move:{min:740,max:950,speed:68} },
+    { x: 980, y: 310, w: 80, h:16, type:"ice" },
+    { x: 1140, y: 360, w: 68, h:16, type:"crumble" },
+    { x: 1300, y: 280, w: 84, h:16, type:"bouncy" },
+    { x: 1480, y: 240, w: 72, h:16, type:"moving", move:{min:1460,max:1680,speed:78} },
+    { x: 1680, y: 330, w: 76, h:16, type:"ice" },
+    { x: 1860, y: 285, w: 64, h:16, type:"crumble" },
+    { x: 2020, y: 350, w: 88, h:16, type:"normal" },
+    { x: 2200, y: 260, w: 84, h:16, type:"bouncy" },
+    { x: 2380, y: 320, w: 72, h:16, type:"moving", move:{min:2360,max:2550,speed:85} },
+    { x: 2580, y: 280, w: 76, h:16, type:"ice" },
+    { x: 2750, y: 360, w: 60, h:16, type:"crumble" },
+    { x: 2910, y: 305, w: 80, h:16, type:"bouncy" },
+    { x: 3090, y: 250, w: 88, h:16, type:"moving", move:{min:3070,max:3270,speed:72} },
+    { x: 3290, y: 330, w: 70, h:16, type:"ice" },
+    { x: 3450, y: 285, w: 66, h:16, type:"crumble" },
+    { x: 3620, y: 340, w: 84, h:16, type:"normal" },
+    { x: 3800, y: 260, w: 80, h:16, type:"bouncy" },
+    { x: 3980, y: 310, w: 76, h:16, type:"moving", move:{min:3960,max:4140,speed:90} },
+    { x: 4180, y: 285, w: 72, h:16, type:"ice" },
+    { x: 4360, y: 340, w: 64, h:16, type:"crumble" },
+    { x: 4480, y: 395, w: 136, h:16, type:"normal" }
+  ],
+  coins: [
+    {x:305,y:300},{x:472,y:245},{x:636,y:290},{x:808,y:220},{x:1020,y:270},{x:1174,y:320},{x:1342,y:240},{x:1580,y:200},{x:1718,y:290},{x:1892,y:245},{x:2064,y:310},{x:2242,y:220},{x:2472,y:280},{x:2618,y:240},{x:2780,y:320},{x:2950,y:265},{x:3180,y:210},{x:3325,y:290},{x:3483,y:245},{x:3662,y:300},{x:3840,y:220},{x:4068,y:270},{x:4216,y:245},{x:4392,y:300}
+  ],
+  flag: { x: 4520, y: 395 }
+};
+
+function genProcLevel(index, rand) {
   var procIdx = index - PENGUIN_LEVELS.length;
-  var width = 1600 + procIdx * 220 + Math.floor(Math.random()*120);
+  // progressive width: 1700 + n*7.5 + wiggle, caps around 4200 before champion
+  var width = 1680 + Math.floor(index * 8.5 + rand()*110);
+  if (width > 4300) width = 4300 + Math.floor(rand()*40);
   var start = { x: 80, y: 360 };
-  var platforms = [{ x: 0, y: 440, w: width, h: 40, type: "normal" }];
-  var count = 8 + Math.floor(procIdx * 0.7);
+  var count = 7 + Math.floor(index * 0.13 + rand()*2);
+  if (count > 38) count = 38 + Math.floor(rand()*3);
+  if (count < 7) count = 7;
+  var platforms = [];
   var lastX = 140;
+  var lastY = 340 + (rand()-0.5)*40;
   for (var i=0;i<count;i++) {
-    var w = 90 + Math.random()*70;
-    var gap = 110 + Math.random()*100 + Math.min(60, procIdx*4);
+    var w = 78 + rand()*68;
+    if (index > 120 && w > 90) w -= 12; // later levels tighter
+    if (index > 180 && w > 82) w -= 10;
+    var gapBase = 108 + rand()*74;
+    var gapBonus = Math.min(58, index*0.22);
+    var gap = gapBase + gapBonus;
+    // widen gap if vertical change is large (need run)
+    var y = 235 + rand()*150;
+    if (i>0) {
+      if (Math.abs(y - lastY) > 88) y = lastY + (rand()<0.5? -58: 58);
+      y = Math.max(205, Math.min(395, y));
+      if (Math.abs(y - lastY) > 70) gap -= 18;
+    }
     var x = lastX + gap;
     if (x + w > width - 140) { x = width - 140 - w; }
-    var y = 240 + Math.random()*130;
-    // force reachable steps: if vertical diff > 90 need closer gap
-    if (i>0) {
-      var prevY = platforms[platforms.length-1].y;
-      if (Math.abs(y - prevY) > 80) y = prevY + (Math.random()<0.5? -55: 55);
-      y = Math.max(210, Math.min(380, y));
-    }
-    var r = Math.random();
+    if (x < lastX + 40) x = lastX + 40;
+    // type distribution ramps with index
+    var r = rand();
     var type = "normal";
-    if (procIdx > 1 && r < 0.22) type = "ice";
-    else if (procIdx > 2 && r < 0.32) type = "bouncy";
-    else if (procIdx > 3 && r < 0.42) type = "crumble";
-    else if (procIdx > 4 && r < 0.48) type = "moving";
+    var iceChance = Math.min(0.26, 0.10 + index*0.0009);
+    var bouncyChance = Math.min(0.22, 0.07 + index*0.0007);
+    var crumbleChance = Math.min(0.24, 0.06 + index*0.00085);
+    var movingChance = Math.min(0.20, 0.04 + index*0.00065);
+    // early game forced distributions to keep intros clean
+    if (index===5) type = rand()<0.5?"ice":"bouncy";
+    else if (index < 10) {
+      if (r < iceChance) type="ice";
+      else if (r < iceChance + bouncyChance*0.7) type="bouncy";
+      else type="normal";
+    } else {
+      if (r < iceChance) type="ice";
+      else if (r < iceChance + bouncyChance) type="bouncy";
+      else if (r < iceChance + bouncyChance + crumbleChance) type="crumble";
+      else if (r < iceChance + bouncyChance + crumbleChance + movingChance) type="moving";
+      else type="normal";
+    }
+    // ensure not too many crumbles in a row
+    if (i>1 && platforms.length>=2 && platforms[platforms.length-1].type==="crumble" && platforms[platforms.length-2].type==="crumble" && type==="crumble" && rand()<0.7) type="normal";
     var p = { x: x, y: y, w: w, h: 16, type: type };
     if (type==="moving") {
-      var range = 60 + Math.random()*80;
-      p.move = { min: Math.max(0, x - range/2), max: Math.min(width- w, x + range/2), speed: 40 + Math.random()*40 };
+      var range = 56 + rand()*86;
+      var extraSpeed = Math.min(38, index*0.18);
+      p.move = { min: Math.max(0, x - range/2), max: Math.min(width- w, x + range/2), speed: 42 + rand()*36 + extraSpeed };
     }
     platforms.push(p);
     lastX = x + w;
-    if (lastX > width - 200) break;
+    lastY = y;
+    if (lastX > width - 180) break;
   }
-  // coins
+  // coins: one per platform + extra for harder levels
   var coins = [];
-  for (var j=1;j<platforms.length;j++) {
-    if (Math.random()<0.8) {
-      var pl = platforms[j];
+  for (var j=0;j<platforms.length;j++) {
+    var pl = platforms[j];
+    if (rand()<0.82) {
       coins.push({ x: pl.x + pl.w/2, y: pl.y - 26 });
-      if (Math.random()<0.25) coins.push({ x: pl.x + pl.w*0.2, y: pl.y - 46 });
+      if (index>30 && rand()<0.18) coins.push({ x: pl.x + pl.w*0.22, y: pl.y - 46 });
+      if (index>90 && rand()<0.08) coins.push({ x: pl.x + pl.w*0.78, y: pl.y - 46 });
     }
   }
-  // thin to 7-11
-  while (coins.length > 11) coins.splice(Math.floor(Math.random()*coins.length),1);
-  while (coins.length < 7) coins.push({ x: 300 + Math.random()*(width-500), y: 200 + Math.random()*80 });
-  var flag = { x: width - 100, y: 440 };
+  while (coins.length > 14) coins.splice(Math.floor(rand()*coins.length),1);
+  var minCoins = index < 20 ? 6 : index < 80 ? 7 : index < 160 ? 8 : 10;
+  while (coins.length < minCoins) coins.push({ x: 260 + rand()*(width-480), y: 220 + rand()*80 });
+  var flag = { x: width - 86, y: 440 };
   return { width: width, height: 480, start: start, platforms: platforms, coins: coins, flag: flag };
 }
 
 function getPenguinLevel(n) {
-  // n is zero-based index
+  if (n < 0) n = 0;
+  if (n >= TOTAL_PENGUIN_LEVELS) n = TOTAL_PENGUIN_LEVELS - 1;
   if (n < PENGUIN_LEVELS.length) {
     var src = PENGUIN_LEVELS[n];
-    // deep copy to allow mutation (crumble timers, moving positions)
     return JSON.parse(JSON.stringify(src));
   }
-  return genProcLevel(n);
+  if (n === TOTAL_PENGUIN_LEVELS - 1) {
+    return JSON.parse(JSON.stringify(CHAMPION_ROAD));
+  }
+  var rng = penguinRNG(penguinHash("penguin-level-" + n));
+  return genProcLevel(n, rng);
 }
 
 function startPenguinParkour() {
@@ -229,6 +374,13 @@ function startPenguinParkour() {
             '<p class="penguin-shop-coins">Your fish-coins: <strong id="penguinShopCoins">0</strong> <span style="opacity:0.7">— collect coins in levels to buy new penguins!</span></p>' +
             '<div class="penguin-shop-grid" id="penguinShopGrid"></div>' +
             '<p class="penguin-shop-hint">Tip: Coins stay with you forever, even if you fall. Replay levels to farm!</p>' +
+          '</div>' +
+        '</div>' +
+        '<div class="penguin-level-picker-overlay" id="penguinLevelPicker" hidden>' +
+          '<div class="penguin-level-picker-panel">' +
+            '<div class="penguin-level-picker-header"><strong>Jump to Level</strong><button class="game-action" id="penguinLevelClose" type="button">Close</button></div>' +
+            '<div class="penguin-level-picker-grid" id="penguinLevelGrid"></div>' +
+            '<p class="penguin-shop-hint">Progress unlocks with each flag. Champion Road at 250!</p>' +
           '</div>' +
         '</div>' +
       '</div>' +
@@ -328,20 +480,23 @@ function startPenguinParkour() {
     particles=[]; popups=[]; shake=0;
     levelIndex = n;
     updateUI();
-    msg.textContent = levelLabel(n) + " — THE FLOOR IS LAVA! Stay on platforms!";
+    var intro = penguinIntro(n);
+    if (intro) msg.textContent = levelLabel(n) + " — " + intro;
+    else msg.textContent = levelLabel(n) + " — THE FLOOR IS LAVA! Stay off it.";
     document.querySelector("#penguinNext").hidden = true;
+    // pulse the message a bit for new mechanic intros
+    if (intro && n < 25) {
+      msg.animate && msg.animate([{transform:"scale(1)"},{transform:"scale(1.03)"},{transform:"scale(1)"}],{duration:520,easing:"ease-out"});
+    }
   }
 
   function levelLabel(n) {
-    if (n < 5) {
-      var names = ["Tutorial Meadows","Icy Heights","Bouncy Bay","Crumble Canyon","Sky Peak"];
-      return "Level " + (n+1) + " · " + names[n];
-    }
-    return "Level " + (n+1) + " · Endless " + (n-4);
+    var title = PENGUIN_TITLES[n] || ("Level " + (n+1));
+    return "Level " + (n+1) + "/" + TOTAL_PENGUIN_LEVELS + " · " + title;
   }
 
   function updateUI() {
-    levelEl.textContent = "Level " + (levelIndex+1);
+    levelEl.textContent = "Level " + (levelIndex+1) + "/" + TOTAL_PENGUIN_LEVELS;
     coinsEl.textContent = "Coins: " + data.coins;
     lvlCoinsEl.textContent = "This level: " + levelCoinsCollected + "/" + coins.length;
     shopCoinsEl.textContent = data.coins;
@@ -659,7 +814,13 @@ function startPenguinParkour() {
         savePenguinData(data);
         try { recordScore("penguin", data.bestLevel, "high"); } catch(e){}
         bestEl.textContent = "Best: " + data.bestLevel;
-        msg.textContent = "Flag reached! " + levelCoinsCollected + "/" + coins.length + " coins. " + (bonus?"Perfect bonus!":"");
+        if (levelIndex === TOTAL_PENGUIN_LEVELS - 1) {
+          msg.textContent = "★★ CHAMPION ROAD CONQUERED! ★★ " + levelCoinsCollected + "/" + coins.length + " coins. You are the Waddles champion!";
+          document.querySelector("#penguinNext").textContent = "Play again from start ↺";
+        } else {
+          msg.textContent = "Flag reached! " + levelCoinsCollected + "/" + coins.length + " coins. " + (bonus?"Perfect bonus! ":"") + (penguinIntro(levelIndex+1) ? "Next: " + (PENGUIN_TITLES[levelIndex+1]||("Level "+(levelIndex+2))) : "");
+          document.querySelector("#penguinNext").textContent = "Next level →";
+        }
         document.querySelector("#penguinNext").hidden = false;
         // burst
         for (var bi=0; bi<14; bi++) {
@@ -1075,27 +1236,109 @@ function startPenguinParkour() {
       ctx.fillText("BRR! Respawning…", W/2, H/2);
     }
     if (won) {
-      ctx.fillStyle = "rgba(255,255,255,0.82)";
+      ctx.fillStyle = levelIndex === TOTAL_PENGUIN_LEVELS - 1 ? "rgba(255,241,150,0.92)" : "rgba(255,255,255,0.82)";
       ctx.fillRect(0,0,W,H);
       ctx.fillStyle = "#1e2a3a";
-      ctx.font = "bold 36px sans-serif";
+      ctx.font = "bold 32px sans-serif";
       ctx.textAlign="center";
-      ctx.fillText("Level complete!", W/2, H/2 - 10);
-      ctx.font = "bold 16px monospace";
-      ctx.fillStyle = "#394354";
-      ctx.fillText(levelCoinsCollected + "/" + coins.length + " coins · Total: " + data.coins, W/2, H/2 + 22);
+      if (levelIndex === TOTAL_PENGUIN_LEVELS - 1) {
+        ctx.fillText("★ CHAMPION ROAD ★", W/2, H/2 - 14);
+        ctx.font = "bold 15px monospace";
+        ctx.fillStyle = "#6a4a0a";
+        ctx.fillText("ALL 250 LEVELS CONQUERED! WADDLES IS YOURS!", W/2, H/2 + 12);
+        ctx.font = "bold 13px monospace";
+        ctx.fillStyle = "#394354";
+        ctx.fillText(levelCoinsCollected + "/" + coins.length + " coins · Total: " + data.coins, W/2, H/2 + 32);
+      } else {
+        ctx.fillText("Level complete!", W/2, H/2 - 10);
+        ctx.font = "bold 16px monospace";
+        ctx.fillStyle = "#394354";
+        ctx.fillText(levelCoinsCollected + "/" + coins.length + " coins · Total: " + data.coins, W/2, H/2 + 22);
+      }
     }
 
     ctx.restore();
   }
 
   function drawPenguinModel(c, skin, stateObj) {
-    // c already translated to player center and scaled for facing/squish
-    // draw order: feet, body, belly, flippers, head, beak, eyes, hat/scarf
     var t = performance.now() * 0.006;
     var isMoving = Math.abs(stateObj.vx) > 20 && stateObj.onGround;
     var waddle = isMoving ? Math.sin(t*1.35)*0.14 : Math.sin(t*0.45)*0.04;
     var flipperSwing = isMoving ? Math.sin(t*2.2)*0.6 : Math.sin(t*0.9)*0.15;
+
+    // ——— WADDLES: perfectly circular, devastatingly cute ———
+    if (skin.circular) {
+      // feet (tiny, peeking)
+      c.fillStyle = skin.foot;
+      c.strokeStyle = "rgba(0,0,0,0.18)"; c.lineWidth = 1.1;
+      c.beginPath(); c.ellipse(-5.5, 12.5, 5.5, 2.8, 0,0,Math.PI*2); c.fill(); c.stroke();
+      c.beginPath(); c.ellipse(5.5, 12.5, 5.5, 2.8, 0,0,Math.PI*2); c.fill(); c.stroke();
+      // body = perfect circle
+      c.fillStyle = skin.body;
+      c.strokeStyle = "#1a2632"; c.lineWidth = 2;
+      c.beginPath(); c.arc(0, 0, 14.5, 0, Math.PI*2); c.fill(); c.stroke();
+      // belly big circle
+      c.fillStyle = skin.belly;
+      c.strokeStyle = "rgba(0,0,0,0.08)"; c.lineWidth = 1;
+      c.beginPath(); c.arc(0, 3.2, 9.5, 0, Math.PI*2); c.fill(); c.stroke();
+      // subtle belly shine
+      c.fillStyle = "rgba(255,255,255,0.95)";
+      c.beginPath(); c.ellipse(-2.5, -0.5, 2.2, 1.2, -0.2, 0, Math.PI*2); c.fill();
+      // flippers tiny & round
+      c.fillStyle = skin.body; c.strokeStyle = "#1a2632"; c.lineWidth = 1.2;
+      c.save(); c.translate(-12.2, 0); c.rotate(flipperSwing*0.65); c.beginPath(); c.ellipse(0,0,3.4,6.2,-0.15,0,Math.PI*2); c.fill(); c.stroke(); c.restore();
+      c.save(); c.translate(12.2, 0); c.rotate(-flipperSwing*0.65); c.beginPath(); c.ellipse(0,0,3.4,6.2,0.15,0,Math.PI*2); c.fill(); c.stroke(); c.restore();
+      // face — slightly squished circle
+      c.fillStyle = "#fff";
+      c.beginPath(); c.ellipse(0, -4.2, 9.2, 8.2, 0, 0, Math.PI*2); c.fill();
+      // eyes — HUGE, sparkly, a little low for baby proportions
+      // eye whites
+      c.fillStyle = "#fff";
+      c.beginPath(); c.arc(-4.8, -5.2, 3.4, 0, Math.PI*2); c.fill();
+      c.beginPath(); c.arc(4.8, -5.2, 3.4, 0, Math.PI*2); c.fill();
+      c.strokeStyle = "rgba(0,0,0,0.12)"; c.lineWidth = 0.8; c.stroke();
+      c.stroke();
+      // iris — big, glossy
+      c.fillStyle = skin.eye; // very dark for waddles but still
+      // allow waddles eye color override to dark brown, add iris
+      c.fillStyle = "#1a0a12";
+      c.beginPath(); c.arc(-4.8, -4.6, 2.2, 0, Math.PI*2); c.fill();
+      c.beginPath(); c.arc(4.8, -4.6, 2.2, 0, Math.PI*2); c.fill();
+      // pupil shine — big
+      c.fillStyle = "#fff";
+      c.beginPath(); c.arc(-3.9, -6.2, 1.1, 0, Math.PI*2); c.fill();
+      c.beginPath(); c.arc(5.7, -6.2, 1.1, 0, Math.PI*2); c.fill();
+      c.beginPath(); c.arc(-4.8, -3.7, 0.5, 0, Math.PI*2); c.fill();
+      c.beginPath(); c.arc(4.8, -3.7, 0.5, 0, Math.PI*2); c.fill();
+      // rosy cheeks — the cuteness engine
+      c.fillStyle = "rgba(255,120,130,0.58)";
+      c.beginPath(); c.ellipse(-7.8, -2.2, 2.1, 1.2, 0,0,Math.PI*2); c.fill();
+      c.beginPath(); c.ellipse(7.8, -2.2, 2.1, 1.2, 0,0,Math.PI*2); c.fill();
+      // beak — tiny, upturned, extra cute
+      c.fillStyle = skin.beak; c.strokeStyle = "#6b3a0a"; c.lineWidth = 1;
+      c.beginPath(); c.moveTo(-3.8, -2.2); c.lineTo(3.8, -2.2); c.lineTo(0, 0.4); c.closePath(); c.fill(); c.stroke();
+      c.fillStyle = "rgba(255,255,255,0.85)";
+      c.beginPath(); c.ellipse(-1, -1.6, 0.8, 0.5, 0,0,Math.PI*2); c.fill();
+      // little tuft on head
+      c.fillStyle = skin.body; c.strokeStyle = "#1a2632"; c.lineWidth = 1;
+      c.beginPath(); c.ellipse(0, -13.2, 1.8, 2.6, -0.3, 0, Math.PI*2); c.fill(); c.stroke();
+      c.beginPath(); c.ellipse(1.4, -12.8, 1.3, 2.0, 0.4, 0, Math.PI*2); c.fill(); c.stroke();
+      // scarf for waddles — chunky knit, keeps the circle cozy
+      c.fillStyle = skin.scarf || "#ffd166"; c.strokeStyle = "rgba(0,0,0,0.16)"; c.lineWidth=1;
+      c.beginPath(); c.roundRect(-8.5, 5.8, 17, 4.2, 2); c.fill(); c.stroke();
+      c.fillRect(3.2, 9.6, 3.8, 5.5); c.strokeRect(3.2, 9.6, 3.8, 5.5);
+      c.fillStyle = "#ff6b6b"; c.fillRect(-8.5, 7.2, 17, 1); c.fillRect(3.2, 11.8, 3.8, 1);
+      // sparkles around waddles when moving/idle
+      var spark = Math.sin(t*2.2);
+      if (spark > 0.6) {
+        c.fillStyle = "rgba(255,241,150,0.9)";
+        c.beginPath(); c.arc(9.5, -10.5, 0.9,0,Math.PI*2); c.fill();
+        c.beginPath(); c.arc(-10, -8, 0.7,0,Math.PI*2); c.fill();
+      }
+      return;
+    }
+
+    // ——— normal penguins ———
     // feet
     c.fillStyle = skin.foot;
     c.strokeStyle = "rgba(0,0,0,0.2)";
@@ -1109,7 +1352,6 @@ function startPenguinParkour() {
     c.strokeStyle = "#1a2632";
     c.lineWidth = 2;
     c.beginPath();
-    // body ellipse
     c.ellipse(0, 2, 12, 15, waddle, 0, Math.PI*2);
     c.fill(); c.stroke();
     // belly
@@ -1123,13 +1365,11 @@ function startPenguinParkour() {
     c.fillStyle = skin.body;
     c.strokeStyle = "#1a2632";
     c.lineWidth = 1.4;
-    // left flipper
     c.save();
     c.translate(-11, 0);
     c.rotate(flipperSwing * 0.7);
     c.beginPath(); c.ellipse(0, 0, 4.2, 9, -0.2, 0, Math.PI*2); c.fill(); c.stroke();
     c.restore();
-    // right flipper
     c.save();
     c.translate(11, 0);
     c.rotate(-flipperSwing * 0.7);
@@ -1151,7 +1391,6 @@ function startPenguinParkour() {
     c.arc(-4.2, -11, 2.1, 0, Math.PI*2); c.fill();
     c.beginPath();
     c.arc(4.2, -11, 2.1, 0, Math.PI*2); c.fill();
-    // eye shine
     c.fillStyle = "#fff";
     c.beginPath(); c.arc(-3.2, -12, 0.9, 0, Math.PI*2); c.fill();
     c.beginPath(); c.arc(5.2, -12, 0.9, 0, Math.PI*2); c.fill();
@@ -1162,71 +1401,91 @@ function startPenguinParkour() {
     c.beginPath();
     c.moveTo(-5, -6.5); c.lineTo(5, -6.5); c.lineTo(0, -1.5); c.closePath();
     c.fill(); c.stroke();
-    // nostrils? small line
     c.strokeStyle = "rgba(0,0,0,0.2)";
     c.lineWidth = 0.8;
     c.beginPath(); c.moveTo(-1, -5.5); c.lineTo(1, -5.5); c.stroke();
-    // hat / accessories per skin
+    // hats
     if (skin.hat === "berry") {
-      // small berry hat
-      c.fillStyle = "#c94a6a";
-      c.beginPath(); c.ellipse(0, -20, 7, 5, 0,0,Math.PI*2); c.fill();
-      c.fillStyle = "#7ac74f";
-      c.beginPath(); c.ellipse(0, -23, 3, 2.2, 0,0,Math.PI*2); c.fill();
+      c.fillStyle = "#c94a6a"; c.beginPath(); c.ellipse(0, -20, 7, 5, 0,0,Math.PI*2); c.fill();
+      c.fillStyle = "#7ac74f"; c.beginPath(); c.ellipse(0, -23, 3, 2.2, 0,0,Math.PI*2); c.fill();
       c.strokeStyle = "#2b0e1a"; c.lineWidth=1; c.stroke();
     } else if (skin.hat === "crown") {
-      c.fillStyle = "#f6c445";
-      c.strokeStyle = "#7a4a0a"; c.lineWidth=1.2;
-      c.beginPath();
-      c.moveTo(-7, -18); c.lineTo(-4, -24); c.lineTo(0, -19); c.lineTo(4, -24); c.lineTo(7, -18); c.closePath();
-      c.fill(); c.stroke();
+      c.fillStyle = "#f6c445"; c.strokeStyle = "#7a4a0a"; c.lineWidth=1.2;
+      c.beginPath(); c.moveTo(-7, -18); c.lineTo(-4, -24); c.lineTo(0, -19); c.lineTo(4, -24); c.lineTo(7, -18); c.closePath(); c.fill(); c.stroke();
       c.fillStyle = "#ff6b6b"; c.beginPath(); c.arc(0, -19.5, 1.6,0,Math.PI*2); c.fill();
     } else if (skin.hat === "headband") {
-      c.fillStyle = "#ff6b6b";
-      c.fillRect(-11, -16, 22, 4);
-      c.strokeStyle = "#7a0f0f"; c.lineWidth=1; c.strokeRect(-11, -16, 22, 4);
+      c.fillStyle = "#ff6b6b"; c.fillRect(-11, -16, 22, 4); c.strokeStyle = "#7a0f0f"; c.lineWidth=1; c.strokeRect(-11, -16, 22, 4);
       c.fillStyle = "#fff"; c.font = "bold 6px monospace"; c.textAlign="center"; c.fillText("忍", 0, -12.5);
     } else if (skin.hat === "helmet") {
-      c.fillStyle = "rgba(234,242,255,0.92)";
-      c.strokeStyle = "#4f8fcf"; c.lineWidth=1.4;
-      c.beginPath(); c.arc(0, -11, 12.5, Math.PI*0.92, Math.PI*0.08); c.stroke();
-      // glass shine
-      c.fillStyle = "rgba(255,255,255,0.9)";
-      c.beginPath(); c.ellipse(3, -15, 4, 2.2, -0.5,0,Math.PI*2); c.fill();
-      // helmet rim
-      c.fillStyle = "#4f8fcf";
-      c.fillRect(-12, -5, 24, 2);
+      c.strokeStyle = "#4f8fcf"; c.lineWidth=1.4; c.beginPath(); c.arc(0, -11, 12.5, Math.PI*0.92, Math.PI*0.08); c.stroke();
+      c.fillStyle = "rgba(255,255,255,0.9)"; c.beginPath(); c.ellipse(3, -15, 4, 2.2, -0.5,0,Math.PI*2); c.fill();
+      c.fillStyle = "#4f8fcf"; c.fillRect(-12, -5, 24, 2);
     } else if (skin.hat === "viking") {
-      c.fillStyle = "#8a7a5a";
-      c.strokeStyle = "#3d2f1b"; c.lineWidth=1.2;
-      // helmet dome
+      c.fillStyle = "#8a7a5a"; c.strokeStyle = "#3d2f1b"; c.lineWidth=1.2;
       c.beginPath(); c.ellipse(0, -18, 10, 7, 0,0,Math.PI*2); c.fill(); c.stroke();
-      // horns
-      c.fillStyle = "#fff8ea";
-      c.strokeStyle = "#3d2f1b";
+      c.fillStyle = "#fff8ea"; c.strokeStyle = "#3d2f1b";
       c.beginPath(); c.moveTo(-9, -18); c.quadraticCurveTo(-16, -26, -13, -30); c.lineTo(-8, -26); c.closePath(); c.fill(); c.stroke();
       c.beginPath(); c.moveTo(9, -18); c.quadraticCurveTo(16, -26, 13, -30); c.lineTo(8, -26); c.closePath(); c.fill(); c.stroke();
+    } else if (skin.hat === "chef") {
+      c.fillStyle = "#fff"; c.strokeStyle = "#2a3442"; c.lineWidth=1.1;
+      c.beginPath(); c.ellipse(0, -19, 9, 6, 0,0,Math.PI*2); c.fill(); c.stroke();
+      c.fillStyle = "#fff"; c.beginPath(); c.ellipse(0, -23, 7, 4.5, 0,0,Math.PI*2); c.fill(); c.stroke();
+      c.strokeStyle = "rgba(0,0,0,0.08)"; c.lineWidth=0.7;
+      for(var ci=0; ci<3; ci++){ c.beginPath(); c.moveTo(-5+ci*5, -22); c.lineTo(-5+ci*5, -18); c.stroke(); }
+    } else if (skin.hat === "pirate") {
+      c.fillStyle = "#1a0f0a"; c.strokeStyle = "#000"; c.lineWidth=1.2;
+      c.beginPath(); c.ellipse(0, -19, 11, 4.5, 0,0,Math.PI*2); c.fill(); c.stroke();
+      c.fillStyle = "#cc1a00"; c.beginPath(); c.ellipse(0, -22, 8, 5, 0,0,Math.PI*2); c.fill(); c.stroke();
+      c.fillStyle = "#f6c445"; c.font = "bold 7px serif"; c.textAlign="center"; c.fillText("☠", 0, -20.5);
+      // eyepatch
+      c.fillStyle = "#000"; c.beginPath(); c.arc(4.2, -11, 3.2, 0, Math.PI*2); c.fill();
+      c.strokeStyle = "#000"; c.lineWidth=1; c.beginPath(); c.moveTo(4.2, -14); c.lineTo(7.5, -17); c.stroke();
+      c.fillStyle = "#fff"; c.beginPath(); c.arc(4.2, -11, 0.9, 0, Math.PI*2); c.fill();
+    } else if (skin.hat === "snowflake") {
+      c.fillStyle = "#a8d6ff"; c.strokeStyle = "#1e4a7a"; c.lineWidth=1;
+      c.beginPath(); c.ellipse(0, -19.5, 7, 7, 0,0,Math.PI*2); c.fill(); c.stroke();
+      c.strokeStyle = "#fff"; c.lineWidth=1.1;
+      for(var si=0; si<6; si++){ var a=si*Math.PI/3; c.beginPath(); c.moveTo(0,-19.5); c.lineTo(Math.cos(a)*6, -19.5+Math.sin(a)*6); c.stroke(); }
+      c.fillStyle = "#fff"; c.beginPath(); c.arc(0,-19.5,1.5,0,Math.PI*2); c.fill();
+    } else if (skin.hat === "disco") {
+      // afro
+      c.fillStyle = "#4a1a6b";
+      for(var di=0; di<9; di++){ var ax=Math.cos(di*0.9)*9, ay=-20+Math.sin(di*0.9)*3; c.beginPath(); c.arc(ax, ay, 3.2,0,Math.PI*2); c.fill(); }
+      c.fillStyle = "#ffd166"; c.beginPath(); c.ellipse(0,-19,9,5,0,0,Math.PI*2); c.fill();
+      c.fillStyle = "#fff"; c.font="bold 5px monospace"; c.textAlign="center"; c.fillText("DISCO",0,-17.5);
+    } else if (skin.hat === "ghost") {
+      c.fillStyle = "rgba(255,255,255,0.92)"; c.strokeStyle = "rgba(42,52,66,0.25)"; c.lineWidth=1;
+      c.beginPath(); c.ellipse(0,-18,10,8,0,0,Math.PI*2); c.fill(); c.stroke();
+      c.fillStyle = "rgba(255,255,255,0.92)";
+      c.beginPath(); c.moveTo(-10,-14); c.lineTo(-7,-10); c.lineTo(-3,-14); c.lineTo(0,-10); c.lineTo(3,-14); c.lineTo(7,-10); c.lineTo(10,-14); c.lineTo(10,-18); c.lineTo(-10,-18); c.closePath(); c.fill(); c.stroke();
+      c.fillStyle = "#4a5a7a"; c.beginPath(); c.arc(-4,-18,1.2,0,Math.PI*2); c.fill(); c.beginPath(); c.arc(4,-18,1.2,0,Math.PI*2); c.fill();
+    } else if (skin.hat === "knight") {
+      c.fillStyle = "#8a9ab0"; c.strokeStyle = "#1a2632"; c.lineWidth=1.3;
+      c.beginPath(); c.roundRect(-9,-24,18,10,2); c.fill(); c.stroke();
+      c.fillStyle = "#4a5a6b"; c.fillRect(-9,-20,18,2);
+      // visor slits
+      c.fillStyle = "#1a2632"; for(var vk=0; vk<3; vk++) c.fillRect(-5+vk*5, -22, 2, 4);
+      // plume
+      c.fillStyle = "#cc1a00"; c.beginPath(); c.ellipse(0,-26,3,6,0,0,Math.PI*2); c.fill();
+    } else if (skin.hat === "robot") {
+      c.fillStyle = "#c0c8d4"; c.strokeStyle = "#2a3442"; c.lineWidth=1.2; c.beginPath(); c.roundRect(-8,-23,16,8,2); c.fill(); c.stroke();
+      c.fillStyle = "#00ffaa"; c.beginPath(); c.arc(-3.5,-19,1.6,0,Math.PI*2); c.fill(); c.beginPath(); c.arc(3.5,-19,1.6,0,Math.PI*2); c.fill();
+      c.strokeStyle = "#2a3442"; c.lineWidth=0.8; c.beginPath(); c.moveTo(0,-23); c.lineTo(0,-26); c.stroke();
+      c.fillStyle = "#ff6b6b"; c.beginPath(); c.arc(0,-26.5,1.5,0,Math.PI*2); c.fill();
+    } else if (skin.hat === "waddles") {
+      // waddles already handled via circular, but add tiny star crown for ultra
+      c.fillStyle = "#ffd166"; c.strokeStyle = "#7a4a0a"; c.lineWidth=0.9;
+      c.beginPath(); c.moveTo(-4,-13.8); c.lineTo(-1.5,-16.2); c.lineTo(0,-14); c.lineTo(1.5,-16.2); c.lineTo(4,-13.8); c.closePath(); c.fill(); c.stroke();
+      c.fillStyle = "#ff6b9d"; c.beginPath(); c.arc(0,-14.2,0.8,0,Math.PI*2); c.fill();
     }
-    // scarf
     if (skin.scarf) {
-      c.fillStyle = skin.scarf;
-      c.strokeStyle = "rgba(0,0,0,0.18)"; c.lineWidth=1;
-      c.fillRect(-9, -2, 18, 5);
-      c.strokeRect(-9, -2, 18, 5);
-      // tail
-      c.fillRect(4, 2, 4, 8);
-      c.strokeRect(4, 2, 4, 8);
-      // stripes if berry
-      if (skin.id==="berry") {
-        c.fillStyle = "#ff6b6b";
-        c.fillRect(-9, 0, 18, 1.2);
-      }
-      if (skin.id==="viking") {
-        c.fillStyle = "#fff";
-        c.fillRect(-9, 1, 18, 1);
-      }
+      c.fillStyle = skin.scarf; c.strokeStyle = "rgba(0,0,0,0.18)"; c.lineWidth=1;
+      if (!skin.circular) { c.fillRect(-9, -2, 18, 5); c.strokeRect(-9, -2, 18, 5); c.fillRect(4, 2, 4, 8); c.strokeRect(4, 2, 4, 8); }
+      if (skin.id==="berry") { c.fillStyle = "#ff6b6b"; c.fillRect(-9, 0, 18, 1.2); }
+      if (skin.id==="viking") { c.fillStyle = "#fff"; c.fillRect(-9, 1, 18, 1); }
+      if (skin.id==="chef") { c.fillStyle = "#fff"; c.font="bold 4px monospace"; c.textAlign="center"; c.fillText("CHEF", -0.5, 1.8); }
+      if (skin.id==="disco") { c.fillStyle = "rgba(255,255,255,0.9)"; c.fillRect(-9,1,18,1); }
     }
-    // airborne wobble shadow on body when jumping?
   }
 
   // shop rendering
@@ -1253,33 +1512,8 @@ function startPenguinParkour() {
         pc.clearRect(0,0,72,72);
         pc.save();
         pc.translate(36, 38);
-        // draw mini penguin (scale 1.2)
-        pc.scale(1.25,1.25);
-        var fakeState = { vx:0, vy:0, onGround:true, facing:1, squish:0 };
-        // reuse draw func but need to mock selected skin locally
-        // inline mini draw without calling full model scale issues
-        // create temporary skin reference
-        (function(c2, skin2){
-          // feet
-          c2.fillStyle = skin2.foot;
-          c2.beginPath(); c2.ellipse(-5, 12, 6, 2.8, 0,0,Math.PI*2); c2.fill();
-          c2.beginPath(); c2.ellipse(5, 12, 6, 2.8, 0,0,Math.PI*2); c2.fill();
-          // body
-          c2.fillStyle = skin2.body; c2.strokeStyle = "#1a2632"; c2.lineWidth=1.3;
-          c2.beginPath(); c2.ellipse(0,2,10,13,0,0,Math.PI*2); c2.fill(); c2.stroke();
-          c2.fillStyle = skin2.belly; c2.beginPath(); c2.ellipse(0,4,6.5,8.5,0,0,Math.PI*2); c2.fill();
-          c2.fillStyle = skin2.body; c2.beginPath(); c2.ellipse(0,-10,9.5,8.5,0,0,Math.PI*2); c2.fill(); c2.stroke();
-          c2.fillStyle = "#fff"; c2.beginPath(); c2.ellipse(0,-8,7.2,6,0,0,Math.PI*2); c2.fill();
-          c2.fillStyle = skin2.eye; c2.beginPath(); c2.arc(-3.6,-10,1.7,0,Math.PI*2); c2.fill(); c2.beginPath(); c2.arc(3.6,-10,1.7,0,Math.PI*2); c2.fill();
-          c2.fillStyle = "#fff"; c2.beginPath(); c2.arc(-2.9,-11,0.7,0,Math.PI*2); c2.fill(); c2.beginPath(); c2.arc(4.3,-11,0.7,0,Math.PI*2); c2.fill();
-          c2.fillStyle = skin2.beak; c2.beginPath(); c2.moveTo(-4,-5.5); c2.lineTo(4,-5.5); c2.lineTo(0,-1.2); c2.closePath(); c2.fill();
-          if (skin2.hat==="berry") { c2.fillStyle="#c94a6a"; c2.beginPath(); c2.ellipse(0,-18,6,4,0,0,Math.PI*2); c2.fill(); c2.fillStyle="#7ac74f"; c2.beginPath(); c2.ellipse(0,-21,2.4,1.7,0,0,Math.PI*2); c2.fill(); }
-          else if(skin2.hat==="crown"){ c2.fillStyle="#f6c445"; c2.beginPath(); c2.moveTo(-6,-16); c2.lineTo(-3,-21); c2.lineTo(0,-16); c2.lineTo(3,-21); c2.lineTo(6,-16); c2.closePath(); c2.fill(); }
-          else if(skin2.hat==="headband"){ c2.fillStyle="#ff6b6b"; c2.fillRect(-9,-14,18,3); }
-          else if(skin2.hat==="helmet"){ c2.strokeStyle="#4f8fcf"; c2.lineWidth=1; c2.beginPath(); c2.arc(0,-10,10, Math.PI*0.92, Math.PI*0.08); c2.stroke(); }
-          else if(skin2.hat==="viking"){ c2.fillStyle="#8a7a5a"; c2.beginPath(); c2.ellipse(0,-16,8,6,0,0,Math.PI*2); c2.fill(); c2.fillStyle="#fff8ea"; c2.beginPath(); c2.moveTo(-7,-16); c2.quadraticCurveTo(-12,-22,-10,-25); c2.lineTo(-6,-22); c2.closePath(); c2.fill(); c2.beginPath(); c2.moveTo(7,-16); c2.quadraticCurveTo(12,-22,10,-25); c2.lineTo(6,-22); c2.closePath(); c2.fill(); }
-          if(skin2.scarf){ c2.fillStyle=skin2.scarf; c2.fillRect(-7,-1,14,4); c2.fillRect(3,2,3,6); }
-        })(pc, p);
+        pc.scale(1.18,1.18);
+        drawPenguinModel(pc, p, {vx:0, vy:0, onGround:true, facing:1, squish:0});
         pc.restore();
       }
     });
@@ -1386,10 +1620,52 @@ function startPenguinParkour() {
   document.querySelector("#penguinShopBtn").addEventListener("click", openShop);
   document.querySelector("#penguinShopClose").addEventListener("click", closeShop);
   shopOverlay.addEventListener("click", function(ev){ if(ev.target===shopOverlay) closeShop(); });
+  // level picker
+  var levelPicker = document.querySelector("#penguinLevelPicker");
+  var levelGrid = document.querySelector("#penguinLevelGrid");
+  function renderLevelPicker(){
+    levelGrid.innerHTML = "";
+    for(var li=0; li<TOTAL_PENGUIN_LEVELS; li++){
+      var btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "penguin-level-btn";
+      if (li === levelIndex) btn.classList.add("current");
+      // locked if beyond best+1, unless you already beat it
+      var unlocked = li <= data.bestLevel || li <= levelIndex || data.bestLevel >= li;
+      // allow next level + allow any previously visited via data.bestLevel, but also allow jumping back to any beaten level
+      var maxUnlock = data.bestLevel + 1;
+      if (li > maxUnlock) {
+        btn.classList.add("locked");
+        btn.disabled = true;
+        btn.title = "Locked — beat level " + (maxUnlock+1) + " first";
+      } else {
+        (function(idx){ btn.addEventListener("click", function(){ closeLevelPicker(); buildLevel(idx); }); })(li);
+        if (li === TOTAL_PENGUIN_LEVELS - 1) btn.classList.add("champion");
+      }
+      btn.textContent = li === TOTAL_PENGUIN_LEVELS-1 ? "★ 250" : String(li+1);
+      if (li === TOTAL_PENGUIN_LEVELS-1) btn.title = "Champion Road — the final test";
+      else btn.title = PENGUIN_TITLES[li] || ("Level " + (li+1));
+      levelGrid.appendChild(btn);
+    }
+  }
+  function openLevelPicker(){
+    renderLevelPicker();
+    levelPicker.hidden = false;
+    levelPicker.style.display = "flex";
+  }
+  function closeLevelPicker(){
+    levelPicker.hidden = true;
+    levelPicker.style.display = "none";
+  }
+  levelEl.style.cursor = "pointer";
+  levelEl.title = "Click to jump to any unlocked level";
+  levelEl.addEventListener("click", openLevelPicker);
+  document.querySelector("#penguinLevelClose").addEventListener("click", closeLevelPicker);
+  levelPicker.addEventListener("click", function(ev){ if(ev.target===levelPicker) closeLevelPicker(); });
   document.querySelector("#penguinRestart").addEventListener("click", function(){ buildLevel(levelIndex); });
   document.querySelector("#penguinNext").addEventListener("click", function(){
     var next = levelIndex + 1;
-    if (next >= 30) next = 0; // loop after 30? keep endless
+    if (next >= TOTAL_PENGUIN_LEVELS) next = 0;
     buildLevel(next);
   });
 

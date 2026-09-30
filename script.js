@@ -67,7 +67,9 @@ const gameSlugs = {
   cheese: "cheese_thief",
   machine: "normal_machine",
   onebutton: "one_button",
-  penguin: "penguin_parkour"
+  penguin: "penguin_parkour",
+  penguinDefence: "penguin_defence",
+  defence: "penguin_defence"
 };
 
 function slugToGame(slug) {
@@ -325,6 +327,12 @@ function embedStatText(snap) {
     if (typeof snap.level === "number") parts.push("Level " + snap.level);
     if (typeof snap.coins === "number") parts.push("Coins " + snap.coins);
     if (typeof snap.levelCoins === "string") parts.push(snap.levelCoins);
+  }
+  if (snap.game === "Penguin Defence") {
+    if (typeof snap.wave === "number") parts.push("Wave " + snap.wave);
+    if (typeof snap.lives === "number") parts.push("Lives " + snap.lives);
+    if (typeof snap.coins === "number") parts.push("Fish " + snap.coins);
+    if (typeof snap.cold === "number") parts.push("Cold " + snap.cold + "%");
   }
   return parts.join(" · ");
 }
