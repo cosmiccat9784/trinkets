@@ -1662,6 +1662,68 @@ body.embed {
   line-height: 1.4;
 }
 
+.penguin-level-picker-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 7;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 12px;
+  background: rgba(25, 33, 43, 0.72);
+  border-radius: 12px;
+  overflow: auto;
+}
+.penguin-level-picker-overlay[hidden] { display: none !important; }
+.penguin-level-picker-overlay:not([hidden]) { display: flex; }
+.penguin-level-picker-panel {
+  width: min(620px, 100%);
+  max-height: calc(100% - 10px);
+  overflow: auto;
+  background: var(--paper);
+  border: 3px solid var(--line);
+  border-radius: 12px;
+  box-shadow: 8px 8px 0 rgba(0,0,0,0.22);
+  padding: 14px;
+  display: grid;
+  gap: 12px;
+}
+.penguin-level-picker-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+.penguin-level-picker-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(48px, 1fr));
+  gap: 6px;
+}
+.penguin-level-btn {
+  aspect-ratio: 1;
+  min-height: 48px;
+  border: 2px solid var(--line);
+  border-radius: 8px;
+  background: white;
+  box-shadow: 2px 2px 0 var(--line);
+  font-weight: 900;
+  font-size: 0.82rem;
+  cursor: pointer;
+  transition: transform 0.08s, background 0.12s;
+}
+.penguin-level-btn:hover:not(:disabled) { transform: translate(-1px, -1px); background: #eaf4fb; }
+.penguin-level-btn.current { background: var(--mint); border-color: #1a7a65; box-shadow: inset 0 0 0 1px #1a7a65, 2px 2px 0 #1a7a65; }
+.penguin-level-btn.locked { background: #e8eaf0; color: #9aa3b6; border-color: #cbd2e0; box-shadow: none; cursor: not-allowed; opacity: 0.7; }
+.penguin-level-btn.champion { background: linear-gradient(135deg, #ffd166, #ff9a3d); border-color: #7a3a0a; color: #4a0a00; box-shadow: 2px 2px 0 #7a3a0a, 0 0 10px rgba(255,150,0,0.45); font-size: 0.72rem; }
+.penguin-level-btn.champion.locked { background: #e8eaf0; color: #9aa3b6; box-shadow: none; }
+.penguin-level-btn.champion.current { background: linear-gradient(135deg, #43c6ac, #4f8fcf); color: white; border-color: #1a4a6b; }
+
+#pengLevel {
+  cursor: pointer;
+  user-select: none;
+}
+#pengLevel:hover { background: #fff0a0; }
+
 /* ── Penguin Defence ── */
 .defence-art {
   position: relative;

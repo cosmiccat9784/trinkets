@@ -537,6 +537,7 @@ function startPenguinParkour() {
   function tryJump() {
     if (won || dead) return;
     if (shopOverlay && !shopOverlay.hidden) return;
+    if (typeof levelPicker !== "undefined" && levelPicker && !levelPicker.hidden) return;
     if (player.onGround || player.coyote > 0) {
       player.vy = -JUMP;
       player.onGround = false;
@@ -562,8 +563,8 @@ function startPenguinParkour() {
   }
 
   function update(dt) {
-    if (shopOverlay && !shopOverlay.hidden) {
-      // pause game while shop open
+    if ((shopOverlay && !shopOverlay.hidden) || (typeof levelPicker !== "undefined" && levelPicker && !levelPicker.hidden)) {
+      // pause game while overlays open
       return;
     }
     if (won) {
@@ -1563,7 +1564,10 @@ function startPenguinParkour() {
 
   // input handling
   function keydown(e) {
+    if (levelPicker && !levelPicker.hidden && e.key==="Escape") { closeLevelPicker(); return; }
     if (shopOverlay && !shopOverlay.hidden && e.key==="Escape") { closeShop(); return; }
+    // pause input when any overlay open
+    if ((shopOverlay && !shopOverlay.hidden) || (levelPicker && !levelPicker.hidden)) return;
     if (document.activeElement && (document.activeElement.tagName==="INPUT" || document.activeElement.tagName==="TEXTAREA")) return;
     var k = e.key.toLowerCase();
     if (k===" " || e.code==="Space") {
@@ -1630,10 +1634,8 @@ function startPenguinParkour() {
       btn.type = "button";
       btn.className = "penguin-level-btn";
       if (li === levelIndex) btn.classList.add("current");
-      // locked if beyond best+1, unless you already beat it
-      var unlocked = li <= data.bestLevel || li <= levelIndex || data.bestLevel >= li;
-      // allow next level + allow any previously visited via data.bestLevel, but also allow jumping back to any beaten level
-      var maxUnlock = data.bestLevel + 1;
+      var maxUnlock = data.bestLevel; // bestLevel is count beaten, so next index = bestLevel
+      // allow replay of any beaten + next one
       if (li > maxUnlock) {
         btn.classList.add("locked");
         btn.disabled = true;
@@ -1642,8 +1644,16 @@ function startPenguinParkour() {
         (function(idx){ btn.addEventListener("click", function(){ closeLevelPicker(); buildLevel(idx); }); })(li);
         if (li === TOTAL_PENGUIN_LEVELS - 1) btn.classList.add("champion");
       }
+      if (li === TOTAL_PENGUIN_LEVELS - 1 && maxUnlock < li) {
+        btn.classList.add("champion");
+        btn.classList.add("locked");
+        btn.disabled = true;
+        btn.title = "Locked — conquer " + (TOTAL_PENGUIN_LEVELS-1) + " levels first";
+        // re-add champion styling even when locked
+      }
       btn.textContent = li === TOTAL_PENGUIN_LEVELS-1 ? "★ 250" : String(li+1);
-      if (li === TOTAL_PENGUIN_LEVELS-1) btn.title = "Champion Road — the final test";
+      if (li === TOTAL_PENGUIN_LEVELS-1 && btn.disabled) btn.title = "Locked — conquer " + (TOTAL_PENGUIN_LEVELS-1) + " levels first";
+      else if (li === TOTAL_PENGUIN_LEVELS-1) btn.title = "Champion Road — the final test";
       else btn.title = PENGUIN_TITLES[li] || ("Level " + (li+1));
       levelGrid.appendChild(btn);
     }
