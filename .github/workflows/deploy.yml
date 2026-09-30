@@ -1,0 +1,71 @@
+# Trinkets Arcade deploy.
+#
+# One-time repo setup (owner does this once in Settings → Pages):
+#   Build and deployment → Source → "GitHub Actions".
+#
+# On every push to main this workflow:
+#   1. stamps an adaptive build number — "build <commit-count> (<sha>)"
+#      — into the trinkets-build meta tag (shown in the footer), and
+#   2. restamps every ?v= asset version to the commit SHA, so browsers
+#      never serve stale cached copies. Manual ?v= bumps are dead;
+#      see RULES.md.
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # full history: rev-list --count needs it
+
+      - name: Stamp build number and cache-busters
+        run: |
+          COUNT=$(git rev-list --count HEAD)
+          SHA=$(git rev-parse --short HEAD)
+          BUILD="build ${COUNT} (${SHA})"
+          echo "Stamping: $BUILD"
+          for f in index.html embed.html feedback.html; do
+            sed -i 's|\(<meta name="trinkets-build" content="\)[^"]*|\1'"$BUILD"'|' "$f"
+            sed -i -E 's/\?v=[0-9]+/?v='"$SHA"'/g' "$f"
+          done
+          echo "--- stamped footer ---"
+          grep -o '<meta name="trinkets-build" content="[^"]*"' index.html
+          echo "--- distinct ?v= values (want exactly one) ---"
+          vals=$(grep -rhoE '\?v=[^"&]+' index.html embed.html feedback.html | sort -u)
+          echo "$vals"
+          if [ "$vals" != "?v=$SHA" ]; then
+            echo "::error::asset versions were not uniformly restamped to $SHA"
+            exit 1
+          fi
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: .
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

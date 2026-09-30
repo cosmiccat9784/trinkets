@@ -6,8 +6,16 @@ const favoriteCount = document.querySelector("#favoriteCount");
 
 (function showBuildTag() {
   const tag = document.querySelector("#buildTag");
+  if (!tag) return;
+  // Deploy-stamped build number (see .github/workflows/deploy.yml).
+  // Falls back to the script ?v= locally, where no stamp exists.
+  const meta = document.querySelector('meta[name="trinkets-build"]');
+  if (meta && meta.content && meta.content !== "dev") {
+    tag.textContent = "· " + meta.content;
+    return;
+  }
   const script = document.querySelector('script[src*="script.js?v="]');
-  if (!tag || !script) return;
+  if (!script) return;
   const match = /[?&]v=([^&"]+)/.exec(script.getAttribute("src") || "");
   if (match) tag.textContent = "· build " + match[1];
 })();

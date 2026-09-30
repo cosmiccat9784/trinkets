@@ -73,8 +73,11 @@ chrome eats more viewport height than developers expect.
 - 1366×768 laptop.
 - 1920×1080 desktop.
 - Rotate a phone with a game open; no scrollbars may appear.
-- After any CSS/JS change, bump the `?v=` asset versions in index.html,
-  or testers will validate against cached copies and report ghosts.
+- Never bump `?v=` asset versions by hand: the deploy workflow
+  (`.github/workflows/deploy.yml`) restamps every `?v=` to the commit
+  SHA and stamps the footer build number (`build <count> (<sha>)`) on
+  each push to main. When testing locally, hard-refresh instead —
+  stale caches will report ghosts.
 
 ## Violations log
 
