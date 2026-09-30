@@ -418,7 +418,16 @@ function getPenguinLevel(n) {
   return genProcLevel(n, rng);
 }
 
-var SECRET_COIN_CODE = "12113";
+// vault code rotates every calendar month — the recipe is secret, the game never shows the code
+var VAULT_PEPPER = [119, 97, 100, 100, 108, 101, 115, 45, 102, 105, 115, 104, 45, 55];
+function vaultSalt() { return String.fromCharCode.apply(null, VAULT_PEPPER); }
+function secretCoinCodeFor(when) {
+  var d = new Date(when);
+  var h = penguinHash("vault-" + d.getFullYear() + "-" + d.getMonth() + "-" + vaultSalt());
+  var code = String(h % 100000);
+  while (code.length < 5) code = "0" + code;
+  return code;
+}
 var SECRET_LEVEL_INDEX = -99;
 
 // once-per-calendar-month gate for the coin vault
@@ -1900,7 +1909,7 @@ function startPenguinParkour() {
   levelPicker.addEventListener("click", function(ev){ if(ev.target===levelPicker) closeLevelPicker(); });
   var levelsBtn = document.querySelector("#penguinLevelsBtn");
   if (levelsBtn) levelsBtn.addEventListener("click", openLevelPicker);
-  // secret cheat pin pad (Ctrl+F3, code 12113 → coin vault)
+  // secret cheat pin pad (Ctrl+F3 → monthly coin vault)
   var cheatOverlay = document.querySelector("#penguinCheat");
   var pinDisplay = document.querySelector("#penguinPinDisplay");
   var pinGrid = document.querySelector("#penguinPinGrid");
@@ -1928,7 +1937,7 @@ function startPenguinParkour() {
     renderPin();
     cheatSay("", true);
     if (pinEntry.length === 5) {
-      if (pinEntry === SECRET_COIN_CODE) {
+      if (pinEntry === secretCoinCodeFor(Date.now())) {
         if (!secretVaultAvailable(data.secretLastUsed)) {
           cheatSay("Vault already looted this month — back " + secretNextResetLabel(data.secretLastUsed) + ".", false);
           if (pinDisplay) {
