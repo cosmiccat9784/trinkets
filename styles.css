@@ -1724,6 +1724,121 @@ body.embed {
 }
 #pengLevel:hover { background: #fff0a0; }
 
+.penguin-cheat-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 8;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 12px;
+  background: rgba(12, 8, 20, 0.82);
+  border-radius: 12px;
+  overflow: auto;
+}
+.penguin-cheat-overlay[hidden] { display: none !important; }
+.penguin-cheat-overlay:not([hidden]) { display: flex; }
+.penguin-cheat-panel {
+  width: min(340px, 100%);
+  background: linear-gradient(180deg, #1c1430, #2b1a3d);
+  border: 3px solid #ffd166;
+  border-radius: 14px;
+  box-shadow: 0 0 24px rgba(255, 209, 102, 0.45), 8px 8px 0 rgba(0,0,0,0.35);
+  padding: 16px;
+  display: grid;
+  gap: 12px;
+  color: #fff8ea;
+  text-align: center;
+}
+.penguin-cheat-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+.penguin-cheat-header strong {
+  font-size: 1.05rem;
+  letter-spacing: 0.08em;
+  color: #ffd166;
+  text-shadow: 0 0 12px rgba(255, 209, 102, 0.7);
+}
+.penguin-cheat-header .game-action {
+  min-height: 36px;
+  padding: 0 12px;
+  font-size: 0.85rem;
+}
+.penguin-cheat-sub {
+  margin: 0;
+  color: #d9c8ff;
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+.penguin-pin-display {
+  font-family: monospace;
+  font-size: 1.7rem;
+  font-weight: 900;
+  letter-spacing: 0.35em;
+  text-indent: 0.35em;
+  padding: 10px 6px;
+  background: #0c0814;
+  border: 3px solid #ffd166;
+  border-radius: 10px;
+  color: #ffd166;
+  min-height: 52px;
+  display: grid;
+  place-items: center;
+}
+.penguin-pin-display.filled { color: #fff; }
+.penguin-pin-display.unlocked {
+  background: linear-gradient(135deg, #ffd166, #ff9a3d);
+  color: #4a0a00;
+  animation: penguin-pin-win 0.5s ease infinite alternate;
+}
+.penguin-pin-display.denied {
+  border-color: #ff6b6b;
+  color: #ff6b6b;
+  animation: penguin-pin-shake 0.4s ease;
+}
+@keyframes penguin-pin-win {
+  from { transform: scale(1); box-shadow: 0 0 0 rgba(255,209,102,0); }
+  to { transform: scale(1.04); box-shadow: 0 0 22px rgba(255,209,102,0.9); }
+}
+@keyframes penguin-pin-shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-6px); }
+  50% { transform: translateX(6px); }
+  75% { transform: translateX(-4px); }
+}
+.penguin-pin-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+.penguin-pin-btn {
+  min-height: 52px;
+  border: 3px solid #ffd166;
+  border-radius: 10px;
+  background: #fff8ea;
+  color: #1c1430;
+  font-size: 1.25rem;
+  font-weight: 900;
+  cursor: pointer;
+  box-shadow: 3px 3px 0 #7a4a0a;
+  transition: transform 0.08s, box-shadow 0.08s;
+  touch-action: manipulation;
+}
+.penguin-pin-btn:active { transform: translate(2px, 2px); box-shadow: 1px 1px 0 #7a4a0a; }
+.penguin-pin-btn.pin-clear { background: #ff6b6b; color: #fff; border-color: #7a1010; box-shadow: 3px 3px 0 #7a1010; }
+.penguin-pin-btn.pin-back { background: #cbd2e0; border-color: #394354; box-shadow: 3px 3px 0 #394354; }
+.penguin-cheat-msg {
+  margin: 0;
+  min-height: 1.4em;
+  font-size: 0.88rem;
+  font-weight: 800;
+}
+.penguin-cheat-msg.good { color: #7dff9a; }
+.penguin-cheat-msg.bad { color: #ff8080; }
+
 /* ── Penguin Defence ── */
 .defence-art {
   position: relative;

@@ -34,10 +34,11 @@ function loadPenguinData() {
       var currentLevel = typeof raw.currentLevel === "number" ? raw.currentLevel : (bestLevel>0 ? Math.min(bestLevel, TOTAL_PENGUIN_LEVELS-1) : 0);
       if (currentLevel <0) currentLevel=0;
       if (currentLevel >= TOTAL_PENGUIN_LEVELS) currentLevel = TOTAL_PENGUIN_LEVELS-1;
-      return { coins: coins, unlocked: unlocked, selected: selected, bestLevel: bestLevel, bestCoins: bestCoins, currentLevel: currentLevel };
+      var secretUnlocked = raw.secretUnlocked === true;
+      return { coins: coins, unlocked: unlocked, selected: selected, bestLevel: bestLevel, bestCoins: bestCoins, currentLevel: currentLevel, secretUnlocked: secretUnlocked };
     }
   } catch(e){}
-  return { coins: 0, unlocked: ["classic"], selected: "classic", bestLevel: 0, bestCoins: 0, currentLevel: 0 };
+  return { coins: 0, unlocked: ["classic"], selected: "classic", bestLevel: 0, bestCoins: 0, currentLevel: 0, secretUnlocked: false };
 }
 function savePenguinData(d) {
   try { localStorage.setItem(PENGUIN_KEY, JSON.stringify(d)); } catch(e){}
@@ -349,6 +350,47 @@ function getPenguinLevel(n) {
   return genProcLevel(n, rng);
 }
 
+var SECRET_COIN_CODE = "12113";
+var SECRET_LEVEL_INDEX = -99;
+
+function getSecretCoinLevel() {
+  var width = 2900;
+  var platforms = [
+    { x: 32, y: 395, w: 130, h: 16, type: "normal" },
+    { x: 250, y: 350, w: 170, h: 16, type: "normal" },
+    { x: 500, y: 310, w: 170, h: 16, type: "bouncy" },
+    { x: 750, y: 340, w: 170, h: 16, type: "normal" },
+    { x: 1000, y: 295, w: 180, h: 16, type: "ice" },
+    { x: 1260, y: 335, w: 170, h: 16, type: "normal" },
+    { x: 1510, y: 285, w: 180, h: 16, type: "bouncy" },
+    { x: 1770, y: 330, w: 170, h: 16, type: "normal" },
+    { x: 2020, y: 290, w: 180, h: 16, type: "ice" },
+    { x: 2280, y: 340, w: 170, h: 16, type: "normal" },
+    { x: 2530, y: 395, w: 150, h: 16, type: "normal" }
+  ];
+  var coins = [];
+  // coin carpets above every platform
+  for (var pi = 0; pi < platforms.length; pi++) {
+    var pl = platforms[pi];
+    var count = 5;
+    for (var k = 0; k < count; k++) {
+      coins.push({ x: pl.x + 18 + k * ((pl.w - 36) / (count - 1)), y: pl.y - 30 });
+    }
+    // second floating row
+    for (var k2 = 0; k2 < 3; k2++) {
+      coins.push({ x: pl.x + 30 + k2 * ((pl.w - 60) / 2), y: pl.y - 62 });
+    }
+  }
+  // bonus coin rainbows in the gaps
+  for (var g = 0; g < 10; g++) {
+    var gx = 200 + g * 240;
+    coins.push({ x: gx, y: 220 });
+    coins.push({ x: gx + 18, y: 200 });
+    coins.push({ x: gx + 36, y: 220 });
+  }
+  return { width: width, height: 480, start: { x: 90, y: 360 }, platforms: platforms, coins: coins, flag: { x: 2590, y: 395 }, secret: true };
+}
+
 function startPenguinParkour() {
   openGame(
     "Penguin Parkour",
@@ -384,6 +426,15 @@ function startPenguinParkour() {
             '<div class="penguin-level-picker-header"><strong>Jump to Level</strong><button class="game-action" id="penguinLevelClose" type="button">Close</button></div>' +
             '<div class="penguin-level-picker-grid" id="penguinLevelGrid"></div>' +
             '<p class="penguin-shop-hint">Progress unlocks with each flag. Champion Road at 250!</p>' +
+          '</div>' +
+        '</div>' +
+        '<div class="penguin-cheat-overlay" id="penguinCheat" hidden>' +
+          '<div class="penguin-cheat-panel">' +
+            '<div class="penguin-cheat-header"><strong>??? SECRET ???</strong><button class="game-action" id="penguinCheatClose" type="button">X</button></div>' +
+            '<p class="penguin-cheat-sub">Enter the 5-digit code</p>' +
+            '<div class="penguin-pin-display" id="penguinPinDisplay">_ _ _ _ _</div>' +
+            '<div class="penguin-pin-grid" id="penguinPinGrid"></div>' +
+            '<p class="penguin-cheat-msg" id="penguinCheatMsg"></p>' +
           '</div>' +
         '</div>' +
       '</div>' +
@@ -453,8 +504,17 @@ function startPenguinParkour() {
   var raf = 0;
   var last = performance.now();
 
+  var isSecretLevel = false;
+  var secretReturnIndex = 0;
+
   function buildLevel(n) {
-    level = getPenguinLevel(n);
+    if (n === SECRET_LEVEL_INDEX) {
+      level = getSecretCoinLevel();
+      isSecretLevel = true;
+    } else {
+      level = getPenguinLevel(n);
+      isSecretLevel = false;
+    }
     levelWidth = level.width;
     // filter out the old floor (y==440 w==width) — floor is now lava!
     var rawPlats = level.platforms.filter(function(p){ return !(p.y===440 && p.w===level.width); });
@@ -483,6 +543,13 @@ function startPenguinParkour() {
     won=false; dead=false; deadTimer=0; levelCoinsCollected=0; camX=0;
     particles=[]; popups=[]; shake=0;
     levelIndex = n;
+    if (isSecretLevel) {
+      // don't overwrite auto-save resume with secret — keep return point
+      updateUI();
+      msg.textContent = "★ SECRET COIN VAULT ★ — grab it all! Reach the flag to return.";
+      document.querySelector("#penguinNext").hidden = true;
+      return;
+    }
     // auto-save current level so you resume where you left off
     data.currentLevel = n;
     try { savePenguinData(data); } catch(e){}
@@ -497,13 +564,19 @@ function startPenguinParkour() {
     }
   }
 
+  function buildSecretLevel() {
+    secretReturnIndex = (typeof levelIndex === "number" && levelIndex >= 0) ? levelIndex : (data.currentLevel || 0);
+    buildLevel(SECRET_LEVEL_INDEX);
+  }
+
   function levelLabel(n) {
+    if (n === SECRET_LEVEL_INDEX) return "★ SECRET COIN VAULT ★";
     var title = PENGUIN_TITLES[n] || ("Level " + (n+1));
     return "Level " + (n+1) + "/" + TOTAL_PENGUIN_LEVELS + " · " + title;
   }
 
   function updateUI() {
-    levelEl.textContent = "Level " + (levelIndex+1) + "/" + TOTAL_PENGUIN_LEVELS;
+    levelEl.textContent = isSecretLevel ? "★ SECRET ★" : ("Level " + (levelIndex+1) + "/" + TOTAL_PENGUIN_LEVELS);
     coinsEl.textContent = "Coins: " + data.coins;
     lvlCoinsEl.textContent = "This level: " + levelCoinsCollected + "/" + coins.length;
     shopCoinsEl.textContent = data.coins;
@@ -522,8 +595,10 @@ function startPenguinParkour() {
   function saveData() {
     data.selected = selectedPenguin.id;
     savePenguinData(data);
-    // also use global highscore for stats band
-    try { recordScore("penguin", Math.max(data.bestLevel, levelIndex + (won?1:0)), "high"); } catch(e){}
+    // also use global highscore for stats band (skip secret level)
+    if (!isSecretLevel) {
+      try { recordScore("penguin", Math.max(data.bestLevel, levelIndex + (won?1:0)), "high"); } catch(e){}
+    }
     updateUI();
   }
 
@@ -545,6 +620,7 @@ function startPenguinParkour() {
     if (won || dead) return;
     if (shopOverlay && !shopOverlay.hidden) return;
     if (typeof levelPicker !== "undefined" && levelPicker && !levelPicker.hidden) return;
+    if (typeof cheatOverlay !== "undefined" && cheatOverlay && !cheatOverlay.hidden) return;
     if (player.onGround || player.coyote > 0) {
       player.vy = -JUMP;
       player.onGround = false;
@@ -570,7 +646,7 @@ function startPenguinParkour() {
   }
 
   function update(dt) {
-    if ((shopOverlay && !shopOverlay.hidden) || (typeof levelPicker !== "undefined" && levelPicker && !levelPicker.hidden)) {
+    if ((shopOverlay && !shopOverlay.hidden) || (typeof levelPicker !== "undefined" && levelPicker && !levelPicker.hidden) || (typeof cheatOverlay !== "undefined" && cheatOverlay && !cheatOverlay.hidden)) {
       // pause game while overlays open
       return;
     }
@@ -818,18 +894,30 @@ function startPenguinParkour() {
         var bonus = 0;
         if (levelCoinsCollected === coins.length) bonus = coins.length * 2;
         if (bonus>0) { data.coins += bonus; for(var b=0;b<bonus;b++) popups.push({ x: flag.x, y: flag.y- 90 - b*7, vy:-18, life:0.9, max:0.9, text:"+"+bonus+" perfect!" }); saveData(); }
-        data.bestLevel = Math.max(data.bestLevel, levelIndex+1);
-        savePenguinData(data);
-        try { recordScore("penguin", data.bestLevel, "high"); } catch(e){}
-        bestEl.textContent = "Best: " + data.bestLevel;
-        if (levelIndex === TOTAL_PENGUIN_LEVELS - 1) {
-          msg.textContent = "★★ CHAMPION ROAD CONQUERED! ★★ " + levelCoinsCollected + "/" + coins.length + " coins. You are the Waddles champion!";
-          document.querySelector("#penguinNext").textContent = "Play again from start ↺";
+        if (isSecretLevel) {
+          try { savePenguinData(data); } catch(e){}
+          bestEl.textContent = "Best: " + data.bestLevel;
+          msg.textContent = "★ VAULT LOOTED! ★ " + levelCoinsCollected + "/" + coins.length + " coins pocketed! Returning you back…";
+          document.querySelector("#penguinNext").textContent = "Back to level " + (secretReturnIndex+1) + " ↩";
+          document.querySelector("#penguinNext").hidden = false;
+          // auto-return after a beat so it feels like a bonus stage
+          setTimeout(function(){
+            try { if (won && isSecretLevel && document.querySelector("#penguinCanvas")) buildLevel(secretReturnIndex); } catch(e){}
+          }, 2600);
         } else {
-          msg.textContent = "Flag reached! " + levelCoinsCollected + "/" + coins.length + " coins. " + (bonus?"Perfect bonus! ":"") + (penguinIntro(levelIndex+1) ? "Next: " + (PENGUIN_TITLES[levelIndex+1]||("Level "+(levelIndex+2))) : "");
-          document.querySelector("#penguinNext").textContent = "Next level →";
+          data.bestLevel = Math.max(data.bestLevel, levelIndex+1);
+          savePenguinData(data);
+          try { recordScore("penguin", data.bestLevel, "high"); } catch(e){}
+          bestEl.textContent = "Best: " + data.bestLevel;
+          if (levelIndex === TOTAL_PENGUIN_LEVELS - 1) {
+            msg.textContent = "★★ CHAMPION ROAD CONQUERED! ★★ " + levelCoinsCollected + "/" + coins.length + " coins. You are the Waddles champion!";
+            document.querySelector("#penguinNext").textContent = "Play again from start ↺";
+          } else {
+            msg.textContent = "Flag reached! " + levelCoinsCollected + "/" + coins.length + " coins. " + (bonus?"Perfect bonus! ":"") + (penguinIntro(levelIndex+1) ? "Next: " + (PENGUIN_TITLES[levelIndex+1]||("Level "+(levelIndex+2))) : "");
+            document.querySelector("#penguinNext").textContent = "Next level →";
+          }
+          document.querySelector("#penguinNext").hidden = false;
         }
-        document.querySelector("#penguinNext").hidden = false;
         // burst
         for (var bi=0; bi<14; bi++) {
           var ang = Math.random()*Math.PI*2;
@@ -1571,10 +1659,18 @@ function startPenguinParkour() {
 
   // input handling
   function keydown(e) {
+    // secret cheat: Ctrl+F3 opens pin pad (check first, even with overlays open)
+    if (e.ctrlKey && (e.key === "F3" || e.code === "F3" || e.keyCode === 114)) {
+      e.preventDefault();
+      if (typeof openCheat === "function") openCheat();
+      else if (typeof cheatOverlay !== "undefined" && cheatOverlay) { cheatOverlay.hidden = false; cheatOverlay.style.display = "flex"; }
+      return;
+    }
+    if (typeof cheatOverlay !== "undefined" && cheatOverlay && !cheatOverlay.hidden && e.key==="Escape") { closeCheat(); return; }
     if (levelPicker && !levelPicker.hidden && e.key==="Escape") { closeLevelPicker(); return; }
     if (shopOverlay && !shopOverlay.hidden && e.key==="Escape") { closeShop(); return; }
     // pause input when any overlay open
-    if ((shopOverlay && !shopOverlay.hidden) || (levelPicker && !levelPicker.hidden)) return;
+    if ((shopOverlay && !shopOverlay.hidden) || (levelPicker && !levelPicker.hidden) || (typeof cheatOverlay !== "undefined" && cheatOverlay && !cheatOverlay.hidden)) return;
     if (document.activeElement && (document.activeElement.tagName==="INPUT" || document.activeElement.tagName==="TEXTAREA")) return;
     var k = e.key.toLowerCase();
     if (k===" " || e.code==="Space") {
@@ -1681,8 +1777,100 @@ function startPenguinParkour() {
   levelPicker.addEventListener("click", function(ev){ if(ev.target===levelPicker) closeLevelPicker(); });
   var levelsBtn = document.querySelector("#penguinLevelsBtn");
   if (levelsBtn) levelsBtn.addEventListener("click", openLevelPicker);
-  document.querySelector("#penguinRestart").addEventListener("click", function(){ buildLevel(levelIndex); });
+  // secret cheat pin pad (Ctrl+F3, code 12113 → coin vault)
+  var cheatOverlay = document.querySelector("#penguinCheat");
+  var pinDisplay = document.querySelector("#penguinPinDisplay");
+  var pinGrid = document.querySelector("#penguinPinGrid");
+  var cheatMsg = document.querySelector("#penguinCheatMsg");
+  var pinEntry = "";
+  function renderPin() {
+    if (!pinDisplay) return;
+    var out = "";
+    for (var i = 0; i < 5; i++) {
+      out += (i < pinEntry.length ? pinEntry[i] : "_") + (i < 4 ? " " : "");
+    }
+    pinDisplay.textContent = out;
+    pinDisplay.classList.toggle("filled", pinEntry.length === 5);
+  }
+  function cheatSay(t, ok) {
+    if (!cheatMsg) return;
+    cheatMsg.textContent = t;
+    cheatMsg.classList.toggle("good", !!ok);
+    cheatMsg.classList.toggle("bad", !ok && !!t);
+  }
+  function pressPinDigit(d) {
+    if (cheatOverlay.hidden) return;
+    if (pinEntry.length >= 5) return;
+    pinEntry += d;
+    renderPin();
+    cheatSay("", true);
+    if (pinEntry.length === 5) {
+      if (pinEntry === SECRET_COIN_CODE) {
+        data.secretUnlocked = true;
+        try { savePenguinData(data); } catch(e){}
+        cheatSay("★ UNLOCKED! Coin vault opening… ★", true);
+        if (pinDisplay) {
+          pinDisplay.classList.add("unlocked");
+          setTimeout(function(){ pinDisplay.classList.remove("unlocked"); }, 1600);
+        }
+        setTimeout(function(){ closeCheat(); buildSecretLevel(); }, 750);
+      } else {
+        cheatSay("Nope. That code melts.", false);
+        if (pinDisplay) {
+          pinDisplay.classList.add("denied");
+          setTimeout(function(){ pinDisplay.classList.remove("denied"); }, 450);
+        }
+        setTimeout(function(){ pinEntry = ""; renderPin(); }, 550);
+      }
+    }
+  }
+  function openCheat() {
+    pinEntry = "";
+    renderPin();
+    // if already unlocked, hint it
+    if (data.secretUnlocked) cheatSay("Vault already unlocked — re-enter code to return.", true);
+    else cheatSay("", true);
+    cheatOverlay.hidden = false;
+    cheatOverlay.style.display = "flex";
+  }
+  function closeCheat() {
+    pinEntry = "";
+    renderPin();
+    cheatSay("", true);
+    cheatOverlay.hidden = true;
+    cheatOverlay.style.display = "none";
+  }
+  if (pinGrid) {
+    pinGrid.innerHTML = "";
+    ["1","2","3","4","5","6","7","8","9","C","0","⌫"].forEach(function(label){
+      var b = document.createElement("button");
+      b.type = "button";
+      b.className = "penguin-pin-btn" + (label==="C" ? " pin-clear" : label==="⌫" ? " pin-back" : "");
+      b.textContent = label;
+      b.setAttribute("aria-label", "Pin " + label);
+      b.addEventListener("click", function(){
+        if (label === "C") { pinEntry = ""; renderPin(); cheatSay("", true); }
+        else if (label === "⌫") { pinEntry = pinEntry.slice(0, -1); renderPin(); }
+        else pressPinDigit(label);
+      });
+      pinGrid.appendChild(b);
+    });
+  }
+  document.querySelector("#penguinCheatClose").addEventListener("click", closeCheat);
+  cheatOverlay.addEventListener("click", function(ev){ if(ev.target===cheatOverlay) closeCheat(); });
+  // physical keyboard digits while cheat open
+  function pinKeys(e){
+    if (!cheatOverlay || cheatOverlay.hidden) return;
+    if (/^[0-9]$/.test(e.key)) { e.preventDefault(); pressPinDigit(e.key); }
+    else if (e.key === "Backspace") { e.preventDefault(); pinEntry = pinEntry.slice(0,-1); renderPin(); }
+  }
+  document.addEventListener("keydown", pinKeys);
+  document.querySelector("#penguinRestart").addEventListener("click", function(){
+    if (isSecretLevel) buildLevel(SECRET_LEVEL_INDEX);
+    else buildLevel(levelIndex);
+  });
   document.querySelector("#penguinNext").addEventListener("click", function(){
+    if (isSecretLevel) { buildLevel(secretReturnIndex); return; }
     var next = levelIndex + 1;
     if (next >= TOTAL_PENGUIN_LEVELS) next = 0;
     buildLevel(next);
@@ -1718,6 +1906,7 @@ function startPenguinParkour() {
     cancelAnimationFrame(raf);
     document.removeEventListener("keydown", keydown);
     document.removeEventListener("keyup", keyup);
+    document.removeEventListener("keydown", pinKeys);
   };
   // allow external advance
   activeAdvance = function(ms){
