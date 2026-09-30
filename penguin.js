@@ -31,10 +31,13 @@ function loadPenguinData() {
       var selected = typeof raw.selected === "string" && unlocked.indexOf(raw.selected)!==-1 ? raw.selected : unlocked[0];
       var bestLevel = typeof raw.bestLevel === "number" ? raw.bestLevel : 0;
       var bestCoins = typeof raw.bestCoins === "number" ? raw.bestCoins : coins;
-      return { coins: coins, unlocked: unlocked, selected: selected, bestLevel: bestLevel, bestCoins: bestCoins };
+      var currentLevel = typeof raw.currentLevel === "number" ? raw.currentLevel : (bestLevel>0 ? Math.min(bestLevel, TOTAL_PENGUIN_LEVELS-1) : 0);
+      if (currentLevel <0) currentLevel=0;
+      if (currentLevel >= TOTAL_PENGUIN_LEVELS) currentLevel = TOTAL_PENGUIN_LEVELS-1;
+      return { coins: coins, unlocked: unlocked, selected: selected, bestLevel: bestLevel, bestCoins: bestCoins, currentLevel: currentLevel };
     }
   } catch(e){}
-  return { coins: 0, unlocked: ["classic"], selected: "classic", bestLevel: 0, bestCoins: 0 };
+  return { coins: 0, unlocked: ["classic"], selected: "classic", bestLevel: 0, bestCoins: 0, currentLevel: 0 };
 }
 function savePenguinData(d) {
   try { localStorage.setItem(PENGUIN_KEY, JSON.stringify(d)); } catch(e){}
@@ -385,6 +388,7 @@ function startPenguinParkour() {
         '</div>' +
       '</div>' +
       '<div class="game-actions">' +
+        '<button class="game-action" id="penguinLevelsBtn" type="button">Levels</button>' +
         '<button class="game-action" id="penguinShopBtn" type="button">Shop / Change penguin</button>' +
         '<button class="game-action" id="penguinRestart" type="button">Restart level</button>' +
         '<button class="game-action" id="penguinNext" type="button" hidden>Next level →</button>' +
@@ -479,6 +483,9 @@ function startPenguinParkour() {
     won=false; dead=false; deadTimer=0; levelCoinsCollected=0; camX=0;
     particles=[]; popups=[]; shake=0;
     levelIndex = n;
+    // auto-save current level so you resume where you left off
+    data.currentLevel = n;
+    try { savePenguinData(data); } catch(e){}
     updateUI();
     var intro = penguinIntro(n);
     if (intro) msg.textContent = levelLabel(n) + " — " + intro;
@@ -1672,6 +1679,8 @@ function startPenguinParkour() {
   levelEl.addEventListener("click", openLevelPicker);
   document.querySelector("#penguinLevelClose").addEventListener("click", closeLevelPicker);
   levelPicker.addEventListener("click", function(ev){ if(ev.target===levelPicker) closeLevelPicker(); });
+  var levelsBtn = document.querySelector("#penguinLevelsBtn");
+  if (levelsBtn) levelsBtn.addEventListener("click", openLevelPicker);
   document.querySelector("#penguinRestart").addEventListener("click", function(){ buildLevel(levelIndex); });
   document.querySelector("#penguinNext").addEventListener("click", function(){
     var next = levelIndex + 1;
@@ -1681,11 +1690,18 @@ function startPenguinParkour() {
 
   bindTouch();
 
-  // init
+  // init — auto-resume where you left off
   selectedPenguin = penguinById(data.selected);
-  buildLevel(0);
+  var resume = (typeof data.currentLevel === "number") ? data.currentLevel : (data.bestLevel ? Math.min(data.bestLevel, TOTAL_PENGUIN_LEVELS-1) : 0);
+  if (resume <0) resume=0; if (resume >= TOTAL_PENGUIN_LEVELS) resume = TOTAL_PENGUIN_LEVELS-1;
+  // clamp to unlocked: if player somehow saved beyond unlock, clamp to maxUnlock
+  var maxAllowed = (data.bestLevel||0);
+  if (resume > maxAllowed) resume = maxAllowed;
+  buildLevel(resume);
   renderShop();
   closeShop();
+  // also close picker initially
+  if (typeof levelPicker !== "undefined" && levelPicker) { levelPicker.hidden = true; levelPicker.style.display = "none"; }
 
   function tick(now) {
     var dt = Math.min(0.033, (now - last)/1000);
