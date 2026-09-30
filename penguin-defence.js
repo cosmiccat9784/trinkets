@@ -57,7 +57,7 @@ function startPenguinDefence() {
     fox:   { id:"fox",   name:"Arctic Fox", cost:45,  dmg:13, range:104, rate:1.28, projSpeed:540, color:"#d98a42", accent:"#ffe2c0", bullet:"#ff8a65", desc:"Speedster", emoji:"\uD83E\uDD8A" },
     owl:   { id:"owl",   name:"Snowy Owl",  cost:78,  dmg:30, range:172, rate:0.66, projSpeed:620, color:"#f0f0f0", accent:"#cde6ff", bullet:"#ffffff", desc:"Long-range", emoji:"\uD83E\uDD89" },
     bear:  { id:"bear",  name:"Polar Bear", cost:120, dmg:52, range:102, rate:0.52, projSpeed:420, color:"#fdfdfd", accent:"#d0e8ff", bullet:"#ffd54f", desc:"Heavy paw", emoji:"\uD83D\uDC3B" },
-    penguin:{id:"penguin",name:"PENGUIN",   cost:310, dmg:108,range:146, rate:0.96, projSpeed:680, color:"#1e2a3a", accent:"#fff8ea", bullet:"#ffd700", desc:"THE MENACE \u2744\uFE0F", emoji:"\uD83D\uDC27", limit:1, unlockWave:7, aoe:64 }
+    penguin:{id:"penguin",name:"PENGUIN",   cost:310, dmg:108,range:146, rate:0.96, projSpeed:680, color:"#1e2a3a", accent:"#fff8ea", bullet:"#ffd700", desc:"THE MENACE \u2744\uFE0F", emoji:"\uD83D\uDC27", limit:3, unlockWave:7, aoe:64 }
   };
   var TOWER_ORDER = ["seal","fox","owl","bear","penguin"];
 
@@ -125,6 +125,36 @@ function startPenguinDefence() {
   var snow = [];
   var tutorialShown = false;
   try { tutorialShown = localStorage.getItem("trinkets-defence-tut")==="1"; } catch(e){}
+  // --- local save / resume (don't lose game on X) ---
+  var SAVE_KEY = "trinkets-penguin-defence-save-v1";
+  function saveDefence(){
+    try{
+      // don't save mid-wave enemies/projectiles — save between-wave building state so resume is clean
+      var saveTowers = towers.map(function(t){ return {c:t.c,r:t.r,id:t.id,level:t.level,totalCost:t.totalCost,kills:t.kills}; });
+      var payload = {
+        v:1,
+        money: money, lives: lives, wave: wave, score: score,
+        towers: saveTowers,
+        coldLevel: coldLevel, penguinUnlocked: penguinUnlocked, penguinCount: penguinCount,
+        perfectWaves: perfectWaves, totalKills: totalKills, waveLeaks: waveLeaks,
+        gameOver: gameOver, won: won
+      };
+      localStorage.setItem(SAVE_KEY, JSON.stringify(payload));
+    }catch(e){}
+  }
+  function loadDefence(){
+    try{
+      var raw = localStorage.getItem(SAVE_KEY);
+      if(!raw) return null;
+      var d = JSON.parse(raw);
+      if(!d || typeof d!=="object" || !Array.isArray(d.towers)) return null;
+      if(typeof d.money!=="number" || typeof d.wave!=="number") return null;
+      // validate towers are within grid and defs exist
+      d.towers = d.towers.filter(function(t){ return typeof t.c==="number" && typeof t.r==="number" && TOWER_DEFS[t.id]; });
+      return d;
+    }catch(e){ return null; }
+  }
+  function clearDefenceSave(){ try{ localStorage.removeItem(SAVE_KEY); }catch(e){} }
   // audio
   var audioCtx = null;
   function beep(freq, dur, vol, type){
@@ -335,7 +365,7 @@ function startPenguinDefence() {
       return false;
     }
     if(def.limit && penguinCount >= def.limit){
-      msgEl.textContent = "Only one Penguin can be on the ice at a time!";
+      msgEl.textContent = "Max " + def.limit + " Penguins on the ice! (you have " + penguinCount + ")";
       return false;
     }
     if(money < def.cost){
@@ -504,10 +534,13 @@ function startPenguinDefence() {
         btn.disabled = true;
         btn.title = "Unlocks at wave " + def.unlockWave;
       } else if(atLimit){
-        btn.innerHTML = '<span class="def-btn-icon">'+def.emoji+'</span><span class="def-btn-name">'+def.name+'</span><span class="def-btn-cost">'+def.cost+' \uD83D\uDC1F</span><span class="def-btn-desc">MAX 1</span>';
+        btn.innerHTML = '<span class="def-btn-icon">'+def.emoji+'</span><span class="def-btn-name">'+def.name+'</span><span class="def-btn-cost">'+def.cost+' \uD83D\uDC1F</span><span class="def-btn-desc">MAX '+def.limit+' ('+penguinCount+'/'+def.limit+')</span>';
         btn.disabled = true;
       } else {
-        btn.innerHTML = '<span class="def-btn-icon">'+def.emoji+'</span><span class="def-btn-name">'+def.name+'</span><span class="def-btn-cost">'+def.cost+' \uD83D\uDC1F</span><span class="def-btn-desc">'+def.desc+'</span>';
+        // show count for penguin when some already placed
+        var desc = def.desc;
+        if(isPenguin && penguinCount>0) desc = penguinCount + "/" + def.limit + " placed · " + desc;
+        btn.innerHTML = '<span class="def-btn-icon">'+def.emoji+'</span><span class="def-btn-name">'+def.name+'</span><span class="def-btn-cost">'+def.cost+' \uD83D\uDC1F</span><span class="def-btn-desc">'+desc+'</span>';
         btn.disabled = !canAfford;
         if(!canAfford) btn.title = "Not enough fish";
       }
@@ -585,6 +618,9 @@ function startPenguinDefence() {
       bestWave = wave;
       try { recordScore("defence", bestWave, "high"); } catch(e){}
     }
+    // autosave (keep colony on X close) — clear on gameover/win so next open is fresh
+    if(!gameOver && !won) saveDefence();
+    else clearDefenceSave();
   }
 
   // canvas pointer mapping
@@ -1850,6 +1886,7 @@ function startPenguinDefence() {
   }
 
   function resetGame(){
+    clearDefenceSave();
     money = START_MONEY;
     lives = START_LIVES;
     wave = 1;
@@ -1921,8 +1958,38 @@ function startPenguinDefence() {
   }
   document.addEventListener("keydown", keydown);
 
-  // init
+  // init — try resume saved colony (so X close doesn't lose game)
   buildBlocked();
+  var saved = loadDefence();
+  if(saved && (saved.towers.length>0 || saved.wave>1) && !saved.gameOver && !saved.won){
+    money = saved.money; lives = saved.lives; wave = saved.wave; score = saved.score;
+    coldLevel = typeof saved.coldLevel==="number" ? saved.coldLevel : 0;
+    penguinUnlocked = !!saved.penguinUnlocked;
+    penguinCount = 0; // will recompute
+    perfectWaves = saved.perfectWaves||0; totalKills = saved.totalKills||0; waveLeaks = saved.waveLeaks||0;
+    towers = [];
+    for(var si=0; si<saved.towers.length; si++){
+      var st = saved.towers[si];
+      var def = TOWER_DEFS[st.id];
+      if(!def) continue;
+      if(isBlockedCell(st.c, st.r)) continue;
+      if(towerAtCell(st.c, st.r)) continue;
+      var cen2 = cellCenter(st.c, st.r);
+      var lvl = st.level||1; lvl = Math.max(1, Math.min(3, lvl));
+      var dmg = lvl===1? def.dmg : lvl===2? Math.round(def.dmg*1.75) : Math.round(def.dmg*2.9);
+      var range = lvl===1? def.range : lvl===2? def.range+14 : def.range+26;
+      var rate = lvl===1? def.rate : lvl===2? def.rate*1.18 : def.rate*1.38;
+      towers.push({c:st.c,r:st.r,x:cen2.x,y:cen2.y,id:def.id,def:def,level:lvl,dmg:dmg,range:range,rate:rate,cooldown:0,kills:st.kills||0,totalCost:st.totalCost||def.cost,angle:-Math.PI/2, blizzardCd: def.id==="penguin"? 8+Math.random()*1.2 : undefined});
+    }
+    penguinCount = towers.filter(function(t){return t.id==="penguin";}).length;
+    if(penguinUnlocked) penguinBannerShown = true;
+    msgEl.textContent = "❄️ Colony restored! Wave "+wave+" \u00B7 "+towers.length+" defenders \u00B7 Welcome back!";
+    bannerText.textContent = "\u2744\uFE0F COLONY RESTORED — WAVE "+wave+" \u2744\uFE0F";
+    bannerEl.hidden=false; bannerEl.classList.add("show");
+    setTimeout(function(){ bannerEl.classList.remove("show"); setTimeout(function(){bannerEl.hidden=true;},420); }, 1800);
+  } else {
+    if(saved && (saved.gameOver||saved.won)) clearDefenceSave();
+  }
   renderShop();
   updateUI();
   // snow init already
@@ -1938,6 +2005,7 @@ function startPenguinDefence() {
   raf = requestAnimationFrame(tick);
 
   activeCleanup = function(){
+    try{ if(!gameOver && !won) saveDefence(); }catch(e){}
     cancelAnimationFrame(raf);
     document.removeEventListener("keydown", keydown);
   };
