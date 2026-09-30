@@ -35,10 +35,11 @@ function loadPenguinData() {
       if (currentLevel <0) currentLevel=0;
       if (currentLevel >= TOTAL_PENGUIN_LEVELS) currentLevel = TOTAL_PENGUIN_LEVELS-1;
       var secretUnlocked = raw.secretUnlocked === true;
-      return { coins: coins, unlocked: unlocked, selected: selected, bestLevel: bestLevel, bestCoins: bestCoins, currentLevel: currentLevel, secretUnlocked: secretUnlocked };
+      var secretLastUsed = typeof raw.secretLastUsed === "number" ? raw.secretLastUsed : 0;
+      return { coins: coins, unlocked: unlocked, selected: selected, bestLevel: bestLevel, bestCoins: bestCoins, currentLevel: currentLevel, secretUnlocked: secretUnlocked, secretLastUsed: secretLastUsed };
     }
   } catch(e){}
-  return { coins: 0, unlocked: ["classic"], selected: "classic", bestLevel: 0, bestCoins: 0, currentLevel: 0, secretUnlocked: false };
+  return { coins: 0, unlocked: ["classic"], selected: "classic", bestLevel: 0, bestCoins: 0, currentLevel: 0, secretUnlocked: false, secretLastUsed: 0 };
 }
 function savePenguinData(d) {
   try { localStorage.setItem(PENGUIN_KEY, JSON.stringify(d)); } catch(e){}
@@ -420,6 +421,22 @@ function getPenguinLevel(n) {
 var SECRET_COIN_CODE = "12113";
 var SECRET_LEVEL_INDEX = -99;
 
+// once-per-calendar-month gate for the coin vault
+function secretMonthKey(ts) {
+  var d = new Date(ts);
+  return d.getFullYear() + "-" + d.getMonth();
+}
+function secretVaultAvailable(lastUsed) {
+  if (!lastUsed) return true;
+  return secretMonthKey(lastUsed) !== secretMonthKey(Date.now());
+}
+function secretNextResetLabel(lastUsed) {
+  var now = new Date(Date.now());
+  var reset = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+  var months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+  return months[reset.getMonth()] + " 1";
+}
+
 function getSecretCoinLevel() {
   var width = 2900;
   var platforms = [
@@ -498,7 +515,7 @@ function startPenguinParkour() {
         '<div class="penguin-cheat-overlay" id="penguinCheat" hidden>' +
           '<div class="penguin-cheat-panel">' +
             '<div class="penguin-cheat-header"><strong>??? SECRET ???</strong><button class="game-action" id="penguinCheatClose" type="button">X</button></div>' +
-            '<p class="penguin-cheat-sub">Enter the 5-digit code</p>' +
+            '<p class="penguin-cheat-sub">Enter the 5-digit code · one use per month</p>' +
             '<div class="penguin-pin-display" id="penguinPinDisplay">_ _ _ _ _</div>' +
             '<div class="penguin-pin-grid" id="penguinPinGrid"></div>' +
             '<p class="penguin-cheat-msg" id="penguinCheatMsg"></p>' +
@@ -1899,14 +1916,24 @@ function startPenguinParkour() {
     cheatSay("", true);
     if (pinEntry.length === 5) {
       if (pinEntry === SECRET_COIN_CODE) {
-        data.secretUnlocked = true;
-        try { savePenguinData(data); } catch(e){}
-        cheatSay("★ UNLOCKED! Coin vault opening… ★", true);
-        if (pinDisplay) {
-          pinDisplay.classList.add("unlocked");
-          setTimeout(function(){ pinDisplay.classList.remove("unlocked"); }, 1600);
+        if (!secretVaultAvailable(data.secretLastUsed)) {
+          cheatSay("Vault already looted this month — back " + secretNextResetLabel(data.secretLastUsed) + ".", false);
+          if (pinDisplay) {
+            pinDisplay.classList.add("denied");
+            setTimeout(function(){ pinDisplay.classList.remove("denied"); }, 450);
+          }
+          setTimeout(function(){ pinEntry = ""; renderPin(); }, 900);
+        } else {
+          data.secretUnlocked = true;
+          data.secretLastUsed = Date.now();
+          try { savePenguinData(data); } catch(e){}
+          cheatSay("★ UNLOCKED! Coin vault opening… ★", true);
+          if (pinDisplay) {
+            pinDisplay.classList.add("unlocked");
+            setTimeout(function(){ pinDisplay.classList.remove("unlocked"); }, 1600);
+          }
+          setTimeout(function(){ closeCheat(); buildSecretLevel(); }, 750);
         }
-        setTimeout(function(){ closeCheat(); buildSecretLevel(); }, 750);
       } else {
         cheatSay("Nope. That code melts.", false);
         if (pinDisplay) {
@@ -1920,9 +1947,10 @@ function startPenguinParkour() {
   function openCheat() {
     pinEntry = "";
     renderPin();
-    // if already unlocked, hint it
-    if (data.secretUnlocked) cheatSay("Vault already unlocked — re-enter code to return.", true);
-    else cheatSay("", true);
+    if (!secretVaultAvailable(data.secretLastUsed)) {
+      cheatSay("Already looted this month — back " + secretNextResetLabel(data.secretLastUsed) + ".", true);
+    } else if (data.secretUnlocked) cheatSay("Vault already unlocked — re-enter code to return.", true);
+    else cheatSay("One use per month. Spend it wisely.", true);
     cheatOverlay.hidden = false;
     cheatOverlay.style.display = "flex";
   }
