@@ -48,24 +48,29 @@ function startPenguinDefence() {
   var CELL_W = W / COLS;
   var CELL_H = H / ROWS;
   var PATH_W = 38;
-  var START_MONEY = 130;
-  var START_LIVES = 20;
+  var START_MONEY = 170;
+  var START_LIVES = 25;
 
   var TOWER_DEFS = {
-    seal:  { id:"seal",  name:"Seal",       cost:55,  dmg:18, range:98,  rate:0.92, projSpeed:460, color:"#b8a99a", accent:"#e8ddd0", bullet:"#6ddcff", desc:"Quick slap", emoji:"\uD83E\uDDAD" },
-    fox:   { id:"fox",   name:"Arctic Fox", cost:45,  dmg:12, range:86,  rate:1.25, projSpeed:500, color:"#d98a42", accent:"#ffe2c0", bullet:"#ff8a65", desc:"Speedster", emoji:"\uD83E\uDD8A" },
-    owl:   { id:"owl",   name:"Snowy Owl",  cost:85,  dmg:30, range:150, rate:0.62, projSpeed:580, color:"#f0f0f0", accent:"#cde6ff", bullet:"#ffffff", desc:"Long-range", emoji:"\uD83E\uDD89" },
-    bear:  { id:"bear",  name:"Polar Bear", cost:135, dmg:58, range:84,  rate:0.46, projSpeed:380, color:"#fdfdfd", accent:"#d0e8ff", bullet:"#ffd54f", desc:"Heavy paw", emoji:"\uD83D\uDC3B" },
-    penguin:{id:"penguin",name:"PENGUIN",   cost:340, dmg:95, range:128, rate:0.90, projSpeed:620, color:"#1e2a3a", accent:"#fff8ea", bullet:"#ffd700", desc:"THE MENACE \u2744\uFE0F", emoji:"\uD83D\uDC27", limit:1, unlockWave:8, aoe:58 }
+    // Seal intentionally worse now — clumsier, shorter reach, slower clap (as requested)
+    seal:  { id:"seal",  name:"Seal",       cost:42,  dmg:11, range:82,  rate:0.68, projSpeed:420, color:"#b8a99a", accent:"#e8ddd0", bullet:"#6ddcff", desc:"Clumsy splash", emoji:"\uD83E\uDDAD" },
+    fox:   { id:"fox",   name:"Arctic Fox", cost:45,  dmg:13, range:104, rate:1.28, projSpeed:540, color:"#d98a42", accent:"#ffe2c0", bullet:"#ff8a65", desc:"Speedster", emoji:"\uD83E\uDD8A" },
+    owl:   { id:"owl",   name:"Snowy Owl",  cost:78,  dmg:30, range:172, rate:0.66, projSpeed:620, color:"#f0f0f0", accent:"#cde6ff", bullet:"#ffffff", desc:"Long-range", emoji:"\uD83E\uDD89" },
+    bear:  { id:"bear",  name:"Polar Bear", cost:120, dmg:52, range:102, rate:0.52, projSpeed:420, color:"#fdfdfd", accent:"#d0e8ff", bullet:"#ffd54f", desc:"Heavy paw", emoji:"\uD83D\uDC3B" },
+    penguin:{id:"penguin",name:"PENGUIN",   cost:310, dmg:108,range:146, rate:0.96, projSpeed:680, color:"#1e2a3a", accent:"#fff8ea", bullet:"#ffd700", desc:"THE MENACE \u2744\uFE0F", emoji:"\uD83D\uDC27", limit:1, unlockWave:7, aoe:64 }
   };
   var TOWER_ORDER = ["seal","fox","owl","bear","penguin"];
 
   var ENEMY_DEFS = {
-    crab:   { hp:28,  speed:70, reward:10, radius:12, color:"#ff6b35", stroke:"#7a2b00", eye:"#fff", name:"Crab" },
-    wolf:   { hp:22,  speed:94, reward:11, radius:10, color:"#a4b0bc", stroke:"#2b3440", eye:"#ffd166", name:"Wolf" },
-    hunter: { hp:52,  speed:74, reward:16, radius:13, color:"#6b7cff", stroke:"#232a6a", eye:"#fff", name:"Hunter" },
-    yeti:   { hp:115, speed:52, reward:28, radius:16, color:"#eef4ff", stroke:"#6e7d9a", eye:"#ff4757", name:"Yeti" },
-    boss:   { hp:420, speed:40, reward:85, radius:23, color:"#8a0f1f", stroke:"#1a0408", eye:"#ffd700", name:"BOSS" }
+    crab:    { hp:28,  speed:70, reward:10, radius:12, color:"#ff6b35", stroke:"#7a2b00", eye:"#fff", name:"Crab" },
+    wolf:    { hp:22,  speed:84, reward:11, radius:10, color:"#a4b0bc", stroke:"#2b3440", eye:"#ffd166", name:"Wolf" },
+    // people — more humans invading the colony!
+    hunter:  { hp:46,  speed:68, reward:14, radius:12, color:"#6b7cff", stroke:"#232a6a", eye:"#fff", name:"Hunter" },
+    poacher: { hp:38,  speed:72, reward:13, radius:11, color:"#8a5a2b", stroke:"#4a2e0a", eye:"#fff8c0", name:"Poacher" },
+    skier:   { hp:30,  speed:86, reward:12, radius:11, color:"#43c6ac", stroke:"#1a4a3f", eye:"#0f2a1a", name:"Skier" },
+    explorer:{ hp:42,  speed:66, reward:15, radius:12, color:"#ff9f43", stroke:"#7a3a0a", eye:"#fff", name:"Explorer" },
+    yeti:    { hp:108, speed:48, reward:26, radius:16, color:"#eef4ff", stroke:"#6e7d9a", eye:"#ff4757", name:"Yeti" },
+    boss:    { hp:380, speed:36, reward:82, radius:23, color:"#8a0f1f", stroke:"#1a0408", eye:"#ffd700", name:"BOSS" }
   };
 
   // waypoints — aligned to grid cell centers so path sits cleanly inside tiles
@@ -181,20 +186,22 @@ function startPenguinDefence() {
   for(var si=0; si<28; si++) snow.push({ x: Math.random()*W, y: Math.random()*H, r: 1+Math.random()*2.2, speed: 18+Math.random()*28, drift: Math.random()*Math.PI*2, driftSpeed: 0.6+Math.random()*0.9, alpha: 0.35+Math.random()*0.5 });
 
   function getWaveList(w) {
-    var base = 7 + Math.floor(w * 1.85);
-    if (w > 15) base = Math.min(42, base);
+    var base = 8 + Math.floor(w * 2.0);
+    if (w > 15) base = Math.min(44, base);
     var types = [];
-    if (w < 3) types = ["crab"];
-    else if (w < 5) types = ["crab","wolf"];
-    else if (w < 8) types = ["crab","wolf","hunter"];
-    else if (w < 12) types = ["crab","wolf","hunter","yeti"];
-    else types = ["hunter","yeti","wolf","crab"];
+    // more people as game goes on — easier but busier!
+    if (w < 3) types = ["crab","poacher"];
+    else if (w < 5) types = ["crab","wolf","poacher","skier"];
+    else if (w < 7) types = ["crab","wolf","hunter","poacher","skier"];
+    else if (w < 10) types = ["hunter","poacher","skier","explorer","wolf","crab"];
+    else if (w < 13) types = ["hunter","poacher","skier","explorer","yeti","wolf"];
+    else types = ["hunter","poacher","skier","explorer","yeti","wolf","crab"];
     var list = [];
     for (var i=0;i<base;i++) {
       var t = types[Math.floor(Math.random()*types.length)];
-      // inject tougher mixes as waves progress
-      if (w >= 6 && Math.random() < 0.12) t = "yeti";
-      if (w >= 4 && Math.random() < 0.18) t = "hunter";
+      // inject tougher but keep mostly people — game easier, more bodies
+      if (w >= 7 && Math.random() < 0.09) t = "yeti";
+      if (w >= 4 && Math.random() < 0.14) t = ["hunter","poacher","explorer","skier"][Math.floor(Math.random()*4)];
       list.push(t);
     }
     // boss every 5 waves
@@ -411,11 +418,12 @@ function startPenguinDefence() {
 
   function enemyStatForWave(type, waveNum){
     var base = ENEMY_DEFS[type];
-    var hpScale = 1 + (waveNum-1)*0.34 + Math.max(0, waveNum-8)*0.08;
-    if(type==="boss") hpScale = 1 + (waveNum-1)*0.28; // boss scales a bit less but still terrifying
+    // easier curve — less HP ramp, slower speed ramp
+    var hpScale = 1 + (waveNum-1)*0.24 + Math.max(0, waveNum-10)*0.045;
+    if(type==="boss") hpScale = 1 + (waveNum-1)*0.20;
     var hp = Math.round(base.hp * hpScale);
-    var speed = base.speed * (1 + Math.min(0.38, (waveNum-1)*0.018));
-    return { hp:hp, maxHp:hp, speed:speed, reward:base.reward + Math.floor((waveNum-1)*0.7), radius:base.radius, color:base.color, stroke:base.stroke, eye:base.eye, name:base.name };
+    var speed = base.speed * (1 + Math.min(0.26, (waveNum-1)*0.012));
+    return { hp:hp, maxHp:hp, speed:speed, reward:base.reward + Math.floor((waveNum-1)*0.6), radius:base.radius, color:base.color, stroke:base.stroke, eye:base.eye, name:base.name };
   }
 
   function spawnEnemy(type){
@@ -1237,27 +1245,61 @@ function startPenguinDefence() {
       ctx.fillStyle = "#fff";
       ctx.beginPath(); ctx.arc(-eyeOff*0.5+1, -en3.radius*0.32, en3.radius*0.06,0,Math.PI*2); ctx.fill();
       ctx.beginPath(); ctx.arc( eyeOff*0.5+1, -en3.radius*0.32, en3.radius*0.06,0,Math.PI*2); ctx.fill();
-      // type icon: crab has pinchers, wolf has ears etc.
+      // type icon: each enemy now has distinct silhouette
       if(en3.type==="crab"){
-        ctx.fillStyle = en3.stroke;
-        ctx.beginPath(); ctx.ellipse(-en3.radius*0.75, 2, 5,3, -0.4,0,Math.PI*2); ctx.fill();
-        ctx.beginPath(); ctx.ellipse( en3.radius*0.75, 2, 5,3, 0.4,0,Math.PI*2); ctx.fill();
+        ctx.fillStyle = "#c0392b"; ctx.strokeStyle="#7a1a0a"; ctx.lineWidth=1.1;
+        ctx.beginPath(); ctx.ellipse(-en3.radius*0.78, 1.8, 5.2,3.2, -0.38,0,Math.PI*2); ctx.fill(); ctx.stroke();
+        ctx.beginPath(); ctx.ellipse( en3.radius*0.78, 1.8, 5.2,3.2, 0.38,0,Math.PI*2); ctx.fill(); ctx.stroke();
+        // legs
+        ctx.strokeStyle="#7a1a0a"; ctx.lineWidth=1; for(var leg=-1; leg<=1; leg+=2){ ctx.beginPath(); ctx.moveTo(leg*en3.radius*0.42, 3); ctx.lineTo(leg*en3.radius*0.92, 6); ctx.stroke(); }
       } else if(en3.type==="wolf"){
         ctx.fillStyle = en3.stroke;
-        ctx.beginPath(); ctx.moveTo(-en3.radius*0.45, -en3.radius*0.85); ctx.lineTo(-en3.radius*0.18, -en3.radius*0.35); ctx.lineTo(-en3.radius*0.7, -en3.radius*0.4); ctx.closePath(); ctx.fill();
-        ctx.beginPath(); ctx.moveTo( en3.radius*0.45, -en3.radius*0.85); ctx.lineTo( en3.radius*0.18, -en3.radius*0.35); ctx.lineTo( en3.radius*0.7, -en3.radius*0.4); ctx.closePath(); ctx.fill();
+        ctx.beginPath(); ctx.moveTo(-en3.radius*0.48, -en3.radius*0.88); ctx.lineTo(-en3.radius*0.18, -en3.radius*0.38); ctx.lineTo(-en3.radius*0.72, -en3.radius*0.42); ctx.closePath(); ctx.fill();
+        ctx.beginPath(); ctx.moveTo( en3.radius*0.48, -en3.radius*0.88); ctx.lineTo( en3.radius*0.18, -en3.radius*0.38); ctx.lineTo( en3.radius*0.72, -en3.radius*0.42); ctx.closePath(); ctx.fill();
+        // snout
+        ctx.fillStyle="#dfe6ec"; ctx.beginPath(); ctx.ellipse(0,1.8,3.2,2.1,0,0,Math.PI*2); ctx.fill();
       } else if(en3.type==="hunter"){
-        // little hat
-        ctx.fillStyle = "#2a2a4a";
-        ctx.fillRect(-en3.radius*0.6, -en3.radius*0.95, en3.radius*1.2, 4);
+        // parka hood with fur
+        ctx.fillStyle="#2a3a7a"; ctx.beginPath(); ctx.arc(0,-en3.radius*0.72, en3.radius*0.62, Math.PI,0); ctx.fill();
+        ctx.fillStyle="#e8ddd0"; ctx.strokeStyle="#2a3a7a"; ctx.lineWidth=0.9;
+        ctx.beginPath(); ctx.arc(0,-en3.radius*0.72, en3.radius*0.62, Math.PI,0); ctx.stroke();
+        // goggles
+        ctx.fillStyle="#a0e7ff"; ctx.strokeStyle="#0f1a2a"; ctx.lineWidth=0.9;
+        ctx.beginPath(); ctx.roundRect(-en3.radius*0.52,-en3.radius*0.38, en3.radius*1.04, 3.2,1.2); ctx.fill(); ctx.stroke();
+        ctx.fillRect(-1, -en3.radius*0.38, 2, 3.2);
+      } else if(en3.type==="poacher"){
+        // brown trapper hat + rifle sling
+        ctx.fillStyle="#5a3a12"; ctx.beginPath(); ctx.ellipse(0,-en3.radius*0.78, en3.radius*0.58, en3.radius*0.42,0,0,Math.PI*2); ctx.fill();
+        ctx.fillStyle="#8a5a2b"; ctx.fillRect(-en3.radius*0.58,-en3.radius*0.95, en3.radius*1.16, 3.2);
+        ctx.strokeStyle="#1a0f05"; ctx.lineWidth=0.9; ctx.beginPath(); ctx.moveTo(-en3.radius*0.42,0.8); ctx.lineTo(en3.radius*0.42,2.2); ctx.stroke();
+        ctx.fillStyle="#2a1a0a"; ctx.beginPath(); ctx.arc(en3.radius*0.42,1.2,1.1,0,Math.PI*2); ctx.fill();
+      } else if(en3.type==="skier"){
+        // goggles + skis
+        ctx.fillStyle="#ffffff"; ctx.beginPath(); ctx.ellipse(0,-en3.radius*0.62, en3.radius*0.55, en3.radius*0.35,0,0,Math.PI*2); ctx.fill();
+        ctx.fillStyle="#ff4d4d"; ctx.strokeStyle="#7a0a0a"; ctx.lineWidth=0.9;
+        ctx.beginPath(); ctx.roundRect(-en3.radius*0.52,-en3.radius*0.42, en3.radius*1.04, 2.8,1); ctx.fill(); ctx.stroke();
+        // skis
+        ctx.fillStyle="#2a3a4a"; ctx.fillRect(-en3.radius*0.82, en3.radius*0.52, en3.radius*1.64, 1.4);
+        ctx.fillStyle="#43c6ac"; ctx.fillRect(-en3.radius*0.72, en3.radius*0.82, en3.radius*1.44, 0.9);
+      } else if(en3.type==="explorer"){
+        // orange explorer parka + backpack
+        ctx.fillStyle="#ff6b35"; ctx.beginPath(); ctx.roundRect(-en3.radius*0.62,-en3.radius*0.78, en3.radius*1.24, en3.radius*0.78,3); ctx.fill();
+        ctx.fillStyle="#ffd166"; ctx.fillRect(-en3.radius*0.22,-en3.radius*0.92, en3.radius*0.44, en3.radius*0.18);
+        ctx.fillStyle="#2a3a4a"; ctx.beginPath(); ctx.ellipse(en3.radius*0.42,0.2,2.6,3.8,0.22,0,Math.PI*2); ctx.fill();
+        ctx.fillStyle="#7a3a0a"; ctx.beginPath(); ctx.arc(0,-en3.radius*0.32,1.1,0,Math.PI*2); ctx.fill();
+      } else if(en3.type==="yeti"){
+        // shaggy yeti — fur tufts
+        ctx.fillStyle="rgba(255,255,255,0.92)"; for(var yf=0; yf<3; yf++){ ctx.beginPath(); ctx.ellipse((yf-1)*en3.radius*0.42, -en3.radius*0.42, en3.radius*0.22, en3.radius*0.32,0,0,Math.PI*2); ctx.fill(); }
+        ctx.fillStyle="#cbd6e6"; ctx.beginPath(); ctx.arc(0,-en3.radius*0.18, en3.radius*0.22,0,Math.PI*2); ctx.fill();
       } else if(en3.type==="boss"){
         // horns/spikes
         ctx.fillStyle = en3.stroke;
         ctx.beginPath(); ctx.moveTo(-en3.radius*0.9, -4); ctx.lineTo(-en3.radius*1.15, -10); ctx.lineTo(-en3.radius*0.7, -8); ctx.closePath(); ctx.fill();
         ctx.beginPath(); ctx.moveTo( en3.radius*0.9, -4); ctx.lineTo( en3.radius*1.15, -10); ctx.lineTo( en3.radius*0.7, -8); ctx.closePath(); ctx.fill();
-        // crown?
-        ctx.fillStyle="#ffd700";
-        ctx.beginPath(); ctx.moveTo(-8,-en3.radius+2); ctx.lineTo(-4,-en3.radius-4); ctx.lineTo(0,-en3.radius+2); ctx.lineTo(4,-en3.radius-4); ctx.lineTo(8,-en3.radius+2); ctx.closePath(); ctx.fill();
+        ctx.fillStyle="#ffd700"; ctx.strokeStyle="#7a4a0a"; ctx.lineWidth=1;
+        ctx.beginPath(); ctx.moveTo(-8,-en3.radius+2); ctx.lineTo(-4,-en3.radius-4); ctx.lineTo(0,-en3.radius+2); ctx.lineTo(4,-en3.radius-4); ctx.lineTo(8,-en3.radius+2); ctx.closePath(); ctx.fill(); ctx.stroke();
+        // scar
+        ctx.strokeStyle="rgba(0,0,0,0.22)"; ctx.lineWidth=0.9; ctx.beginPath(); ctx.moveTo(-4,2); ctx.lineTo(4,4); ctx.stroke();
       }
       ctx.restore();
       // health bar
@@ -1434,111 +1476,376 @@ function startPenguinDefence() {
   function drawTowerCritter(c, tower){
     var id = tower.id;
     var ang = tower.angle || -Math.PI/2;
-    // common gun direction line faint?
+    var lvl = tower.level || 1;
+    var t = performance.now()*0.004;
+    // subtle idle wobble / breathing
+    var breathe = Math.sin(t*1.8 + (tower.x||0)*0.01)*0.45;
+    var bob = Math.sin(t*1.1 + (tower.y||0)*0.008)*0.6;
+    c.translate(0, bob*0.35);
+
     if(id==="owl"){
-      // owl body
-      c.fillStyle="#f5f5f5";
-      c.strokeStyle="#2a3442"; c.lineWidth=1.3;
-      c.beginPath(); c.ellipse(0,1,10,12,0,0,Math.PI*2); c.fill(); c.stroke();
-      // belly
-      c.fillStyle="#e8e0d0";
-      c.beginPath(); c.ellipse(0,4,6,7,0,0,Math.PI*2); c.fill();
-      // wings
-      c.fillStyle="#e8e0d0";
-      c.beginPath(); c.ellipse(-9,0,4,8,-0.35,0,Math.PI*2); c.fill(); c.stroke();
-      c.beginPath(); c.ellipse(9,0,4,8,0.35,0,Math.PI*2); c.fill(); c.stroke();
-      // eyes big yellow
-      c.fillStyle="#ffd166";
-      c.beginPath(); c.arc(-4.2,-4,3.2,0,Math.PI*2); c.fill();
-      c.beginPath(); c.arc(4.2,-4,3.2,0,Math.PI*2); c.fill();
-      c.fillStyle="#1e2a3a";
-      c.beginPath(); c.arc(-4.2,-4,1.4,0,Math.PI*2); c.fill();
-      c.beginPath(); c.arc(4.2,-4,1.4,0,Math.PI*2); c.fill();
-      // beak
-      c.fillStyle="#ff9f2e";
-      c.beginPath(); c.moveTo(-2,-1); c.lineTo(2,-1); c.lineTo(0,2); c.closePath(); c.fill();
-      // gun barrel direction
-      c.save(); c.rotate(ang); c.fillStyle="#2a3442"; c.fillRect(6,-1.2,10,2.4); c.restore();
+      // --- SNOWY OWL: fluffy, long-range sentinel ---
+      // perch snow
+      c.fillStyle="rgba(207,232,255,0.95)";
+      c.beginPath(); c.ellipse(0,10.5,9,2.8,0,0,Math.PI*2); c.fill();
+      // body fluffy gradient
+      var gradO = c.createRadialGradient(-2,-2,2,0,1,12);
+      gradO.addColorStop(0,"#ffffff");
+      gradO.addColorStop(1,"#e6eef7");
+      c.fillStyle=gradO; c.strokeStyle="#3a3a4a"; c.lineWidth=1.4;
+      c.beginPath(); c.ellipse(0,1,10.2,12.5,0,0,Math.PI*2); c.fill(); c.stroke();
+      // belly soft
+      c.fillStyle="#fff8ea";
+      c.beginPath(); c.ellipse(0,4.8,6.4,7.6,0,0,Math.PI*2); c.fill();
+      c.fillStyle="rgba(58,58,74,0.09)";
+      for(var i=0;i<3;i++){ c.beginPath(); c.ellipse(-1.5+i*1.5, 5+i*0.4, 0.9,0.7,0,0,Math.PI*2); c.fill(); }
+      // wings — slightly lifted when aiming
+      var wingBreathe = Math.sin(t*2.2)*0.07;
+      c.fillStyle="#f0e8d8"; c.strokeStyle="#3a3a4a"; c.lineWidth=1.15;
+      // left
+      c.save(); c.translate(-9.2,0.5); c.rotate(-0.32 + wingBreathe); c.beginPath(); c.ellipse(0,0,4.1,8.2,0,0,Math.PI*2); c.fill(); c.stroke();
+      // feather lines
+      c.strokeStyle="rgba(58,58,74,0.18)"; c.lineWidth=0.7;
+      for(var f=0; f<3; f++){ c.beginPath(); c.moveTo(-1, -4+f*2.5); c.lineTo(1, -3.2+f*2.5); c.stroke(); }
+      c.restore();
+      c.save(); c.translate(9.2,0.5); c.rotate(0.32 - wingBreathe); c.fillStyle="#f0e8d8"; c.strokeStyle="#3a3a4a"; c.lineWidth=1.15;
+      c.beginPath(); c.ellipse(0,0,4.1,8.2,0,0,Math.PI*2); c.fill(); c.stroke();
+      c.strokeStyle="rgba(58,58,74,0.18)"; c.lineWidth=0.7;
+      for(var f2=0; f2<3; f2++){ c.beginPath(); c.moveTo(-1, -4+f2*2.5); c.lineTo(1, -3.2+f2*2.5); c.stroke(); }
+      c.restore();
+      // head — slight turn toward target
+      var headTurn = Math.max(-0.18, Math.min(0.18, Math.sin(ang)*0.14));
+      c.save(); c.translate(headTurn*6, 0);
+      c.fillStyle="#ffffff"; c.strokeStyle="#3a3a4a"; c.lineWidth=1.3;
+      c.beginPath(); c.ellipse(0,-5.5,8.6,7.8,0,0,Math.PI*2); c.fill(); c.stroke();
+      // face disk
+      c.fillStyle="#fafaf5"; c.beginPath(); c.ellipse(0,-5.5,7.2,6.4,0,0,Math.PI*2); c.fill();
+      // ear tufts
+      c.fillStyle="#3a3a4a"; c.beginPath(); c.moveTo(-6.2,-11); c.lineTo(-7.2,-14.2); c.lineTo(-4.2,-12); c.closePath(); c.fill();
+      c.beginPath(); c.moveTo(6.2,-11); c.lineTo(7.2,-14.2); c.lineTo(4.2,-12); c.closePath(); c.fill();
+      c.fillStyle="#f7f0d8"; c.beginPath(); c.moveTo(-6.2,-11); c.lineTo(-6.6,-12.6); c.lineTo(-4.8,-11.2); c.closePath(); c.fill();
+      c.beginPath(); c.moveTo(6.2,-11); c.lineTo(6.6,-12.6); c.lineTo(4.8,-11.2); c.closePath(); c.fill();
+      // eyes — gold with shrinking pupil when aiming long range
+      var blink = (Math.sin(t*0.9 + headTurn*10) > 0.985) ? 0.2 : 1;
+      c.fillStyle="#ffd166"; c.strokeStyle="#2a2a30"; c.lineWidth=1.1;
+      c.beginPath(); c.ellipse(-4,-5.5,3.6*blink,3.5,0,0,Math.PI*2); c.fill(); c.stroke();
+      c.beginPath(); c.ellipse(4,-5.5,3.6*blink,3.5,0,0,Math.PI*2); c.fill(); c.stroke();
+      if(blink>0.5){
+        c.fillStyle="#0f1320";
+        var pupilShift = headTurn*1.2;
+        c.beginPath(); c.arc(-4 + pupilShift,-5.5,1.55,0,Math.PI*2); c.fill();
+        c.beginPath(); c.arc(4 + pupilShift,-5.5,1.55,0,Math.PI*2); c.fill();
+        c.fillStyle="#fff"; c.beginPath(); c.arc(-4 + pupilShift+0.6,-6.2,0.7,0,Math.PI*2); c.fill();
+        c.beginPath(); c.arc(4 + pupilShift+0.6,-6.2,0.7,0,Math.PI*2); c.fill();
+      }
+      // beak tiny diamond
+      c.fillStyle="#ff9f2e"; c.strokeStyle="#6b3a0a"; c.lineWidth=0.9;
+      c.beginPath(); c.moveTo(-1.6,-2.2); c.lineTo(1.6,-2.2); c.lineTo(0,1.1); c.closePath(); c.fill(); c.stroke();
+      c.restore();
+      // weapon — frost feather volley (rotates to target)
+      c.save(); c.rotate(ang);
+      // bow?
+      c.strokeStyle="rgba(58,58,74,0.85)"; c.lineWidth=1.2;
+      c.beginPath(); c.moveTo(7,-3.2); c.lineTo(13,0); c.lineTo(7,3.2); c.stroke();
+      c.fillStyle="#a0e7ff"; c.strokeStyle="#2a5a7a"; c.lineWidth=1;
+      c.beginPath(); c.ellipse(11,0,3.2,2.1,0,0,Math.PI*2); c.fill(); c.stroke();
+      c.fillStyle="rgba(255,255,255,0.9)"; c.beginPath(); c.ellipse(10.2,-0.8,0.9,0.6,0,0,Math.PI*2); c.fill();
+      c.restore();
+      // level chevrons on perch
+      if(lvl>=2){ c.fillStyle=lvl>=3?"#ffd700":"#cfeeff"; c.strokeStyle="#2a3442"; c.lineWidth=0.9;
+        for(var lv=0; lv<lvl-1; lv++){ c.beginPath(); c.moveTo(-6+lv*6, 9.2); c.lineTo(-3+lv*6, 11); c.lineTo(0+lv*6, 9.2); c.stroke(); c.fill(); } }
+
     } else if(id==="bear"){
-      c.fillStyle="#ffffff";
-      c.strokeStyle="#2a3442"; c.lineWidth=1.5;
-      c.beginPath(); c.ellipse(0,0,11,10,0,0,Math.PI*2); c.fill(); c.stroke();
+      // --- POLAR BEAR: big cuddly tank with ice slam ---
+      // icy platform shine
+      c.fillStyle="rgba(174,215,255,0.22)";
+      c.beginPath(); c.ellipse(0,11,10,2.6,0,0,Math.PI*2); c.fill();
+      // body — big fluffy
+      var grdB = c.createRadialGradient(-3,-4,2,0,0,14);
+      grdB.addColorStop(0,"#ffffff");
+      grdB.addColorStop(0.55,"#f5fbff");
+      grdB.addColorStop(1,"#dbe9f7");
+      c.fillStyle=grdB; c.strokeStyle="#2a3a4a"; c.lineWidth=1.6;
+      c.beginPath(); c.ellipse(0,0.5,12.4,11.2,0,0,Math.PI*2); c.fill(); c.stroke();
+      // belly — warm cream
+      c.fillStyle="#fff3d6";
+      c.beginPath(); c.ellipse(0,4.6,7.8,6.4,0,0,Math.PI*2); c.fill();
+      c.fillStyle="rgba(0,0,0,0.04)"; c.beginPath(); c.ellipse(0,6.2,7.8,1.4,0,0,Math.PI*2); c.fill();
+      // arms
+      c.fillStyle="#ffffff"; c.strokeStyle="#2a3a4a"; c.lineWidth=1.2;
+      c.beginPath(); c.ellipse(-8,2,4.6,7.2,-0.18,0,Math.PI*2); c.fill(); c.stroke();
+      c.beginPath(); c.ellipse(8,2,4.6,7.2,0.18,0,Math.PI*2); c.fill(); c.stroke();
+      // paw pads
+      c.fillStyle="#2a3a4a"; c.beginPath(); c.arc(-8,5.2,1.4,0,Math.PI*2); c.fill();
+      c.beginPath(); c.arc(-6.6,7,0.8,0,Math.PI*2); c.fill(); c.beginPath(); c.arc(-9.2,6.6,0.7,0,Math.PI*2); c.fill();
+      c.beginPath(); c.arc(8,5.2,1.4,0,Math.PI*2); c.fill();
+      c.beginPath(); c.arc(6.6,7,0.8,0,Math.PI*2); c.fill(); c.beginPath(); c.arc(9.2,6.6,0.7,0,Math.PI*2); c.fill();
+      // head
+      c.fillStyle="#ffffff"; c.strokeStyle="#2a3a4a"; c.lineWidth=1.4;
+      c.beginPath(); c.ellipse(0,-9.8,10,9,0,0,Math.PI*2); c.fill(); c.stroke();
       // muzzle
-      c.fillStyle="#e8e8e0";
-      c.beginPath(); c.ellipse(0,3,5,4,0,0,Math.PI*2); c.fill();
-      // nose
-      c.fillStyle="#1e2a3a"; c.beginPath(); c.arc(0,1.2,1.6,0,Math.PI*2); c.fill();
-      // eyes small
-      c.fillStyle="#1e2a3a";
-      c.beginPath(); c.arc(-4.5,-3,1.5,0,Math.PI*2); c.fill();
-      c.beginPath(); c.arc(4.5,-3,1.5,0,Math.PI*2); c.fill();
+      c.fillStyle="#fff3d6"; c.strokeStyle="rgba(0,0,0,0.12)"; c.lineWidth=0.9;
+      c.beginPath(); c.ellipse(0,-5.2,5.4,4.2,0,0,Math.PI*2); c.fill(); c.stroke();
+      c.fillStyle="#1a2632"; c.beginPath(); c.ellipse(0,-4.2,2.2,1.6,0,0,Math.PI*2); c.fill();
+      c.fillStyle="#fff"; c.beginPath(); c.ellipse(-0.7,-4.7,0.7,0.5,0,0,Math.PI*2); c.fill();
+      // eyes — small friendly, squint when about to slam
+      var squint = (tower.cooldown && tower.cooldown<0.12) ? 0.45 : 1;
+      c.fillStyle="#1a2632";
+      c.beginPath(); c.ellipse(-4.8,-10.2,1.9,1.9*squint,0,0,Math.PI*2); c.fill();
+      c.beginPath(); c.ellipse(4.8,-10.2,1.9,1.9*squint,0,0,Math.PI*2); c.fill();
+      c.fillStyle="#fff"; c.beginPath(); c.arc(-4.2,-11,0.6,0,Math.PI*2); c.fill(); c.beginPath(); c.arc(5.4,-11,0.6,0,Math.PI*2); c.fill();
+      // brows
+      c.strokeStyle="#2a3a4a"; c.lineWidth=0.9; c.beginPath(); c.moveTo(-7.2,-12.2); c.lineTo(-3.2,-11.4); c.moveTo(7.2,-12.2); c.lineTo(3.2,-11.4); c.stroke();
       // ears
-      c.fillStyle="#fff"; c.strokeStyle="#2a3442"; c.lineWidth=1.1;
-      c.beginPath(); c.arc(-7,-7,3,0,Math.PI*2); c.fill(); c.stroke();
-      c.beginPath(); c.arc(7,-7,3,0,Math.PI*2); c.fill(); c.stroke();
-      c.fillStyle="#ffb3b3"; c.beginPath(); c.arc(-7,-7,1.4,0,Math.PI*2); c.fill();
-      c.beginPath(); c.arc(7,-7,1.4,0,Math.PI*2); c.fill();
-      // paw gun
-      c.save(); c.rotate(ang); c.fillStyle="#d0e8ff"; c.strokeStyle="#2a3442"; c.lineWidth=1; c.beginPath(); c.ellipse(10,0,6,5,0,0,Math.PI*2); c.fill(); c.stroke(); c.restore();
+      c.fillStyle="#ffffff"; c.strokeStyle="#2a3a4a"; c.lineWidth=1.1;
+      c.beginPath(); c.arc(-7.6,-17,3.3,0,Math.PI*2); c.fill(); c.stroke();
+      c.beginPath(); c.arc(7.6,-17,3.3,0,Math.PI*2); c.fill(); c.stroke();
+      c.fillStyle="#ffb3c1"; c.beginPath(); c.arc(-7.6,-17,1.5,0,Math.PI*2); c.fill();
+      c.beginPath(); c.arc(7.6,-17,1.5,0,Math.PI*2); c.fill();
+      c.fillStyle="#ffffff"; c.beginPath(); c.arc(-7,-18.2,0.9,0,Math.PI*2); c.fill(); c.beginPath(); c.arc(8.2,-18,0.9,0,Math.PI*2); c.fill();
+      // ice gauntlet weapon
+      c.save(); c.rotate(ang);
+      // frost hammer
+      c.fillStyle="#e6f4ff"; c.strokeStyle="#2a5a7a"; c.lineWidth=1.2;
+      c.beginPath(); c.roundRect(9,-4.2,10,8.4,3); c.fill(); c.stroke();
+      c.fillStyle="rgba(160,220,255,0.9)"; c.fillRect(10,-2.8,8,1.2);
+      c.fillStyle="#a0e7ff"; c.beginPath(); c.moveTo(19,-3.2); c.lineTo(22,0); c.lineTo(19,3.2); c.closePath(); c.fill(); c.stroke();
+      // snow puff when slamming — scale with cooldown
+      if(tower.cooldown && tower.cooldown<0.15){
+        c.fillStyle="rgba(255,255,255,0.85)"; c.beginPath(); c.ellipse(22,0,3.2,2.2,0,0,Math.PI*2); c.fill();
+      }
+      c.restore();
+      // little breath cloud
+      c.fillStyle="rgba(255,255,255,0.55)"; c.beginPath(); c.ellipse(3,-1,2.2,1.4,0,0,Math.PI*2); c.fill();
+
     } else if(id==="seal"){
-      c.fillStyle="#c8b8a0";
-      c.strokeStyle="#4a3f35"; c.lineWidth=1.4;
-      c.beginPath(); c.ellipse(0,2,10,8,0,0,Math.PI*2); c.fill(); c.stroke();
-      // belly white
-      c.fillStyle="#fff8ea"; c.beginPath(); c.ellipse(0,4,6,4.5,0,0,Math.PI*2); c.fill();
+      // --- SEAL: bouncy, whiskered, snowball juggler ---
+      // puddle
+      c.fillStyle="rgba(42,85,120,0.18)";
+      c.beginPath(); c.ellipse(0,11,11,3,0,0,Math.PI*2); c.fill();
+      // body — chubby
+      var grdS = c.createRadialGradient(-3,-1,2,0,2,11);
+      grdS.addColorStop(0,"#8fb7d6");
+      grdS.addColorStop(1,"#5a8ab5");
+      c.fillStyle=grdS; c.strokeStyle="#1d3d5c"; c.lineWidth=1.45;
+      c.beginPath(); c.ellipse(0,2.4,10.6,8.4,0,0,Math.PI*2); c.fill(); c.stroke();
+      // belly — big white with water spots
+      c.fillStyle="#fff8ea"; c.beginPath(); c.ellipse(0,4.8,6.6,4.9,0,0,Math.PI*2); c.fill();
+      c.fillStyle="rgba(91,138,181,0.12)"; c.beginPath(); c.ellipse(-1.5,6,1.2,0.8,0,0,Math.PI*2); c.fill(); c.beginPath(); c.ellipse(1.8,5.2,0.9,0.6,0,0,Math.PI*2); c.fill();
+      // flippers — animated flap toward target
+      var flap = Math.sin(t*3.2 + lvl*0.5)*0.18;
+      c.fillStyle="#6d9bc4"; c.strokeStyle="#1d3d5c"; c.lineWidth=1.1;
+      c.save(); c.translate(-8.6,2.2); c.rotate(-0.42 + flap); c.beginPath(); c.ellipse(0,0,4.2,7.4,0,0,Math.PI*2); c.fill(); c.stroke();
+      // flipper lines
+      c.strokeStyle="rgba(29,61,92,0.22)"; c.lineWidth=0.7; for(var ff=0; ff<2; ff++){ c.beginPath(); c.moveTo(-1,-3+ff*3); c.lineTo(1,-2+ff*3); c.stroke(); } c.restore();
+      c.save(); c.translate(8.6,2.2); c.rotate(0.42 - flap);
+      // aiming flipper holds snowball
+      c.fillStyle="#6d9bc4"; c.strokeStyle="#1d3d5c"; c.lineWidth=1.1;
+      c.beginPath(); c.ellipse(0,0,4.2,7.4,0,0,Math.PI*2); c.fill(); c.stroke();
+      c.restore();
       // head
-      c.fillStyle="#c8b8a0"; c.beginPath(); c.ellipse(0,-6,7,6,0,0,Math.PI*2); c.fill(); c.stroke();
-      // eyes
-      c.fillStyle="#1e2a3a"; c.beginPath(); c.arc(-3,-7,1.6,0,Math.PI*2); c.fill(); c.beginPath(); c.arc(3,-7,1.6,0,Math.PI*2); c.fill();
-      c.fillStyle="#fff"; c.beginPath(); c.arc(-2.3,-8,0.7,0,Math.PI*2); c.fill(); c.beginPath(); c.arc(3.7,-8,0.7,0,Math.PI*2); c.fill();
-      // whiskers
-      c.strokeStyle="#4a3f35"; c.lineWidth=0.7; c.beginPath(); c.moveTo(-6,-5); c.lineTo(-9,-5); c.moveTo(-6,-3); c.lineTo(-9,-2.5); c.moveTo(6,-5); c.lineTo(9,-5); c.moveTo(6,-3); c.lineTo(9,-2.5); c.stroke();
-      // nose
-      c.fillStyle="#4a3f35"; c.beginPath(); c.arc(0,-4,1,0,Math.PI*2); c.fill();
-      // flippers pointing toward angle
-      c.save(); c.rotate(ang); c.fillStyle="#a89888"; c.beginPath(); c.ellipse(9,0,6,3,0,0,Math.PI*2); c.fill(); c.stroke(); c.restore();
+      c.fillStyle="#8fb7d6"; c.strokeStyle="#1d3d5c"; c.lineWidth=1.25;
+      c.beginPath(); c.ellipse(0,-6.2,7.3,6.2,0,0,Math.PI*2); c.fill(); c.stroke();
+      // cheeks puff
+      c.fillStyle="#5a8ab5"; c.beginPath(); c.ellipse(-4.2,-6.8,1.2,0.9,0,0,Math.PI*2); c.fill(); c.beginPath(); c.ellipse(4.2,-6.8,1.2,0.9,0,0,Math.PI*2); c.fill();
+      // eyes — big glossy but tired/droopy (worse seal!)
+      c.fillStyle="#0f1f2f";
+      c.beginPath(); c.arc(-3.2,-7,1.9,0,Math.PI*2); c.fill(); c.beginPath(); c.arc(3.2,-7,1.9,0,Math.PI*2); c.fill();
+      c.fillStyle="#fff"; c.beginPath(); c.arc(-2.4,-8.1,0.85,0,Math.PI*2); c.fill(); c.beginPath(); c.arc(4,-8.1,0.85,0,Math.PI*2); c.fill();
+      c.fillStyle="#6ddcff"; c.beginPath(); c.arc(-3.2,-6.7,0.45,0,Math.PI*2); c.fill(); c.beginPath(); c.arc(3.2,-6.7,0.45,0,Math.PI*2); c.fill();
+      // droopy lids — makes seal look clumsy/tired
+      c.strokeStyle="rgba(29,61,92,0.96)"; c.lineWidth=1.05; c.lineCap="round";
+      c.beginPath(); c.moveTo(-5.4,-7.9); c.lineTo(-1.0,-7.1); c.stroke();
+      c.beginPath(); c.moveTo(1.0,-7.1); c.lineTo(5.4,-7.9); c.stroke();
+      // sweat drop (clumsy)
+      c.fillStyle="rgba(109,220,255,0.92)"; c.strokeStyle="#1d3d5c"; c.lineWidth=0.7;
+      c.beginPath(); c.ellipse(5.1,-5.4,1.1,1.6,0.32,0,Math.PI*2); c.fill(); c.stroke();
+      c.fillStyle="#fff"; c.beginPath(); c.ellipse(4.8,-6,0.42,0.55,0.32,0,Math.PI*2); c.fill();
+      // nose + whiskers (dots)
+      c.fillStyle="#1d3d5c"; c.beginPath(); c.ellipse(0,-4.6,1.7,1.2,0,0,Math.PI*2); c.fill();
+      c.fillStyle="rgba(255,255,255,0.9)"; c.beginPath(); c.arc(-0.5,-5,0.45,0,Math.PI*2); c.fill();
+      c.strokeStyle="#1d3d5c"; c.lineWidth=0.65;
+      for(var wh=-1; wh<=1; wh++){ c.beginPath(); c.moveTo(-3.2, -4.2+wh*0.9); c.lineTo(-6.6, -4.4+wh*1.1); c.stroke(); c.beginPath(); c.moveTo(3.2, -4.2+wh*0.9); c.lineTo(6.6, -4.4+wh*1.1); c.stroke(); }
+      // whisker pads
+      c.fillStyle="#1d3d5c"; c.beginPath(); c.arc(-5.6,-4.1,0.5,0,Math.PI*2); c.fill(); c.beginPath(); c.arc(5.6,-4.1,0.5,0,Math.PI*2); c.fill();
+      // snowball in aiming flipper
+      c.save(); c.rotate(ang);
+      var ballBob = Math.sin(t*4)*0.4;
+      c.translate(10.2+ballBob, 0);
+      c.fillStyle="#ffffff"; c.strokeStyle="#1d3d5c"; c.lineWidth=1;
+      c.beginPath(); c.arc(0,0,3.6,0,Math.PI*2); c.fill(); c.stroke();
+      c.fillStyle="rgba(160,220,255,0.65)"; c.beginPath(); c.arc(0.7,0.7,1.1,0,Math.PI*2); c.fill();
+      c.fillStyle="#fff"; c.beginPath(); c.arc(-0.9,-0.9,0.9,0,Math.PI*2); c.fill();
+      // tiny sparkle
+      c.fillStyle="rgba(255,255,255,1)"; c.beginPath(); c.moveTo(1.2,-1.2); c.lineTo(1.6,-0.4); c.lineTo(0.8,0); c.lineTo(1.6,0.4); c.lineTo(1.2,1.2); c.lineTo(0.4,0.4); c.lineTo(0,0); c.lineTo(0.4,-0.4); c.closePath(); c.fill();
+      c.restore();
+
     } else if(id==="fox"){
-      c.fillStyle="#d98a42";
-      c.strokeStyle="#5a2e0a"; c.lineWidth=1.4;
-      c.beginPath(); c.ellipse(0,0,10,8,0,0,Math.PI*2); c.fill(); c.stroke();
-      // chest white
-      c.fillStyle="#fff"; c.beginPath(); c.ellipse(0,3,5,4,0,0,Math.PI*2); c.fill();
-      // head
-      c.fillStyle="#d98a42"; c.beginPath(); c.moveTo(-7,-4); c.lineTo(7,-4); c.lineTo(0,-13); c.closePath(); c.fill(); c.stroke();
-      // ears
-      c.fillStyle="#5a2e0a"; c.beginPath(); c.moveTo(-6,-8); c.lineTo(-4,-12); c.lineTo(-2,-8); c.closePath(); c.fill();
-      c.beginPath(); c.moveTo(6,-8); c.lineTo(4,-12); c.lineTo(2,-8); c.closePath(); c.fill();
-      // eyes
-      c.fillStyle="#1e2a3a"; c.beginPath(); c.arc(-3,-6,1.3,0,Math.PI*2); c.fill(); c.beginPath(); c.arc(3,-6,1.3,0,Math.PI*2); c.fill();
-      // nose
-      c.fillStyle="#1e2a3a"; c.beginPath(); c.arc(0,-3.5,1,0,Math.PI*2); c.fill();
-      // tail
-      c.fillStyle="#fff"; c.beginPath(); c.ellipse(8,5,4,2.5,0.7,0,Math.PI*2); c.fill();
-      c.save(); c.rotate(ang); c.fillStyle="#5a2e0a"; c.fillRect(7,-1.5,9,3); c.restore();
+      // --- ARCTIC FOX: agile rusher with ember tail ---
+      // shadow
+      c.fillStyle="rgba(42,30,10,0.14)"; c.beginPath(); c.ellipse(0,11,9,2.6,0,0,Math.PI*2); c.fill();
+      // body — orange gradient
+      var grdF = c.createRadialGradient(-2,-3,2,0,0,11);
+      grdF.addColorStop(0,"#ffca7a");
+      grdF.addColorStop(0.6,"#d98a42");
+      grdF.addColorStop(1,"#b5652a");
+      c.fillStyle=grdF; c.strokeStyle="#5a2e0a"; c.lineWidth=1.35;
+      c.beginPath(); c.ellipse(0,0.2,10.4,8.2,0,0,Math.PI*2); c.fill(); c.stroke();
+      // chest white w/ fur tuft
+      c.fillStyle="#fffef8"; c.beginPath(); c.ellipse(0,3.6,5.4,4.6,0,0,Math.PI*2); c.fill();
+      c.strokeStyle="rgba(90,46,10,0.14)"; c.lineWidth=0.7; c.beginPath(); c.moveTo(-2.2,1.2); c.lineTo(-0.6,3.4); c.moveTo(2.2,1.2); c.lineTo(0.6,3.4); c.stroke();
+      // head — triangular
+      c.fillStyle="#d98a42"; c.strokeStyle="#5a2e0a"; c.lineWidth=1.25;
+      c.beginPath(); c.moveTo(-7,-3.8); c.lineTo(7,-3.8); c.lineTo(0,-13.8); c.closePath(); c.fill(); c.stroke();
+      // muzzle white
+      c.fillStyle="#fffef8"; c.beginPath(); c.ellipse(0,-5.8,3.2,2.2,0,0,Math.PI*2); c.fill();
+      // ears — pink inside, ear flick
+      var earFlick = Math.sin(t*2.8)*0.04;
+      c.fillStyle="#5a2e0a"; c.beginPath(); c.moveTo(-6.6,-8.2); c.lineTo(-4.2,-13.2 + earFlick*4); c.lineTo(-2.4,-8.4); c.closePath(); c.fill();
+      c.fillStyle="#ffb3c1"; c.beginPath(); c.moveTo(-5.8,-9); c.lineTo(-4.4,-11.2); c.lineTo(-3.2,-8.8); c.closePath(); c.fill();
+      c.fillStyle="#5a2e0a"; c.beginPath(); c.moveTo(6.6,-8.2); c.lineTo(4.2,-13.2 - earFlick*4); c.lineTo(2.4,-8.4); c.closePath(); c.fill();
+      c.fillStyle="#ffb3c1"; c.beginPath(); c.moveTo(5.8,-9); c.lineTo(4.4,-11.2); c.lineTo(3.2,-8.8); c.closePath(); c.fill();
+      // eyes — amber, slightly narrowed when targeting
+      var foxSquint = (tower.cooldown && tower.cooldown<0.18) ? 0.6 : 1;
+      c.fillStyle="#1e140a"; c.beginPath(); c.ellipse(-3.2,-7,1.5,1.6*foxSquint,0,0,Math.PI*2); c.fill(); c.beginPath(); c.ellipse(3.2,-7,1.5,1.6*foxSquint,0,0,Math.PI*2); c.fill();
+      c.fillStyle="#ff8a1a"; c.beginPath(); c.arc(-3.2,-7,0.5,0,Math.PI*2); c.fill(); c.beginPath(); c.arc(3.2,-7,0.5,0,Math.PI*2); c.fill();
+      c.fillStyle="#fff"; c.beginPath(); c.arc(-2.6,-7.8,0.45,0,Math.PI*2); c.fill(); c.beginPath(); c.arc(3.8,-7.8,0.45,0,Math.PI*2); c.fill();
+      // nose — heart
+      c.fillStyle="#1a0f05"; c.beginPath(); c.arc(0,-4.4,1.05,0,Math.PI*2); c.fill(); c.fillStyle="#fff"; c.beginPath(); c.arc(-0.4,-4.8,0.35,0,Math.PI*2); c.fill();
+      // tail — big fluffy, wag when idle
+      var wag = Math.sin(t*4.2)*0.5;
+      c.save(); c.translate(8.2,4.8); c.rotate(0.62 + wag*0.14);
+      var grdTail = c.createLinearGradient(-6,0,6,0);
+      grdTail.addColorStop(0,"#d98a42"); grdTail.addColorStop(0.55,"#ffca7a"); grdTail.addColorStop(1,"#ffffff");
+      c.fillStyle=grdTail; c.strokeStyle="#5a2e0a"; c.lineWidth=1.05;
+      c.beginPath(); c.ellipse(0,0,7.2,4.6,0,0,Math.PI*2); c.fill(); c.stroke();
+      c.fillStyle="#fff"; c.beginPath(); c.ellipse(4.2,0.6,2.4,2.1,0,0,Math.PI*2); c.fill();
+      // tail tip flicker ember when shooting
+      if(tower.cooldown && tower.cooldown<0.2){
+        c.fillStyle="rgba(255,138,101,0.85)"; c.beginPath(); c.ellipse(5.2,0,1.2,0.9,0,0,Math.PI*2); c.fill();
+      }
+      c.restore();
+      // weapon — ember dart along angle
+      c.save(); c.rotate(ang);
+      c.fillStyle="#ff8a65"; c.strokeStyle="#5a2e0a"; c.lineWidth=1;
+      c.beginPath(); c.moveTo(7,-1.1); c.lineTo(13,0); c.lineTo(7,1.1); c.closePath(); c.fill(); c.stroke();
+      c.fillStyle="#fff"; c.beginPath(); c.arc(9.2,0,0.6,0,Math.PI*2); c.fill();
+      // trail ember
+      if(tower.cooldown && tower.cooldown<0.25){
+        c.fillStyle="rgba(255,138,101,0.42)"; c.beginPath(); c.arc(5.2,0,1.4,0,Math.PI*2); c.fill();
+      }
+      c.restore();
+
     } else if(id==="penguin"){
-      // use darker, menacing penguin
-      c.fillStyle="#1e2a3a";
-      c.strokeStyle="#0f1320"; c.lineWidth=1.4;
-      c.beginPath(); c.ellipse(0,1,9,11,0,0,Math.PI*2); c.fill(); c.stroke();
-      c.fillStyle="#fff8ea"; c.beginPath(); c.ellipse(0,3,5.5,7,0,0,Math.PI*2); c.fill();
+      // --- THE PENGUIN: absolute menace, frost lord ---
+      // dark ice puddle
+      c.fillStyle="rgba(10,24,42,0.22)"; c.beginPath(); c.ellipse(0,11.5,12,3.2,0,0,Math.PI*2); c.fill();
+      // frost aura — pulsing ring
+      var pulse = 0.55 + Math.sin(t*2.6)*0.25;
+      c.strokeStyle="rgba(160,220,255,"+(0.42 + pulse*0.18)+")"; c.lineWidth=1.2 + pulse*0.6;
+      c.beginPath(); c.arc(0,-1,15 + pulse*2,0,Math.PI*2); c.stroke();
+      // inner frost
+      c.strokeStyle="rgba(255,255,255,"+(0.18 + pulse*0.12)+")"; c.lineWidth=0.8; c.beginPath(); c.arc(0,-1,10.5,0,Math.PI*2); c.stroke();
+      // snowflakes around aura
+      for(var sf=0; sf<3; sf++){
+        var a = t*0.9 + sf*2.09; var r = 13.5 + Math.sin(t*1.7+sf)*1.2;
+        c.fillStyle="rgba(255,255,255,0.92)"; c.beginPath();
+        // tiny star
+        var sx = Math.cos(a)*r, sy = Math.sin(a)*r -1;
+        c.translate(sx,sy); c.rotate(a);
+        c.fillRect(-1.1,-0.22,2.2,0.44); c.fillRect(-0.22,-1.1,0.44,2.2);
+        c.rotate(-a); c.translate(-sx,-sy);
+      }
+      // body — tuxedo with belly gradient + shine
+      var grdP = c.createRadialGradient(-2,-4,1,0,0,12);
+      grdP.addColorStop(0,"#2e4460");
+      grdP.addColorStop(0.58,"#1e2a3a");
+      grdP.addColorStop(1,"#0f1a2a");
+      c.fillStyle=grdP; c.strokeStyle="#0a1320"; c.lineWidth=1.5;
+      c.beginPath(); c.ellipse(0,1.8,9.4,11.4,0,0,Math.PI*2); c.fill(); c.stroke();
+      // belly — warm gold-white with speckles
+      var grdBelly = c.createRadialGradient(-1,2,0,0,3,8);
+      grdBelly.addColorStop(0,"#ffffff");
+      grdBelly.addColorStop(0.62,"#fff8ea");
+      grdBelly.addColorStop(1,"#ffd66e");
+      c.fillStyle=grdBelly; c.beginPath(); c.ellipse(0,3.6,5.9,7.4,0,0,Math.PI*2); c.fill();
+      c.fillStyle="rgba(30,42,58,0.07)"; for(var b=0;b<2;b++){ c.beginPath(); c.ellipse(-0.8+b*1.6, 4.2+b*0.9, 0.7,0.5,0,0,Math.PI*2); c.fill(); }
+      // chest highlight
+      c.fillStyle="rgba(255,255,255,0.72)"; c.beginPath(); c.ellipse(-1.8,0.2,2.2,3.2, -0.22,0,Math.PI*2); c.fill();
+      // scarf? — tiny frost scarf flutter
+      var scarfFlutter = Math.sin(t*3.4)*0.9;
+      c.fillStyle="#a0e7ff"; c.strokeStyle="#0f3860"; c.lineWidth=0.9;
+      c.beginPath(); c.roundRect(-5.2, -1.2, 10.4,3.2,1.2); c.fill(); c.stroke();
+      c.save(); c.translate(4.2,2.2); c.rotate(scarfFlutter*0.08); c.fillStyle="#a0e7ff"; c.strokeStyle="#0f3860"; c.lineWidth=0.8;
+      c.beginPath(); c.roundRect(-1.6,-0.6,3.2,6.2,1); c.fill(); c.stroke();
+      c.fillStyle="rgba(255,255,255,0.9)"; c.fillRect(-1.6,1.2,3.2,0.9); c.restore();
       // head
-      c.fillStyle="#1e2a3a"; c.beginPath(); c.ellipse(0,-8,8,7,0,0,Math.PI*2); c.fill(); c.stroke();
-      c.fillStyle="#fff"; c.beginPath(); c.ellipse(0,-7,5.5,4.5,0,0,Math.PI*2); c.fill();
-      // eyes red menace
-      c.fillStyle="#ff4757"; c.beginPath(); c.arc(-3,-8,1.7,0,Math.PI*2); c.fill(); c.beginPath(); c.arc(3,-8,1.7,0,Math.PI*2); c.fill();
-      c.fillStyle="#fff"; c.beginPath(); c.arc(-2.4,-9,0.6,0,Math.PI*2); c.fill(); c.beginPath(); c.arc(3.6,-9,0.6,0,Math.PI*2); c.fill();
-      // beak
-      c.fillStyle="#ff9f2e"; c.beginPath(); c.moveTo(-3,-4); c.lineTo(3,-4); c.lineTo(0,0); c.closePath(); c.fill();
-      // angry brows
-      c.strokeStyle="#ff4757"; c.lineWidth=1; c.beginPath(); c.moveTo(-5,-10); c.lineTo(-1,-9); c.moveTo(5,-10); c.lineTo(1,-9); c.stroke();
-      // flippers with ice
-      c.fillStyle="#1e2a3a"; c.beginPath(); c.ellipse(-8,0,3.2,7,-0.2,0,Math.PI*2); c.fill(); c.stroke();
-      c.beginPath(); c.ellipse(8,0,3.2,7,0.2,0,Math.PI*2); c.fill(); c.stroke();
-      // frost aura
-      c.fillStyle="rgba(160,220,255,0.62)";
-      c.beginPath(); c.arc(0,-2,14,0,Math.PI*2); c.stroke();
-      // gun ice shard
-      c.save(); c.rotate(ang); c.fillStyle="#a0e7ff"; c.strokeStyle="#0f3860"; c.lineWidth=1; c.beginPath(); c.moveTo(7,-2); c.lineTo(14,0); c.lineTo(7,2); c.closePath(); c.fill(); c.stroke(); c.restore();
+      c.fillStyle="#0f1a2a"; c.strokeStyle="#0a1320"; c.lineWidth=1.4;
+      c.beginPath(); c.ellipse(0,-8.4,8.4,7.4,0,0,Math.PI*2); c.fill(); c.stroke();
+      // face white mask — heart-shaped
+      c.fillStyle="#ffffff"; c.beginPath();
+      c.moveTo(0,-12.2); c.bezierCurveTo(3.2,-12.5,6.2,-9.8,5.2,-6.2); c.bezierCurveTo(4.2,-4.2,2.2,-3.2,0,-3.2);
+      c.bezierCurveTo(-2.2,-3.2,-4.2,-4.2,-5.2,-6.2); c.bezierCurveTo(-6.2,-9.8,-3.2,-12.5,0,-12.2); c.closePath(); c.fill();
+      // beak — orange with nostril line
+      c.fillStyle="#ff9f2e"; c.strokeStyle="#7a3a0a"; c.lineWidth=0.9;
+      c.beginPath(); c.moveTo(-3.2,-3.2); c.lineTo(3.2,-3.2); c.lineTo(0,0.4); c.closePath(); c.fill(); c.stroke();
+      c.strokeStyle="rgba(122,58,10,0.35)"; c.lineWidth=0.6; c.beginPath(); c.moveTo(-1.2,-2.2); c.lineTo(1.2,-2.2); c.stroke();
+      c.fillStyle="rgba(255,255,255,0.55)"; c.beginPath(); c.ellipse(-1.2,-1.8,0.7,0.4,0,0,Math.PI*2); c.fill();
+      // eyes — menacing red, with white highlight and brow that lowers when firing
+      var penguinAngry = (tower.cooldown && tower.cooldown<0.25) ? 0.22 : 0;
+      c.save(); c.translate(0, -0.6*penguinAngry);
+      c.fillStyle="#ff2e3a"; c.strokeStyle="#7a0a12"; c.lineWidth=0.8;
+      c.beginPath(); c.ellipse(-3.1,-8.6,2.1,1.9,0,0,Math.PI*2); c.fill(); c.stroke();
+      c.beginPath(); c.ellipse(3.1,-8.6,2.1,1.9,0,0,Math.PI*2); c.fill(); c.stroke();
+      // pupils — narrow vertical slits
+      c.fillStyle="#0a1320"; c.beginPath(); c.ellipse(-3.1,-8.6,0.75,1.25,0,0,Math.PI*2); c.fill(); c.beginPath(); c.ellipse(3.1,-8.6,0.75,1.25,0,0,Math.PI*2); c.fill();
+      c.fillStyle="#fff"; c.beginPath(); c.arc(-2.6,-9.4,0.55,0,Math.PI*2); c.fill(); c.beginPath(); c.arc(3.6,-9.4,0.55,0,Math.PI*2); c.fill();
+      // angry brows — sharp
+      c.strokeStyle="#ff2e3a"; c.lineWidth=1.05; c.lineCap="round";
+      c.beginPath(); c.moveTo(-5.4,-10.8); c.lineTo(-1.2,-9.4 + penguinAngry*1.2); c.stroke();
+      c.beginPath(); c.moveTo(5.4,-10.8); c.lineTo(1.2,-9.4 + penguinAngry*1.2); c.stroke();
+      c.restore();
+      // flippers — penguin waddle when idle, raised when blizzard ready
+      var flapP = Math.sin(t*2 + (tower.x||0)*0.02)*0.12;
+      var blizzardReady = (tower.blizzardCd!==undefined && tower.blizzardCd<2.2) ? 0.22 : 0;
+      c.fillStyle="#0f1a2a"; c.strokeStyle="#0a1320"; c.lineWidth=1.1;
+      c.save(); c.translate(-8.2,0.2); c.rotate(-0.18 + flapP - blizzardReady*0.4);
+      c.beginPath(); c.ellipse(0,0,3.4,7.2,0,0,Math.PI*2); c.fill(); c.stroke();
+      // flipper shine
+      c.fillStyle="rgba(255,255,255,0.14)"; c.beginPath(); c.ellipse(-0.7,-2.2,1.1,2,0,0,Math.PI*2); c.fill();
+      c.restore();
+      c.save(); c.translate(8.2,0.2); c.rotate(0.18 - flapP + blizzardReady*0.4);
+      c.beginPath(); c.ellipse(0,0,3.4,7.2,0,0,Math.PI*2); c.fill(); c.stroke();
+      c.fillStyle="rgba(255,255,255,0.14)"; c.beginPath(); c.ellipse(0.7,-2.2,1.1,2,0,0,Math.PI*2); c.fill();
+      c.restore();
+      // feet — orange with toe line
+      c.fillStyle="#ff9f2e"; c.strokeStyle="#7a3a0a"; c.lineWidth=0.9;
+      c.beginPath(); c.ellipse(-4.2,11.2,3.6,1.9,0,0,Math.PI*2); c.fill(); c.stroke();
+      c.beginPath(); c.ellipse(4.2,11.2,3.6,1.9,0,0,Math.PI*2); c.fill(); c.stroke();
+      c.strokeStyle="#7a3a0a"; c.lineWidth=0.6; for(var toe=0; toe<2; toe++){ c.beginPath(); c.moveTo(-5+toe*1.4,11); c.lineTo(-5+toe*1.4,12.2); c.stroke(); c.beginPath(); c.moveTo(3+toe*1.4,11); c.lineTo(3+toe*1.4,12.2); c.stroke(); }
+      // weapon — ice shard / frost sceptre pointing at target
+      c.save(); c.rotate(ang);
+      // handle wood
+      c.fillStyle="#5a3a1e"; c.strokeStyle="#2a1a0a"; c.lineWidth=0.9;
+      c.beginPath(); c.roundRect(7,-1,7,2,1); c.fill(); c.stroke();
+      // shard
+      var shardPulse = 0.85 + Math.sin(t*6)*0.15 + (tower.cooldown && tower.cooldown<0.18 ? 0.25 : 0);
+      c.fillStyle="rgba(160,231,255,"+shardPulse+")"; c.strokeStyle="#0f3860"; c.lineWidth=1.05;
+      c.beginPath(); c.moveTo(14,-3.2); c.lineTo(20,0); c.lineTo(14,3.2); c.closePath(); c.fill(); c.stroke();
+      // inner frost core
+      c.fillStyle="rgba(255,255,255,0.95)"; c.beginPath(); c.moveTo(15,-1.1); c.lineTo(17.8,0); c.lineTo(15,1.1); c.closePath(); c.fill();
+      // glow when blizzard ready
+      if(blizzardReady>0){
+        c.fillStyle="rgba(160,231,255,"+(0.22+Math.sin(t*7)*0.12)+")"; c.beginPath(); c.arc(17,0,3.2,0,Math.PI*2); c.fill();
+      }
+      c.restore();
+      // level crown for penguin — small icy crown
+      if(lvl>=2){
+        c.fillStyle="#a0e7ff"; c.strokeStyle="#0f3860"; c.lineWidth=0.9;
+        c.beginPath(); c.moveTo(-5.2,-15.2); c.lineTo(-2.6,-18.2); c.lineTo(0,-15.2); c.lineTo(2.6,-18.2); c.lineTo(5.2,-15.2); c.closePath(); c.fill(); c.stroke();
+        c.fillStyle="#fff"; c.beginPath(); c.arc(0,-15.6,0.7,0,Math.PI*2); c.fill();
+        if(lvl>=3){ c.fillStyle="#ffd700"; c.beginPath(); c.arc(-2.6,-16.6,0.55,0,Math.PI*2); c.fill(); c.beginPath(); c.arc(2.6,-16.6,0.55,0,Math.PI*2); c.fill(); }
+      }
     }
   }
 
