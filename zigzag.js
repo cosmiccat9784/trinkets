@@ -179,6 +179,80 @@ function startZigzag() {
     }
   }
 
+  // --- cheat code: Ctrl+F3 arms it, then type the magic words ---
+  const CHEAT_CODE = "opensesame";
+  const CHEAT_BANK = 999999;
+  let cheatArmed = false;
+  let cheatBuffer = "";
+
+  function removeCheatPopup() {
+    const popup = document.querySelector("#zgCheatPopup");
+    if (popup) popup.remove();
+  }
+
+  function openCheatPopup() {
+    if (document.querySelector("#zgCheatPopup")) return;
+    const panel = document.querySelector(".modal-panel");
+    if (!panel) return;
+    const popup = document.createElement("div");
+    popup.id = "zgCheatPopup";
+    popup.className = "fl-cheat-overlay";
+    popup.innerHTML = `<div class="fl-cheat-box" role="dialog" aria-modal="true" aria-label="Cheat confirmation">
+      <p class="fl-cheat-text">Are you sure you want to ruin the fun?</p>
+      <div class="fl-cheat-row">
+        <button class="game-action fl-cheat-yes" type="button">Ruin it</button>
+        <button class="game-action fl-cheat-no" type="button">Keep it fun</button>
+      </div>
+    </div>`;
+    panel.append(popup);
+    popup.addEventListener("click", (ev) => { if (ev.target === popup) cancelCheat(); });
+    popup.querySelector(".fl-cheat-yes").addEventListener("click", confirmCheat);
+    popup.querySelector(".fl-cheat-no").addEventListener("click", cancelCheat);
+    popup.querySelector(".fl-cheat-no").focus();
+  }
+
+  function confirmCheat() {
+    shop.bank = CHEAT_BANK;
+    shop.owned = SKINS.map((s) => s.id);
+    shop.selected = "ghost";
+    saveShop();
+    renderShop();
+    syncHud();
+    removeCheatPopup();
+    burst(PX, playerY, 26, "#f6c445", 300);
+    showBanner("OPEN SESAME");
+    message.textContent = "Mischief managed: endless coins, every plane. Ghost leads the fleet.";
+  }
+
+  function cancelCheat() {
+    removeCheatPopup();
+    if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
+    message.textContent = "Phew. The fun survives another day.";
+  }
+
+  function cheatKeydown(e) {
+    if (e.key === "F3" && (e.ctrlKey || e.metaKey)) {
+      e.preventDefault();
+      if (e.repeat) return;
+      cheatArmed = true;
+      cheatBuffer = "";
+      message.textContent = "Cheat armed. Type the magic words…";
+      return;
+    }
+    if (!cheatArmed || e.repeat || e.ctrlKey || e.metaKey || e.altKey) return;
+    if (!shopEl.isConnected || document.querySelector("#zgCheatPopup")) return;
+    const tag = (e.target && e.target.tagName) || "";
+    if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return;
+    if (typeof e.key !== "string" || e.key.length !== 1) return;
+    cheatBuffer = (cheatBuffer + e.key.toLowerCase()).slice(-80);
+    if (cheatBuffer.endsWith(CHEAT_CODE)) {
+      cheatArmed = false;
+      cheatBuffer = "";
+      if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
+      openCheatPopup();
+    }
+  }
+
   function showBanner(text) {
     banner = { text, t: 1.8 };
   }
@@ -1058,6 +1132,7 @@ function startZigzag() {
   });
   document.addEventListener("keydown", keydown);
   document.addEventListener("keyup", keyup);
+  document.addEventListener("keydown", cheatKeydown);
 
   setSnapshot({ mode: "ready", game: "Zigzag", dist: 0, score: 0, coins: 0, best, perfects: 0 });
   activeAdvance = (ms) => {
@@ -1069,6 +1144,8 @@ function startZigzag() {
     cancelAnimationFrame(raf);
     document.removeEventListener("keydown", keydown);
     document.removeEventListener("keyup", keyup);
+    document.removeEventListener("keydown", cheatKeydown);
+    removeCheatPopup();
   };
   bestEl.textContent = `Best: ${best} m`;
   renderShop();

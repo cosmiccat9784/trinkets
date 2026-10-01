@@ -856,7 +856,7 @@ function startCheeseThief() {
       <div class="game-layout">
         <div class="game-topline">
           <span class="game-stat" id="cheeseScore">Score: 0</span>
-          <span class="game-stat" id="cheeseLevel">Kitchen: 1/5</span>
+          <span class="game-stat" id="cheeseLevel">Kitchen: 1/4</span>
           <span class="game-stat" id="cheeseLives">Strikes: 0/3</span>
         </div>
         <p class="game-message" id="cheeseMsg">Drag the mouse. Grab cheese. Get home. Mind the light.</p>
@@ -899,7 +899,7 @@ function startCheeseThief() {
       furniture: [{ x: 140, y: 160, w: 120, h: 40 }, { x: 440, y: 280, w: 120, h: 40 }],
       lamps: [{ x: 360, y: 240, range: 200, half: 0.4, speed: 0.6, phase: 1 }],
       chefs: [],
-      cat: { x: 590, y: 90, r: 26, wake: 86 },
+      cat: { x: 360, y: 360, r: 26, wake: 86 },
       vacuum: null,
       plates: false
     },
@@ -921,7 +921,7 @@ function startCheeseThief() {
       furniture: [{ x: 240, y: 60, w: 40, h: 140 }, { x: 440, y: 280, w: 40, h: 140 }],
       lamps: [{ x: 360, y: 240, range: 200, half: 0.4, speed: 0.85, phase: 0 }],
       chefs: [{ path: [{ x: 200, y: 80 }, { x: 520, y: 80 }, { x: 520, y: 400 }, { x: 200, y: 400 }], speed: 120, range: 160, half: 0.5 }],
-      cat: { x: 120, y: 390, r: 26, wake: 86 },
+      cat: { x: 580, y: 290, r: 26, wake: 86 },
       vacuum: { x1: 140, x2: 580, y: 240, speed: 160 },
       plates: true
     }
