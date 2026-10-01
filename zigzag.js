@@ -97,7 +97,8 @@ function startZigzag() {
   function saveExtra() {
     try {
       localStorage.setItem(EXTRA_KEY, JSON.stringify({ score: bestScore, coins: bestCoins }));
-  } catch (err) {}
+    } catch (err) {}
+  }
 
   // --- plane shop: collected coins are the currency ---
   const SKINS = [
@@ -176,7 +177,6 @@ function startZigzag() {
     } else {
       message.textContent = `${s.name} costs ${s.cost} coins — bank has ${shop.bank}. Grab ${s.cost - shop.bank} more.`;
     }
-  }
   }
 
   function showBanner(text) {
