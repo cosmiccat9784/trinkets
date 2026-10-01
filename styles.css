@@ -1503,6 +1503,169 @@ body.embed {
   50% { transform: translateY(-12px); }
 }
 
+.zigzag-canvas {
+  display: block;
+  width: min(100%, 720px, calc((100dvh - 460px) * 3 / 2));
+  aspect-ratio: 3 / 2;
+  margin: 0 auto;
+  border: 3px solid var(--line);
+  border-radius: 12px;
+  box-shadow: 8px 8px 0 var(--line);
+  cursor: pointer;
+  touch-action: none;
+  background: #141a33;
+}
+
+.zigzag-art {
+  position: relative;
+  background: linear-gradient(180deg, #141a33 0%, #1d2550 50%, #141a33 100%);
+  overflow: hidden;
+}
+
+.zigzag-art-wall {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 34px;
+  background: #1a1440;
+  border: 3px solid var(--line);
+}
+
+.zigzag-art-wall.top {
+  top: 18px;
+  border-left: none;
+  border-right: none;
+  border-top: none;
+  box-shadow: 0 3px 0 var(--gold);
+}
+
+.zigzag-art-wall.bottom {
+  bottom: 18px;
+  border-left: none;
+  border-right: none;
+  border-bottom: none;
+  box-shadow: 0 -3px 0 var(--gold);
+}
+
+.zigzag-art-trail {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.zigzag-art-trail polyline {
+  fill: none;
+  stroke: var(--gold);
+  stroke-width: 3;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+  vector-effect: non-scaling-stroke;
+}
+
+.zigzag-art-plane {
+  position: absolute;
+  left: 62%;
+  top: 44%;
+  width: 0;
+  height: 0;
+  border-top: 11px solid transparent;
+  border-bottom: 11px solid transparent;
+  border-left: 26px solid var(--gold);
+  filter: drop-shadow(2px 2px 0 var(--line));
+  animation: zigzag-drift 1.6s ease-in-out infinite;
+}
+
+.zigzag-art-coin {
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--gold);
+  border: 2px solid var(--line);
+}
+
+.zigzag-art-coin.c1 { left: 30%; top: 30%; }
+.zigzag-art-coin.c2 { left: 78%; top: 62%; }
+
+@keyframes zigzag-drift {
+  0%, 100% { transform: translateY(-8px); }
+  50% { transform: translateY(8px); }
+}
+
+.gravball-canvas {
+  display: block;
+  width: min(100%, 720px, calc((100dvh - 460px) * 3 / 2));
+  aspect-ratio: 3 / 2;
+  margin: 0 auto;
+  border: 3px solid var(--line);
+  border-radius: 12px;
+  box-shadow: 8px 8px 0 var(--line);
+  cursor: pointer;
+  touch-action: none;
+  background: #141a33;
+}
+
+.gravball-art {
+  position: relative;
+  background: linear-gradient(180deg, #141a33 0%, #2b2350 50%, #141a33 100%);
+  overflow: hidden;
+}
+
+.gravball-art-rail {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 30px;
+  background: #1a1440;
+  border: 3px solid var(--line);
+}
+
+.gravball-art-rail.top {
+  top: 20px;
+  border-left: none;
+  border-right: none;
+  border-top: none;
+  box-shadow: 0 3px 0 var(--gold);
+}
+
+.gravball-art-rail.bottom {
+  bottom: 20px;
+  border-left: none;
+  border-right: none;
+  border-bottom: none;
+  box-shadow: 0 -3px 0 var(--gold);
+}
+
+.gravball-art-gate {
+  position: absolute;
+  top: 20px;
+  bottom: 20px;
+  width: 16px;
+  background: linear-gradient(90deg, #e14b4b, #ff8787);
+  border: 3px solid var(--line);
+  border-radius: 4px;
+}
+
+.gravball-art-gate.g1 { left: 56%; }
+.gravball-art-gate.g2 { left: 78%; background: linear-gradient(90deg, #7048e8, #b197fc); }
+
+.gravball-art-ball {
+  position: absolute;
+  left: 26%;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #e5dbff, #7048e8 75%);
+  border: 3px solid var(--line);
+  animation: gravball-bounce 1.4s ease-in-out infinite;
+}
+
+@keyframes gravball-bounce {
+  0%, 100% { top: 30%; }
+  50% { top: calc(70% - 26px); }
+}
+
 .flappy-shop {
   display: flex;
   flex-wrap: wrap;
@@ -1540,6 +1703,40 @@ body.embed {
 
 .fl-skin.locked {
   opacity: 0.8;
+}
+
+.fl-cheat-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+  display: grid;
+  place-items: center;
+  padding: 18px;
+  background: rgba(25, 33, 43, 0.72);
+}
+
+.fl-cheat-box {
+  width: min(380px, 100%);
+  background: var(--paper);
+  border: 3px solid var(--line);
+  border-radius: 8px;
+  box-shadow: 12px 12px 0 rgba(0, 0, 0, 0.35);
+  padding: 20px;
+  display: grid;
+  gap: 14px;
+}
+
+.fl-cheat-text {
+  margin: 0;
+  font-weight: 900;
+  font-size: 1.05rem;
+  text-align: center;
+}
+
+.fl-cheat-row {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
 }
 
 /* ── Penguin Parkour ── */
@@ -4813,6 +5010,14 @@ footer p {
   }
 
   .flappy-canvas {
+    width: min(100%, 720px, calc((100vh - 460px) * 3 / 2));
+  }
+
+  .zigzag-canvas {
+    width: min(100%, 720px, calc((100vh - 460px) * 3 / 2));
+  }
+
+  .gravball-canvas {
     width: min(100%, 720px, calc((100vh - 460px) * 3 / 2));
   }
 

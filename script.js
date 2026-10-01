@@ -80,7 +80,9 @@ const gameSlugs = {
   defence: "penguin_defence",
   spider: "spider",
   ikea: "ikea_guess",
-  flappy: "flappy_bird"
+  flappy: "flappy_bird",
+  zigzag: "zigzag",
+  gravityball: "gravity_ball"
 };
 
 function slugToGame(slug) {
@@ -398,6 +400,16 @@ function embedStatText(snap) {
   }
   if (snap.game === "Flappy Bird") {
     if (typeof snap.best === "number") parts.push("Best " + snap.best);
+  }
+  if (snap.game === "Zigzag") {
+    if (typeof snap.dist === "number") parts.push(snap.dist + " m");
+    if (typeof snap.coins === "number") parts.push("Coins " + snap.coins);
+    if (typeof snap.score === "number") parts.push("Score " + snap.score);
+  }
+  if (snap.game === "Gravity Ball") {
+    if (typeof snap.dist === "number") parts.push(snap.dist + " m");
+    if (typeof snap.flips === "number") parts.push("Flips " + snap.flips);
+    if (typeof snap.score === "number") parts.push("Score " + snap.score);
   }
   return parts.join(" · ");
 }

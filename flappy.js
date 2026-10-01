@@ -204,6 +204,72 @@ function startFlappy() {
     banner = { text, t: 2.0 };
   }
 
+  // --- cheat code: type the magic words, confess, profit ---
+  // (Ctrl+F4 can't be used: browsers reserve it to close the tab and
+  // pages cannot intercept it, so the spoken phrase itself is the trigger.)
+  const CHEAT_CODE = "i solemnly swear i am up to no good";
+  const CHEAT_POINTS = 999999;
+  let cheatBuffer = "";
+
+  function removeCheatPopup() {
+    const popup = document.querySelector("#flCheatPopup");
+    if (popup) popup.remove();
+  }
+
+  function openCheatPopup() {
+    if (document.querySelector("#flCheatPopup")) return;
+    const panel = document.querySelector(".modal-panel");
+    if (!panel) return;
+    const popup = document.createElement("div");
+    popup.id = "flCheatPopup";
+    popup.className = "fl-cheat-overlay";
+    popup.innerHTML = `<div class="fl-cheat-box" role="dialog" aria-modal="true" aria-label="Cheat confirmation">
+      <p class="fl-cheat-text">Are you sure you want to ruin the fun?</p>
+      <div class="fl-cheat-row">
+        <button class="game-action fl-cheat-yes" type="button">Ruin it</button>
+        <button class="game-action fl-cheat-no" type="button">Keep it fun</button>
+      </div>
+    </div>`;
+    panel.append(popup);
+    popup.addEventListener("click", (ev) => { if (ev.target === popup) cancelCheat(); });
+    popup.querySelector(".fl-cheat-yes").addEventListener("click", confirmCheat);
+    popup.querySelector(".fl-cheat-no").addEventListener("click", cancelCheat);
+    popup.querySelector(".fl-cheat-no").focus();
+  }
+
+  function confirmCheat() {
+    shop.points = CHEAT_POINTS;
+    shop.owned = SKINS.map((s) => s.id);
+    shop.selected = "waddles";
+    saveShop();
+    renderShop();
+    syncHud();
+    removeCheatPopup();
+    burst(BX, birdY, 26, "#f6c445", 300);
+    showBanner("MISCHIEF MANAGED");
+    message.textContent = "Mischief managed: endless points, every bird. Waddles leads the flock.";
+  }
+
+  function cancelCheat() {
+    removeCheatPopup();
+    if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
+    message.textContent = "Phew. The fun survives another day.";
+  }
+
+  function cheatKeydown(e) {
+    if (e.repeat || e.ctrlKey || e.metaKey || e.altKey) return;
+    if (!shopEl.isConnected || document.querySelector("#flCheatPopup")) return;
+    const tag = (e.target && e.target.tagName) || "";
+    if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return;
+    if (typeof e.key !== "string" || e.key.length !== 1) return;
+    cheatBuffer = (cheatBuffer + e.key.toLowerCase()).slice(-80);
+    if (cheatBuffer.endsWith(CHEAT_CODE)) {
+      cheatBuffer = "";
+      if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
+      openCheatPopup();
+    }
+  }
+
   function syncHud() {
     scoreEl.textContent = `Score: ${score}`;
     bestEl.textContent = `Best: ${Math.max(best, score)}`;
@@ -758,6 +824,7 @@ function startFlappy() {
     syncHud();
   });
   document.addEventListener("keydown", keydown);
+  document.addEventListener("keydown", cheatKeydown);
 
   // seed clouds
   for (let i = 0; i < 5; i++) {
@@ -779,6 +846,8 @@ function startFlappy() {
   activeCleanup = () => {
     cancelAnimationFrame(raf);
     document.removeEventListener("keydown", keydown);
+    document.removeEventListener("keydown", cheatKeydown);
+    removeCheatPopup();
   };
   bestEl.textContent = `Best: ${best}`;
   renderShop();
