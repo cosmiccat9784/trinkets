@@ -1625,18 +1625,26 @@ body.embed {
   box-shadow: 0 -3px 0 var(--gold);
 }
 
-.gravball-art-gate {
+.gravball-art-spike {
   position: absolute;
-  top: 20px;
-  bottom: 20px;
-  width: 16px;
-  background: linear-gradient(90deg, #e14b4b, #ff8787);
-  border: 3px solid var(--line);
-  border-radius: 4px;
+  width: 0;
+  height: 0;
+  border-left: 11px solid transparent;
+  border-right: 11px solid transparent;
+  filter: drop-shadow(2px 2px 0 var(--line));
 }
 
-.gravball-art-gate.g1 { left: 56%; }
-.gravball-art-gate.g2 { left: 78%; background: linear-gradient(90deg, #7048e8, #b197fc); }
+.gravball-art-spike.k1 {
+  left: 54%;
+  bottom: 50px;
+  border-bottom: 22px solid var(--coral);
+}
+
+.gravball-art-spike.k2 {
+  left: 74%;
+  top: 50px;
+  border-top: 22px solid var(--coral);
+}
 
 .gravball-art-ball {
   position: absolute;
