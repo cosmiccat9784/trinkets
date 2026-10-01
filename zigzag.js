@@ -12,6 +12,7 @@ function startZigzag() {
         </div>
         <canvas class="zigzag-canvas" id="zgCanvas" width="720" height="480"></canvas>
         <p class="game-message" id="zgMsg">HOLD to rise · RELEASE to dive. Thread the gaps, don't touch the walls.</p>
+        <div class="zg-shop" id="zgShop" aria-label="Plane shop"></div>
         <div class="game-actions">
           <button class="game-action one-press" id="zgHold" type="button">HOLD TO RISE</button>
           <button class="game-action" id="zgRetry" type="button">Restart</button>
@@ -35,6 +36,7 @@ function startZigzag() {
   const bestEl = document.querySelector("#zgBest");
   const message = document.querySelector("#zgMsg");
   const holdBtn = document.querySelector("#zgHold");
+  const shopEl = document.querySelector("#zgShop");
 
   const QUIPS = [
     "Bonk. The wall sends regards.",
@@ -95,7 +97,86 @@ function startZigzag() {
   function saveExtra() {
     try {
       localStorage.setItem(EXTRA_KEY, JSON.stringify({ score: bestScore, coins: bestCoins }));
+  } catch (err) {}
+
+  // --- plane shop: collected coins are the currency ---
+  const SKINS = [
+    { id: "sunny", name: "Sunny", cost: 0, dot: "#f59f00", hi: "#ffe066", lo: "#f59f00", trail: "246,196,69" },
+    { id: "minty", name: "Minty", cost: 30, dot: "#2f9e44", hi: "#b2f2bb", lo: "#2f9e44", trail: "105,219,124" },
+    { id: "berry", name: "Berry", cost: 70, dot: "#e64980", hi: "#ffc2d4", lo: "#d6336c", trail: "247,131,172" },
+    { id: "splash", name: "Splash", cost: 140, dot: "#1971c2", hi: "#a5d8ff", lo: "#1971c2", trail: "77,171,247" },
+    { id: "dusk", name: "Dusk", cost: 220, dot: "#7048e8", hi: "#d0bfff", lo: "#6741d9", trail: "177,151,252" },
+    { id: "ghost", name: "Ghost", cost: 350, dot: "#868e96", hi: "#ffffff", lo: "#adb5bd", trail: "248,249,250" }
+  ];
+  const SHOP_KEY = "trinkets-zigzag-shop-v1";
+  let shop = { bank: 0, owned: ["sunny"], selected: "sunny" };
+  try {
+    const raw = JSON.parse(localStorage.getItem(SHOP_KEY));
+    if (raw && typeof raw === "object") {
+      if (typeof raw.bank === "number" && raw.bank >= 0) shop.bank = Math.floor(raw.bank);
+      if (Array.isArray(raw.owned)) shop.owned = raw.owned.filter((id) => SKINS.some((s) => s.id === id));
+      if (typeof raw.selected === "string" && shop.owned.includes(raw.selected)) shop.selected = raw.selected;
+    }
+  } catch (err) {}
+  if (!shop.owned.includes("sunny")) shop.owned.unshift("sunny");
+
+  function saveShop() {
+    try {
+      localStorage.setItem(SHOP_KEY, JSON.stringify(shop));
     } catch (err) {}
+  }
+
+  function skin() {
+    return SKINS.find((s) => s.id === shop.selected) || SKINS[0];
+  }
+
+  function renderShop() {
+    if (!shopEl.isConnected) return;
+    shopEl.innerHTML = "";
+    for (const s of SKINS) {
+      const owned = shop.owned.includes(s.id);
+      const selected = shop.selected === s.id;
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "zg-skin" + (selected ? " selected" : "") + (!owned && shop.bank < s.cost ? " locked" : "");
+      const tag = selected ? "flying" : owned ? "owned" : `${s.cost} coins`;
+      btn.innerHTML = `<span class="dot" style="background:${s.dot}"></span>${s.name} · ${tag}`;
+      btn.title = selected ? `${s.name} is equipped` : owned ? `Fly the ${s.name} plane` : `Unlock ${s.name} for ${s.cost} coins`;
+      btn.setAttribute("aria-label", btn.title);
+      btn.addEventListener("click", () => shopAction(s.id));
+      shopEl.append(btn);
+    }
+  }
+
+  function shopAction(id) {
+    const s = SKINS.find((x) => x.id === id);
+    if (!s) return;
+    if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
+    if (shop.selected === id) {
+      message.textContent = `Already flying ${s.name}.`;
+      return;
+    }
+    if (shop.owned.includes(id)) {
+      shop.selected = id;
+      saveShop();
+      renderShop();
+      message.textContent = `${s.name} equipped. Looking sharp.`;
+      return;
+    }
+    if (shop.bank >= s.cost) {
+      shop.bank -= s.cost;
+      shop.owned.push(id);
+      shop.selected = id;
+      saveShop();
+      renderShop();
+      syncHud();
+      burst(PX, playerY, 16, s.trail, 200);
+      showBanner(`${s.name.toUpperCase()} UNLOCKED!`);
+      message.textContent = `${s.name} unlocked and equipped!`;
+    } else {
+      message.textContent = `${s.name} costs ${s.cost} coins — bank has ${shop.bank}. Grab ${s.cost - shop.bank} more.`;
+    }
+  }
   }
 
   function showBanner(text) {
@@ -314,16 +395,17 @@ function startZigzag() {
     const d = distM();
     distEl.textContent = `${d} m`;
     scoreEl.textContent = `Score: ${Math.floor(score)}`;
-    coinsEl.textContent = `Coins: ${coinsGot}`;
+    coinsEl.textContent = `Coins: ${shop.bank}`;
     bestEl.textContent = `Best: ${Math.max(best, d)} m`;
     setSnapshot({
       mode: mode === "playing" ? "playing" : mode === "dead" ? "ended" : "ready",
       game: "Zigzag",
       dist: d,
       score: Math.floor(score),
-      coins: coinsGot,
+      coins: shop.bank,
       best: Math.max(best, d),
-      perfects
+      perfects,
+      skin: shop.selected
     });
   }
 
@@ -375,7 +457,7 @@ function startZigzag() {
     shake = 14;
     flash = 0.45;
     message.textContent = `${reason || QUIPS[Math.floor(Math.random() * QUIPS.length)]}` +
-      (result.isNew && d > 0 ? ` New best: ${d} m!` : ` Dist ${d} m · Score ${s} · Coins ${coinsGot} · Grazes ${perfects}. Best ${best} m.`);
+      (result.isNew && d > 0 ? ` New best: ${d} m!` : ` Dist ${d} m · Score ${s} · +${coinsGot} coins (bank ${shop.bank}) · Grazes ${perfects}. Best ${best} m.`);
     syncHud();
   }
 
@@ -555,10 +637,13 @@ function startZigzag() {
       if (Math.hypot(sx - PX, cy - playerY) < PR + 11) {
         cn.taken = true;
         coinsGot += 1;
+        shop.bank += 1;
+        saveShop();
         score += 25;
         popup(PX + 24, playerY - 26, "+25", "#f6c445");
         burst(sx, cy, 8, "#f6c445", 160);
         if (cn.bait) popup(PX + 24, playerY - 48, "BAIT! RUN!", "#ff6b6b");
+        renderShop();
       }
     }
 
@@ -590,7 +675,7 @@ function startZigzag() {
       const d = distM();
       distEl.textContent = `${d} m`;
       scoreEl.textContent = `Score: ${Math.floor(score)}`;
-      coinsEl.textContent = `Coins: ${coinsGot}`;
+      coinsEl.textContent = `Coins: ${shop.bank}`;
     }
   }
 
@@ -777,11 +862,10 @@ function startZigzag() {
     // player trail ribbon (each stored point is one frame old, world moved speed/60 since)
     if (trail.length > 1 && mode !== "dead") {
       const step = speed / 60;
+      const trailRgb = inverted ? "177,151,252" : skin().trail;
       for (let i = 1; i < trail.length; i++) {
         const a = i / trail.length;
-        ctx.strokeStyle = inverted
-          ? `rgba(177,151,252,${(a * 0.6).toFixed(2)})`
-          : `rgba(246,196,69,${(a * 0.6).toFixed(2)})`;
+        ctx.strokeStyle = `rgba(${trailRgb},${(a * 0.6).toFixed(2)})`;
         ctx.lineWidth = 3 + a * 7;
         ctx.lineCap = "round";
         ctx.beginPath();
@@ -802,8 +886,9 @@ function startZigzag() {
         bodyGrad.addColorStop(0, "#d0bfff");
         bodyGrad.addColorStop(1, "#7048e8");
       } else {
-        bodyGrad.addColorStop(0, "#ffe066");
-        bodyGrad.addColorStop(1, "#f59f00");
+        const sk = skin();
+        bodyGrad.addColorStop(0, sk.hi);
+        bodyGrad.addColorStop(1, sk.lo);
       }
       ctx.fillStyle = bodyGrad;
       ctx.strokeStyle = "#0f1320";
@@ -891,7 +976,7 @@ function startZigzag() {
       ctx.fillStyle = "#fff8ea";
       ctx.font = "16px sans-serif";
       ctx.fillText("PRESS & HOLD — SPACE · CLICK · TAP", W / 2, H / 2 + 2);
-      ctx.fillText("Thread the gaps. Coins pay. Grazing walls pays.", W / 2, H / 2 + 26);
+      ctx.fillText("Thread the gaps. Coins buy planes · grazing walls pays.", W / 2, H / 2 + 26);
       ctx.fillText("Purple = inverted. Skull lane = trap.", W / 2, H / 2 + 50);
       ctx.fillStyle = "#69db7c";
       ctx.font = "bold 18px sans-serif";
@@ -907,7 +992,7 @@ function startZigzag() {
       ctx.fillText("SPLAT", W / 2, H / 2 - 10);
       ctx.fillStyle = "#fff8ea";
       ctx.font = "bold 18px sans-serif";
-      ctx.fillText(`${distM()} m · Score ${Math.floor(score)} · Coins ${coinsGot}`, W / 2, H / 2 + 24);
+      ctx.fillText(`${distM()} m · Score ${Math.floor(score)} · Bank ${shop.bank}`, W / 2, H / 2 + 24);
     }
 
     ctx.restore();
@@ -920,7 +1005,7 @@ function startZigzag() {
     const d = distM();
     distEl.textContent = `${d} m`;
     scoreEl.textContent = `Score: ${Math.floor(score)}`;
-    coinsEl.textContent = `Coins: ${coinsGot}`;
+    coinsEl.textContent = `Coins: ${shop.bank}`;
   }
 
   function tick(now) {
@@ -986,6 +1071,7 @@ function startZigzag() {
     document.removeEventListener("keyup", keyup);
   };
   bestEl.textContent = `Best: ${best} m`;
+  renderShop();
   last = performance.now();
   raf = requestAnimationFrame(tick);
 }

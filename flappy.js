@@ -204,14 +204,13 @@ function startFlappy() {
     banner = { text, t: 2.0 };
   }
 
-  // --- cheat code: arm with Ctrl+F3, type the magic words, confess, profit ---
+  // --- cheat code: Ctrl+F3 opens a box for the magic words ---
   // (Ctrl+F4 can't be used: browsers reserve it to close the tab and
-  // pages cannot intercept it. Ctrl+F3 reaches the page, so it arms the
-  // listener instead.)
+  // pages cannot intercept it. Ctrl+F3 reaches the page.)
+  // Typing happens inside the box's input so not a single keystroke
+  // leaks into the game — spaces can't flap, Enter can't start a run.
   const CHEAT_CODE = "i solemnly swear i am up to no good";
   const CHEAT_POINTS = 999999;
-  let cheatBuffer = "";
-  let cheatArmed = false;
 
   function removeCheatPopup() {
     const popup = document.querySelector("#flCheatPopup");
@@ -225,16 +224,53 @@ function startFlappy() {
     const popup = document.createElement("div");
     popup.id = "flCheatPopup";
     popup.className = "fl-cheat-overlay";
-    popup.innerHTML = `<div class="fl-cheat-box" role="dialog" aria-modal="true" aria-label="Cheat confirmation">
-      <p class="fl-cheat-text">Are you sure you want to ruin the fun?</p>
+    popup.innerHTML = `<div class="fl-cheat-box" role="dialog" aria-modal="true" aria-label="Cheat code entry">
+      <div class="fl-cheat-head"><strong>🤫 Psst… magic words?</strong><button class="fl-cheat-close" type="button" aria-label="Close">×</button></div>
       <div class="fl-cheat-row">
-        <button class="game-action fl-cheat-yes" type="button">Ruin it</button>
-        <button class="game-action fl-cheat-no" type="button">Keep it fun</button>
+        <input class="game-input fl-cheat-input" type="text" placeholder="Type the magic words" autocomplete="off" />
+        <button class="game-action fl-cheat-go" type="button">Go</button>
       </div>
+      <p class="fl-cheat-feedback"></p>
     </div>`;
     panel.append(popup);
     // No backdrop: the overlay is pointer-transparent so the game stays
     // playable behind this box. Only the box itself takes clicks.
+    popup.querySelector(".fl-cheat-close").addEventListener("click", cancelCheat);
+    popup.querySelector(".fl-cheat-go").addEventListener("click", tryCheatInput);
+    const input = popup.querySelector(".fl-cheat-input");
+    input.addEventListener("keydown", (ev) => {
+      if (ev.key === "Enter") tryCheatInput();
+      ev.stopPropagation();
+    });
+    input.focus();
+  }
+
+  function tryCheatInput() {
+    const popup = document.querySelector("#flCheatPopup");
+    if (!popup) return;
+    const input = popup.querySelector(".fl-cheat-input");
+    const val = (input.value || "").trim().toLowerCase();
+    if (val === CHEAT_CODE) {
+      showCheatConfirm();
+      return;
+    }
+    const fb = popup.querySelector(".fl-cheat-feedback");
+    fb.textContent = "Those aren't the magic words.";
+    fb.style.color = "var(--coral)";
+    input.value = "";
+    input.focus();
+  }
+
+  function showCheatConfirm() {
+    const popup = document.querySelector("#flCheatPopup");
+    if (!popup) return;
+    popup.innerHTML = `<div class="fl-cheat-box" role="dialog" aria-modal="true" aria-label="Cheat confirmation">
+      <p class="fl-cheat-text">Are you sure you want to ruin the fun?</p>
+      <div class="fl-cheat-row fl-cheat-center">
+        <button class="game-action fl-cheat-yes" type="button">Ruin it</button>
+        <button class="game-action fl-cheat-no" type="button">Keep it fun</button>
+      </div>
+    </div>`;
     popup.querySelector(".fl-cheat-yes").addEventListener("click", confirmCheat);
     popup.querySelector(".fl-cheat-no").addEventListener("click", cancelCheat);
     popup.querySelector(".fl-cheat-no").focus();
@@ -276,27 +312,8 @@ function startFlappy() {
       e.preventDefault();
       if (!shopEl.isConnected || document.querySelector("#flCheatPopup")) return;
       if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
-      cheatArmed = !cheatArmed;
-      if (cheatArmed) {
-        cheatBuffer = "";
-        showBanner("SPEAK THE MAGIC WORDS");
-        message.textContent = "The pipes are listening… type the magic words.";
-      } else {
-        message.textContent = "Never mind. The pipes hear nothing.";
-      }
-      return;
-    }
-    if (e.ctrlKey || e.metaKey || e.altKey) return;
-    if (!cheatArmed) return;
-    const tag = (e.target && e.target.tagName) || "";
-    if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return;
-    if (typeof e.key !== "string" || e.key.length !== 1) return;
-    cheatBuffer = (cheatBuffer + e.key.toLowerCase()).slice(-80);
-    if (cheatBuffer.endsWith(CHEAT_CODE)) {
-      cheatBuffer = "";
-      cheatArmed = false;
-      if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
       openCheatPopup();
+      message.textContent = "Psst… type the magic words in the box. The game won't notice.";
     }
   }
 
@@ -830,6 +847,8 @@ function startFlappy() {
   }
 
   function keydown(e) {
+    const tag = (e.target && e.target.tagName) || "";
+    if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return;
     if (e.code === "Space" || e.code === "ArrowUp" || e.code === "KeyW") {
       e.preventDefault();
       if (e.repeat) return;

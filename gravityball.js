@@ -11,7 +11,7 @@ function startGravityBall() {
           <span class="game-stat" id="gbBest">Best: 0 m</span>
         </div>
         <canvas class="gravball-canvas" id="gbCanvas" width="720" height="480"></canvas>
-        <p class="game-message" id="gbMsg">Roll along the platforms. CLICK / TAP / SPACE flips gravity — land on the other side. Spikes and walls turn you into a pancake.</p>
+        <p class="game-message" id="gbMsg">Roll along the platforms. CLICK / TAP / SPACE flips gravity — but only while rolling. No mid-air saves!</p>
         <div class="game-actions">
           <button class="game-action one-press" id="gbFlip" type="button">⇅ FLIP GRAVITY</button>
           <button class="game-action" id="gbRetry" type="button">Restart</button>
@@ -73,6 +73,8 @@ function startGravityBall() {
   let grav = 1; // 1 = falls down, -1 = falls up
   let gScale = 1;
   let grounded = null; // null | "floor" | "ceil"
+  let coyote = 0; // brief grace to flip just after rolling off an edge
+  const COYOTE_TIME = 0.09;
   let speed = 265;
   let score = 0;
   let flips = 0;
@@ -410,6 +412,7 @@ function startGravityBall() {
     vy = 0;
     grav = 1;
     gScale = 1;
+    coyote = 0;
     swayAmp = 0;
     swayOff = 0;
     grounded = toReady ? null : "floor";
@@ -439,7 +442,7 @@ function startGravityBall() {
     ensureGen();
     mode = toReady ? "ready" : "playing";
     deadAge = 0;
-    if (toReady) message.textContent = "Roll along the platforms. CLICK / TAP / SPACE flips gravity — land on the other side. Spikes and walls turn you into a pancake.";
+    if (toReady) message.textContent = "Roll along the platforms. CLICK / TAP / SPACE flips gravity — but only while rolling. No mid-air saves!";
     syncHud();
   }
 
@@ -468,14 +471,18 @@ function startGravityBall() {
     if (mode === "ready") {
       resetRun(false);
       showBanner("ROLL · TAP TO FLIP · LAND IT");
-      message.textContent = "Ride the platforms. Flip before the edge!";
+      message.textContent = "Ride the platforms. Flip before the edge — mid-air won't save you!";
       syncHud();
       return;
     }
     if (mode !== "playing") return;
+    // No mid-air jumps: flips only work while rolling on a platform
+    // (plus a split-second coyote grace just past an edge).
+    if (grounded === null && coyote <= 0) return;
     grav = grav === 1 ? -1 : 1;
     flips += 1;
     grounded = null;
+    coyote = 0;
     // damp old momentum so rapid flips stay controllable, plus a small
     // kick toward the new fall direction so the response feels snappy
     vy = vy * 0.25 + grav * KICK * 0.4;
@@ -605,13 +612,16 @@ function startGravityBall() {
           }
         }
       } else {
-        // ran off the edge (or platform moved away): airborne
+        // ran off the edge (or platform moved away): airborne, with a
+        // split-second coyote grace to still flip
+        if (grounded !== null) coyote = COYOTE_TIME;
         grounded = null;
         vy = 0;
       }
     }
 
     if (grounded === null) {
+      if (coyote > 0) coyote = Math.max(0, coyote - dt);
       // --- always accelerating, never jumping ---
       vy += grav * GRAV * gScale * dt;
       if (vy > MAXFALL) vy = MAXFALL;
@@ -627,6 +637,7 @@ function startGravityBall() {
             playerY = sy - PR;
             vy = 0;
             grounded = "floor";
+            coyote = 0;
             landedSeg = seg;
             closeCallBonus();
           }
@@ -639,6 +650,7 @@ function startGravityBall() {
             playerY = sy + PR;
             vy = 0;
             grounded = "ceil";
+            coyote = 0;
             landedSeg = seg;
             closeCallBonus();
           }
@@ -994,7 +1006,7 @@ function startGravityBall() {
       ctx.fillStyle = "#fff8ea";
       ctx.font = "16px sans-serif";
       ctx.fillText("AUTO-RUN · SPACE / CLICK / TAP flips gravity", W / 2, H / 2 + 2);
-      ctx.fillText("Roll the platforms. Land on the other side.", W / 2, H / 2 + 26);
+      ctx.fillText("Flip only while rolling. Land on the other side.", W / 2, H / 2 + 26);
       ctx.fillText("Red spikes kill. Ghost spikes (?) are fake.", W / 2, H / 2 + 50);
       ctx.fillStyle = "#69db7c";
       ctx.font = "bold 18px sans-serif";
@@ -1054,7 +1066,7 @@ function startGravityBall() {
   });
   document.querySelector("#gbRetry").addEventListener("click", () => {
     resetRun(false);
-    message.textContent = "Ride the platforms. Flip before the edge!";
+    message.textContent = "Ride the platforms. Flip before the edge — mid-air won't save you!";
     showBanner("ROLL · TAP TO FLIP · LAND IT");
     syncHud();
   });

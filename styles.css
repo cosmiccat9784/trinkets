@@ -1581,6 +1581,45 @@ body.embed {
   50% { transform: translateY(8px); }
 }
 
+.zg-shop {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+}
+
+.zg-skin {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 36px;
+  padding: 0 10px;
+  font-size: 0.8rem;
+  font-weight: 800;
+  background: white;
+  border: 3px solid var(--line);
+  border-radius: 8px;
+  box-shadow: 3px 3px 0 var(--line);
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.zg-skin .dot {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 2px solid var(--line);
+  flex: none;
+}
+
+.zg-skin.selected {
+  background: var(--gold);
+}
+
+.zg-skin.locked {
+  opacity: 0.8;
+}
+
 .gravball-canvas {
   display: block;
   width: min(100%, 720px, calc((100dvh - 460px) * 3 / 2));
@@ -1734,6 +1773,46 @@ body.embed {
   display: flex;
   gap: 10px;
   justify-content: center;
+}
+
+.fl-cheat-center {
+  justify-content: center;
+}
+
+.fl-cheat-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.95rem;
+}
+
+.fl-cheat-close {
+  margin-left: auto;
+  width: 28px;
+  height: 28px;
+  background: var(--coral);
+  border: 2px solid var(--line);
+  border-radius: 6px;
+  box-shadow: 2px 2px 0 var(--line);
+  font-size: 1rem;
+  font-weight: 900;
+  cursor: pointer;
+  line-height: 1;
+  flex: none;
+}
+
+.fl-cheat-input {
+  flex: 1;
+  min-width: 0;
+  width: auto;
+}
+
+.fl-cheat-feedback {
+  margin: 0;
+  font-weight: 800;
+  font-size: 0.85rem;
+  min-height: 1.2em;
+  text-align: center;
 }
 
 /* ── Penguin Parkour ── */
