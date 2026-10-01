@@ -11,9 +11,9 @@ function startZigzag() {
           <span class="game-stat" id="zgBest">Best: 0 m</span>
         </div>
         <canvas class="zigzag-canvas" id="zgCanvas" width="720" height="480"></canvas>
-        <p class="game-message" id="zgMsg">HOLD to dive · RELEASE to rise. Thread the gaps, don't touch the walls.</p>
+        <p class="game-message" id="zgMsg">HOLD to rise · RELEASE to dive. Thread the gaps, don't touch the walls.</p>
         <div class="game-actions">
-          <button class="game-action one-press" id="zgHold" type="button">HOLD TO DIVE</button>
+          <button class="game-action one-press" id="zgHold" type="button">HOLD TO RISE</button>
           <button class="game-action" id="zgRetry" type="button">Restart</button>
         </div>
       </div>
@@ -213,13 +213,13 @@ function startZigzag() {
 
   function scriptedStage(i) {
     const builders = [
-      () => pushSeg({ h: 112, len: 640, label: "STRAIGHT", hint: "Hold to dive · release to rise. Cruise it.", coins: 3 }),
+      () => pushSeg({ h: 112, len: 640, label: "STRAIGHT", hint: "Hold to rise · release to dive. Cruise it.", coins: 3 }),
       () => pushSeg({ h: 80, len: 620, label: "NARROWING", hint: "Corridor tightens. Small fingers.", coins: 3 }),
       () => pushSeg({ h: 86, len: 700, shape: { type: "sine", amp: 70, period: 600 }, label: "S-BENDS", hint: "Ride the curves — feather your holds.", coins: 3 }),
       () => pushSeg({ h: 80, len: 720, shape: { type: "tri", amp: 70, period: 380 }, label: "ZIGZAG!", hint: "Rapid flips! Tap-tap-tap.", coins: 3, teeth: true, teethSize: 24 }),
       () => pushSeg({ h: 92, len: 680, moveAmp: 24, moveFreq: 2.4, label: "MOVING WALLS", hint: "The walls breathe. Time the squeeze.", coins: 3 }),
       () => pushSeg({ h: 95, len: 700, fast: true, label: "SPEED UP", hint: "Reaction time: gone. Good luck.", coins: 3 }),
-      () => pushSeg({ h: 95, len: 600, invert: true, label: "INVERTED", hint: "Controls flipped! Hold to RISE.", coins: 3 }),
+      () => pushSeg({ h: 95, len: 600, invert: true, label: "INVERTED", hint: "Controls flipped! Hold to DIVE.", coins: 3 }),
       () => pushSeg({ h: 130, len: 640, split: true, label: "PICK A LANE", hint: "One lane is a trap — follow the coins, mind the skull.", coins: 0 }),
       () => pushSeg({ h: 68, len: 620, coinRisky: true, label: "RISK PAYS", hint: "Coins hug the wall. Graze them for bonus.", coins: 5 })
     ];
@@ -240,7 +240,7 @@ function startZigzag() {
     } else if (roll < 0.55) {
       return pushSeg({ h: hBase + 16, len, moveAmp: 18 + Math.random() * 10, moveFreq: 2.2 + Math.random() * 1.2, slosh: Math.random() < 0.5, label: "MOVING WALLS", hint: "The safe path changes.", coins: 3 });
     } else if (roll < 0.65) {
-      return pushSeg({ h: hBase + 10, len: len - 60, invert: true, label: "INVERTED", hint: "Hold to RISE. Don't think, feel.", coins: 3 });
+      return pushSeg({ h: hBase + 10, len: len - 60, invert: true, label: "INVERTED", hint: "Hold to DIVE. Don't think, feel.", coins: 3 });
     } else if (roll < 0.76) {
       return pushSeg({ h: 122, len, split: true, label: "PICK A LANE", hint: "One lane is a trap.", coins: 0 });
     } else if (roll < 0.88) {
@@ -252,7 +252,7 @@ function startZigzag() {
   function ensureGen() {
     while (genX < worldX + W + 900) {
       if (stageIdx === 0) {
-        pushSeg({ c: MID, h: 115, len: 820, label: "STRAIGHT", hint: "Hold to dive · release to rise. Cruise it.", coins: 2 });
+        pushSeg({ c: MID, h: 115, len: 820, label: "STRAIGHT", hint: "Hold to rise · release to dive. Cruise it.", coins: 2 });
       } else if (stageIdx <= 9) {
         scriptedStage(stageIdx - 1);
       } else {
@@ -355,7 +355,7 @@ function startZigzag() {
     playerSegIdx = findSeg(worldX + PX).idx;
     mode = toReady ? "ready" : "playing";
     deadAge = 0;
-    if (toReady) message.textContent = "HOLD to dive · RELEASE to rise. Thread the gaps, don't touch the walls.";
+    if (toReady) message.textContent = "HOLD to rise · RELEASE to dive. Thread the gaps, don't touch the walls.";
     syncHud();
   }
 
@@ -384,7 +384,7 @@ function startZigzag() {
     if (mode === "ready") {
       resetRun(false);
       holding = true;
-      showBanner("HOLD = DIVE · RELEASE = RISE");
+      showBanner("HOLD = RISE · RELEASE = DIVE");
       message.textContent = "Thread the gaps. Coins pay, walls don't.";
       syncHud();
     } else if (mode === "playing") {
@@ -475,7 +475,7 @@ function startZigzag() {
 
     const inverted = now.seg.invert;
     const V = speed * 1.02;
-    const wantDive = inverted ? !holding : holding;
+    const wantDive = inverted ? holding : !holding;
     const target = wantDive ? V : -V;
     vy += (target - vy) * Math.min(1, dt * 18);
     playerY += vy * dt;
@@ -774,8 +774,9 @@ function startZigzag() {
       ctx.restore();
     }
 
-    // player trail ribbon
-    if (trail.length > 1) {
+    // player trail ribbon (each stored point is one frame old, world moved speed/60 since)
+    if (trail.length > 1 && mode !== "dead") {
+      const step = speed / 60;
       for (let i = 1; i < trail.length; i++) {
         const a = i / trail.length;
         ctx.strokeStyle = inverted
@@ -784,8 +785,8 @@ function startZigzag() {
         ctx.lineWidth = 3 + a * 7;
         ctx.lineCap = "round";
         ctx.beginPath();
-        ctx.moveTo(trail[i - 1].x - (trail.length - i) * (speed / 2400), trail[i - 1].y);
-        ctx.lineTo(trail[i].x - (trail.length - 1 - i) * (speed / 2400) - 2, trail[i].y);
+        ctx.moveTo(PX - (trail.length - i) * step, trail[i - 1].y);
+        ctx.lineTo(PX - (trail.length - 1 - i) * step, trail[i].y);
         ctx.stroke();
       }
     }
@@ -827,8 +828,8 @@ function startZigzag() {
       if (mode === "playing") {
         ctx.font = "bold 15px sans-serif";
         ctx.textAlign = "center";
-        ctx.fillStyle = holding !== inverted ? "#69db7c" : "#a5d8ff";
-        ctx.fillText(holding !== inverted ? "▼" : "▲", PX, playerY - 22);
+        ctx.fillStyle = holding === inverted ? "#69db7c" : "#a5d8ff";
+        ctx.fillText(holding === inverted ? "▼" : "▲", PX, playerY - 22);
       }
     }
 
@@ -886,7 +887,7 @@ function startZigzag() {
       ctx.fillText("ZIGZAG", W / 2, H / 2 - 66);
       ctx.font = "bold 19px sans-serif";
       ctx.fillStyle = "#ffe066";
-      ctx.fillText("Hold to dive · release to rise", W / 2, H / 2 - 28);
+      ctx.fillText("Hold to rise · release to dive", W / 2, H / 2 - 28);
       ctx.fillStyle = "#fff8ea";
       ctx.font = "16px sans-serif";
       ctx.fillText("PRESS & HOLD — SPACE · CLICK · TAP", W / 2, H / 2 + 2);
@@ -967,7 +968,7 @@ function startZigzag() {
   document.querySelector("#zgRetry").addEventListener("click", () => {
     resetRun(false);
     message.textContent = "Thread the gaps. Coins pay, walls don't.";
-    showBanner("HOLD = DIVE · RELEASE = RISE");
+    showBanner("HOLD = RISE · RELEASE = DIVE");
     syncHud();
   });
   document.addEventListener("keydown", keydown);
