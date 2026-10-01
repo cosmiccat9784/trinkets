@@ -15,6 +15,7 @@ function startPowderSim() {
             <button class="powder-tool" data-element="8" type="button" title="Plant">Plant</button>
             <button class="powder-tool" data-element="9" type="button" title="TNT">TNT</button>
             <button class="powder-tool" data-element="10" type="button" title="Dynamite">Dyna</button>
+            <button class="powder-tool" data-element="11" type="button" title="Obsidian">Obsid</button>
             <button class="powder-tool powder-tool-erase" data-element="0" type="button" title="Eraser">Erase</button>
           </div>
           <div class="powder-controls">
@@ -42,7 +43,7 @@ function startPowderSim() {
   let paused = false;
   let raf;
 
-  const SAND = 1, WATER = 2, STONE = 3, FIRE = 4, SMOKE = 5, OIL = 6, ACID = 7, PLANT = 8, TNT = 9, DYNA = 10;
+  const SAND = 1, WATER = 2, STONE = 3, FIRE = 4, SMOKE = 5, OIL = 6, ACID = 7, PLANT = 8, TNT = 9, DYNA = 10, OBSIDIAN = 11;
 
   const COLORS = {
     1: ["#d4a574", "#c9956a", "#deb887", "#c8956e"],
@@ -54,7 +55,8 @@ function startPowderSim() {
     7: ["#22c55e", "#16a34a", "#34d058", "#4ade80"],
     8: ["#166534", "#15803d", "#14532d", "#19782e"],
     9: ["#dc2626", "#ef4444", "#b91c1c", "#f87171"],
-    10: ["#ea580c", "#f97316", "#c2410c", "#fb923c"]
+    10: ["#ea580c", "#f97316", "#c2410c", "#fb923c"],
+    11: ["#1e1b29", "#2d2440", "#151220", "#4c1d95"]
   };
 
   function resize() {
@@ -72,7 +74,7 @@ function startPowderSim() {
 
   function idx(x, y) { return y * cols + x; }
   function getCell(x, y) {
-    if (x < 0 || x >= cols || y < 0 || y >= rows) return STONE;
+    if (x < 0 || x >= cols || y < 0 || y >= rows) return OBSIDIAN;
     return grid[idx(x, y)];
   }
   function setLife(x, y, v) {
@@ -102,7 +104,7 @@ function startPowderSim() {
     const a = grid[idx(x1, y1)];
     const b = grid[idx(x2, y2)];
     if (a === b) return false;
-    if (b === STONE) return false;
+    if (b === STONE || b === OBSIDIAN) return false;
     if (isLiquid(a) && b !== 0 && !isLiquid(b)) return false;
     if (b === 0 || (isLiquid(a) && isLiquid(b) && density(a) > density(b))) {
       targeted[idx(x2, y2)] = 1;
@@ -123,7 +125,7 @@ function startPowderSim() {
     for (let y = rows - 1; y >= 0; y--) {
       for (let x = 0; x < cols; x++) {
         const type = grid[idx(x, y)];
-        if (type === 0 || type === STONE) continue;
+        if (type === 0 || type === STONE || type === OBSIDIAN) continue;
         if (type === SAND) stepSand(x, y);
         else if (type === WATER) stepLiquid(x, y, WATER);
         else if (type === ACID) stepLiquid(x, y, ACID);
@@ -282,6 +284,9 @@ function startPowderSim() {
         if (x < 0 || x >= cols || y < 0 || y >= rows) continue;
         const i = idx(x, y);
         const t = grid[i];
+        if (t === OBSIDIAN) {
+          continue;
+        }
         if (t === STONE) {
           if (Math.random() < 0.3) { grid[i] = 0; life[i] = 0; }
           continue;
@@ -368,9 +373,12 @@ function startPowderSim() {
               if (nx >= 0 && nx < cols && ny >= 0 && ny < rows) {
                 const ni = idx(nx, ny);
                 const nb = grid[ni];
-                if (nb !== 0 && nb !== STONE && nb !== ACID && Math.random() < 0.04) {
-                  grid[ni] = 0;
-                  life[ni] = 0;
+                if (nb !== 0 && nb !== OBSIDIAN && nb !== ACID) {
+                  const chance = nb === STONE ? 0.015 : 0.04;
+                  if (Math.random() < chance) {
+                    grid[ni] = 0;
+                    life[ni] = 0;
+                  }
                 }
               }
             }
@@ -420,7 +428,7 @@ function startPowderSim() {
       btn.classList.add("active");
       selectedElement = Number(btn.dataset.element);
       document.querySelector("#powderElement").textContent =
-        selectedElement === 0 ? "Eraser" : ["", "Sand", "Water", "Stone", "Fire", "Smoke", "Oil", "Acid", "Plant", "TNT", "Dynamite"][selectedElement];
+        selectedElement === 0 ? "Eraser" : ["", "Sand", "Water", "Stone", "Fire", "Smoke", "Oil", "Acid", "Plant", "TNT", "Dynamite", "Obsidian"][selectedElement];
     });
   });
 
