@@ -7,10 +7,11 @@ function startFlappy() {
         <div class="game-topline">
           <span class="game-stat" id="flScore">Score: 0</span>
           <span class="game-stat" id="flBest">Best: 0</span>
-          <span class="game-stat" id="flSpeed">Speed x1.0</span>
+          <span class="game-stat" id="flPoints">Points: 0</span>
         </div>
         <canvas class="flappy-canvas" id="flCanvas" width="720" height="480"></canvas>
-        <p class="game-message" id="flMsg">SPACE / CLICK / TAP to flap. Thread the pipes.</p>
+        <p class="game-message" id="flMsg">SPACE / CLICK / TAP to flap. Pipes pay points for the bird shop.</p>
+        <div class="flappy-shop" id="flShop" aria-label="Bird shop"></div>
         <div class="game-actions">
           <button class="game-action one-press" id="flBtn" type="button">FLAP</button>
           <button class="game-action" id="flRetry" type="button">Restart</button>
@@ -34,7 +35,8 @@ function startFlappy() {
 
   const scoreEl = document.querySelector("#flScore");
   const bestEl = document.querySelector("#flBest");
-  const speedEl = document.querySelector("#flSpeed");
+  const pointsEl = document.querySelector("#flPoints");
+  const shopEl = document.querySelector("#flShop");
   const message = document.querySelector("#flMsg");
   const flapBtn = document.querySelector("#flBtn");
 
@@ -51,6 +53,88 @@ function startFlappy() {
   try {
     best = Number((readScores() || {}).flappy) || 0;
   } catch (err) {}
+
+  // --- bird shop: points are the currency, earned 1 per pipe ---
+  const SKINS = [
+    { id: "sunny", name: "Sunny", cost: 0, dot: "#f59f00", bodyHi: "#ffe066", bodyLo: "#f59f00", belly: "#fff3bf", wing: "#e67700", tail: "#f08c00", beak: "#ff6b35" },
+    { id: "minty", name: "Minty", cost: 25, dot: "#2f9e44", bodyHi: "#b2f2bb", bodyLo: "#2f9e44", belly: "#ebfbee", wing: "#1e7e34", tail: "#2b8a3e", beak: "#fab005" },
+    { id: "berry", name: "Berry", cost: 60, dot: "#e64980", bodyHi: "#ffc2d4", bodyLo: "#d6336c", belly: "#ffedf3", wing: "#a61e4d", tail: "#c2255c", beak: "#fab005" },
+    { id: "splash", name: "Splash", cost: 120, dot: "#1971c2", bodyHi: "#a5d8ff", bodyLo: "#1971c2", belly: "#e7f5ff", wing: "#0c4a7a", tail: "#1864ab", beak: "#ff922b" },
+    { id: "dusk", name: "Dusk", cost: 200, dot: "#7048e8", bodyHi: "#d0bfff", bodyLo: "#6741d9", belly: "#ede9fe", wing: "#4527a0", tail: "#5f3dc4", beak: "#ffd43b" },
+    { id: "waddles", name: "Waddles 🐧", cost: 500, dot: "#22223b", bodyHi: "#4a4e69", bodyLo: "#22223b", belly: "#f8f9fa", wing: "#14141f", tail: "#14141f", beak: "#ff922b", penguin: true }
+  ];
+  const SHOP_KEY = "trinkets-flappy-shop-v1";
+  let shop = { points: 0, owned: ["sunny"], selected: "sunny" };
+  try {
+    const raw = JSON.parse(localStorage.getItem(SHOP_KEY));
+    if (raw && typeof raw === "object") {
+      if (typeof raw.points === "number" && raw.points >= 0) shop.points = Math.floor(raw.points);
+      if (Array.isArray(raw.owned)) shop.owned = raw.owned.filter((id) => SKINS.some((s) => s.id === id));
+      if (typeof raw.selected === "string" && shop.owned.includes(raw.selected)) shop.selected = raw.selected;
+    }
+  } catch (err) {}
+  if (!shop.owned.includes("sunny")) shop.owned.unshift("sunny");
+
+  function saveShop() {
+    try {
+      localStorage.setItem(SHOP_KEY, JSON.stringify(shop));
+    } catch (err) {}
+  }
+
+  function skin() {
+    return SKINS.find((s) => s.id === shop.selected) || SKINS[0];
+  }
+
+  function renderShop() {
+    if (!shopEl.isConnected) return;
+    shopEl.innerHTML = "";
+    for (const s of SKINS) {
+      const owned = shop.owned.includes(s.id);
+      const selected = shop.selected === s.id;
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "fl-skin" + (selected ? " selected" : "") + (!owned && shop.points < s.cost ? " locked" : "");
+      const tag = selected ? "flying" : owned ? "owned" : `${s.cost} pts`;
+      btn.innerHTML = `<span class="dot" style="background:${s.dot}"></span>${s.name} · ${tag}`;
+      btn.title = selected ? `${s.name} is equipped` : owned ? `Fly as ${s.name}` : `Unlock ${s.name} for ${s.cost} points`;
+      btn.setAttribute("aria-label", btn.title);
+      btn.addEventListener("click", () => shopAction(s.id));
+      shopEl.append(btn);
+    }
+    pointsEl.textContent = `Points: ${shop.points}`;
+  }
+
+  function shopAction(id) {
+    const s = SKINS.find((x) => x.id === id);
+    if (!s) return;
+    if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
+    if (shop.selected === id) {
+      message.textContent = `Already flying as ${s.name}.`;
+      return;
+    }
+    if (shop.owned.includes(id)) {
+      shop.selected = id;
+      saveShop();
+      renderShop();
+      message.textContent = `${s.name} equipped. Looking sharp.`;
+      return;
+    }
+    if (shop.points >= s.cost) {
+      shop.points -= s.cost;
+      shop.owned.push(id);
+      shop.selected = id;
+      saveShop();
+      renderShop();
+      syncHud();
+      burst(BX, birdY, 16, s.dot, 200);
+      showBanner(`${s.name.toUpperCase().replace(/ 🐧/, "")} UNLOCKED!`);
+      message.textContent = id === "waddles"
+        ? "WADDLES! The penguin has landed. Worth every single point."
+        : `${s.name} unlocked and equipped!`;
+    } else {
+      message.textContent = `${s.name} costs ${s.cost} points — you have ${shop.points}. Thread ${s.cost - shop.points} more pipe${s.cost - shop.points === 1 ? "" : "s"}.`;
+    }
+  }
 
   let raf = 0;
   let last = performance.now();
@@ -123,12 +207,14 @@ function startFlappy() {
   function syncHud() {
     scoreEl.textContent = `Score: ${score}`;
     bestEl.textContent = `Best: ${Math.max(best, score)}`;
-    speedEl.textContent = `Speed x${(pipeSpeed() / 230).toFixed(1)}`;
+    pointsEl.textContent = `Points: ${shop.points}`;
     setSnapshot({
       mode: mode === "playing" ? "playing" : mode === "dead" ? "ended" : "ready",
       game: "Flappy Bird",
       score,
-      best: Math.max(best, score)
+      best: Math.max(best, score),
+      points: shop.points,
+      skin: shop.selected
     });
   }
 
@@ -153,7 +239,7 @@ function startFlappy() {
     deadAge = 0;
     mode = toReady ? "ready" : "playing";
     if (toReady) {
-      message.textContent = "SPACE / CLICK / TAP to flap. Thread the pipes.";
+      message.textContent = "SPACE / CLICK / TAP to flap. Pipes pay points for the bird shop.";
       // a couple of demo pipes drifting behind the ready overlay
       addPipe(W - 60);
       addPipe(W + 300);
@@ -328,9 +414,12 @@ function startFlappy() {
       if (!p.scored && p.x + PIPE_W < BX - BR) {
         p.scored = true;
         score += 1;
+        shop.points += 1;
+        saveShop();
         popup(BX + 26, birdY - 30, "+1", "#f6c445");
         burst(BX + 20, birdY, 5, "#f6c445", 140);
         syncHud();
+        renderShop();
       }
       if (p.x + PIPE_W < -80) {
         pipes.splice(i, 1);
@@ -354,6 +443,7 @@ function startFlappy() {
     else {
       scoreEl.textContent = `Score: ${score}`;
       bestEl.textContent = `Best: ${Math.max(best, score)}`;
+      pointsEl.textContent = `Points: ${shop.points}`;
     }
   }
 
@@ -470,12 +560,13 @@ function startFlappy() {
     }
 
     // bird (hidden on full splat? keep tumbling body visible)
+    const c = skin();
     const flapWing = Math.sin(wingT) * (flapAge < 0.25 ? 1 : 0.45);
     ctx.save();
     ctx.translate(BX, birdY);
     ctx.rotate(birdRot);
     // tail
-    ctx.fillStyle = "#f08c00";
+    ctx.fillStyle = c.tail;
     ctx.strokeStyle = "#1e3a24";
     ctx.lineWidth = 2.5;
     ctx.beginPath();
@@ -487,8 +578,8 @@ function startFlappy() {
     ctx.stroke();
     // body
     const bodyGrad = ctx.createRadialGradient(-4, -6, 2, 0, 0, BR + 4);
-    bodyGrad.addColorStop(0, "#ffe066");
-    bodyGrad.addColorStop(1, "#f59f00");
+    bodyGrad.addColorStop(0, c.bodyHi);
+    bodyGrad.addColorStop(1, c.bodyLo);
     ctx.fillStyle = bodyGrad;
     ctx.beginPath();
     ctx.arc(0, 0, BR, 0, Math.PI * 2);
@@ -497,7 +588,7 @@ function startFlappy() {
     ctx.lineWidth = 3;
     ctx.stroke();
     // belly
-    ctx.fillStyle = "#fff3bf";
+    ctx.fillStyle = c.belly;
     ctx.beginPath();
     ctx.ellipse(-1, 6, 8, 5.5, 0, 0, Math.PI * 2);
     ctx.fill();
@@ -505,7 +596,7 @@ function startFlappy() {
     ctx.save();
     ctx.translate(-4, 1);
     ctx.rotate(-0.5 - flapWing * 0.7);
-    ctx.fillStyle = "#e67700";
+    ctx.fillStyle = c.wing;
     ctx.strokeStyle = "#1e3a24";
     ctx.lineWidth = 2.5;
     ctx.beginPath();
@@ -513,6 +604,13 @@ function startFlappy() {
     ctx.fill();
     ctx.stroke();
     ctx.restore();
+    // penguin face patch for Waddles
+    if (c.penguin) {
+      ctx.fillStyle = "#ffffff";
+      ctx.beginPath();
+      ctx.ellipse(4.5, -3.5, 7.5, 6.5, 0, 0, Math.PI * 2);
+      ctx.fill();
+    }
     // eye
     ctx.fillStyle = "#fff";
     ctx.beginPath();
@@ -530,7 +628,7 @@ function startFlappy() {
     ctx.arc(7.8, -5.8, 0.9, 0, Math.PI * 2);
     ctx.fill();
     // beak
-    ctx.fillStyle = "#ff6b35";
+    ctx.fillStyle = c.beak;
     ctx.strokeStyle = "#1e3a24";
     ctx.lineWidth = 2;
     ctx.beginPath();
@@ -592,7 +690,7 @@ function startFlappy() {
       ctx.fillStyle = "#fff";
       ctx.font = "16px sans-serif";
       ctx.fillText("SPACE · CLICK · TAP — flap your wings", W / 2, H / 2 - 2);
-      ctx.fillText("Thread each gap for +1. Speed creeps up.", W / 2, H / 2 + 22);
+      ctx.fillText("Each gap pays 1 point. Spend them in the shop.", W / 2, H / 2 + 22);
       ctx.fillStyle = "#69db7c";
       ctx.font = "bold 18px sans-serif";
       ctx.fillText("— press anything to start —", W / 2, H / 2 + 54);
@@ -607,7 +705,7 @@ function startFlappy() {
       ctx.fillText("SPLAT", W / 2, H / 2 - 46);
       ctx.fillStyle = "#fff";
       ctx.font = "bold 20px sans-serif";
-      ctx.fillText(`Score ${score} · Best ${Math.max(best, score)}`, W / 2, H / 2 - 10);
+      ctx.fillText(`Score ${score} · +${score} pts · Best ${Math.max(best, score)}`, W / 2, H / 2 - 10);
       if (deadAge > 0.6) {
         ctx.fillStyle = "#69db7c";
         ctx.font = "bold 17px sans-serif";
@@ -624,6 +722,7 @@ function startFlappy() {
 
     scoreEl.textContent = `Score: ${score}`;
     bestEl.textContent = `Best: ${Math.max(best, score)}`;
+    pointsEl.textContent = `Points: ${shop.points}`;
   }
 
   function tick(now) {
@@ -671,7 +770,7 @@ function startFlappy() {
     });
   }
 
-  setSnapshot({ mode: "ready", game: "Flappy Bird", score: 0, best });
+  setSnapshot({ mode: "ready", game: "Flappy Bird", score: 0, best, points: shop.points, skin: shop.selected });
   activeAdvance = (ms) => {
     const steps = Math.max(1, Math.round(ms / 16));
     for (let i = 0; i < steps; i++) update(1 / 60);
@@ -682,6 +781,7 @@ function startFlappy() {
     document.removeEventListener("keydown", keydown);
   };
   bestEl.textContent = `Best: ${best}`;
+  renderShop();
   resetRun(true);
   last = performance.now();
   raf = requestAnimationFrame(tick);

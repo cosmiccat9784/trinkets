@@ -1503,6 +1503,45 @@ body.embed {
   50% { transform: translateY(-12px); }
 }
 
+.flappy-shop {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+}
+
+.fl-skin {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 36px;
+  padding: 0 10px;
+  font-size: 0.8rem;
+  font-weight: 800;
+  background: white;
+  border: 3px solid var(--line);
+  border-radius: 8px;
+  box-shadow: 3px 3px 0 var(--line);
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.fl-skin .dot {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 2px solid var(--line);
+  flex: none;
+}
+
+.fl-skin.selected {
+  background: var(--gold);
+}
+
+.fl-skin.locked {
+  opacity: 0.8;
+}
+
 /* ── Penguin Parkour ── */
 .penguin-art {
   position: relative;
