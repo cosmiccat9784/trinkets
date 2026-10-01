@@ -1444,6 +1444,65 @@ body.embed {
   50% { top: 38px; bottom: auto; }
 }
 
+.flappy-canvas {
+  display: block;
+  width: min(100%, 720px, calc((100dvh - 460px) * 3 / 2));
+  aspect-ratio: 3 / 2;
+  margin: 0 auto;
+  border: 3px solid var(--line);
+  border-radius: 12px;
+  box-shadow: 8px 8px 0 var(--line);
+  cursor: pointer;
+  touch-action: none;
+  background: #4dabf7;
+}
+
+.flappy-art {
+  position: relative;
+  background: linear-gradient(180deg, #4dabf7 0%, #a5d8ff 70%, #e9d8a6 70%, #e9d8a6 100%);
+  overflow: hidden;
+}
+
+.flappy-art-pipe {
+  position: absolute;
+  top: 0;
+  bottom: 30px;
+  width: 26px;
+  background: linear-gradient(90deg, #2f9e44 0%, #69db7c 55%, #2b8a3e 100%);
+  border: 3px solid var(--line);
+  border-radius: 4px;
+}
+
+.flappy-art-pipe.top { left: 58%; }
+.flappy-art-pipe.bottom { left: 78%; top: auto; height: 62px; }
+
+.flappy-art-bird {
+  position: absolute;
+  left: 26%;
+  top: 42%;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #ffe066, #f59f00 75%);
+  border: 3px solid var(--line);
+  animation: flappy-bob 1.4s ease-in-out infinite;
+}
+
+.flappy-art-bird::after {
+  content: "";
+  position: absolute;
+  right: -3px;
+  top: 8px;
+  border-left: 8px solid #ff6b35;
+  border-top: 5px solid transparent;
+  border-bottom: 5px solid transparent;
+}
+
+@keyframes flappy-bob {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-12px); }
+}
+
 /* ── Penguin Parkour ── */
 .penguin-art {
   position: relative;
@@ -4711,6 +4770,10 @@ footer p {
   }
 
   .spider-canvas {
+    width: min(100%, 720px, calc((100vh - 460px) * 3 / 2));
+  }
+
+  .flappy-canvas {
     width: min(100%, 720px, calc((100vh - 460px) * 3 / 2));
   }
 

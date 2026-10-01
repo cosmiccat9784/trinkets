@@ -79,7 +79,8 @@ const gameSlugs = {
   penguinDefence: "penguin_defence",
   defence: "penguin_defence",
   spider: "spider",
-  ikea: "ikea_guess"
+  ikea: "ikea_guess",
+  flappy: "flappy_bird"
 };
 
 function slugToGame(slug) {
@@ -394,6 +395,9 @@ function embedStatText(snap) {
   if (snap.game === "Guess the IKEA Product") {
     if (typeof snap.round === "number") parts.push("Round " + snap.round);
     if (typeof snap.streak === "number") parts.push("Streak " + snap.streak);
+  }
+  if (snap.game === "Flappy Bird") {
+    if (typeof snap.best === "number") parts.push("Best " + snap.best);
   }
   return parts.join(" · ");
 }
