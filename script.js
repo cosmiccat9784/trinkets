@@ -83,7 +83,8 @@ const gameSlugs = {
   flappy: "flappy_bird",
   zigzag: "zigzag",
   gravityball: "gravity_ball",
-  tinyblocks: "tiny_blocks"
+  tinyblocks: "tiny_blocks",
+  mayhem: "magnet_mayhem"
 };
 
 function slugToGame(slug) {
@@ -415,6 +416,10 @@ function embedStatText(snap) {
   if (snap.game === "Tiny Blocks") {
     if (typeof snap.lines === "number") parts.push(snap.lines + " lines");
     if (typeof snap.level === "number") parts.push("Level " + snap.level);
+  }
+  if (snap.game === "Magnet Mayhem") {
+    if (typeof snap.round === "number") parts.push("Round " + snap.round);
+    if (typeof snap.p1wins === "number" && typeof snap.p2wins === "number") parts.push(`P1 ${snap.p1wins} – ${snap.p2wins} P2`);
   }
   return parts.join(" · ");
 }

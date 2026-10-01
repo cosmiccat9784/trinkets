@@ -6213,3 +6213,106 @@ footer p {
   50% { transform: scale(1.1); box-shadow: 2px 2px 0 var(--line), 0 0 12px rgba(255, 224, 102, 0.9); }
 }
 
+
+/* ── Magnet Mayhem ── */
+.mayhem-canvas {
+  display: block;
+  width: min(100%, 720px, calc((100dvh - 460px) * 3 / 2));
+  aspect-ratio: 3 / 2;
+  margin: 0 auto;
+  border: 3px solid var(--line);
+  border-radius: 12px;
+  box-shadow: 8px 8px 0 var(--line);
+  cursor: pointer;
+  touch-action: none;
+  background: #232c4e;
+}
+
+.mayhem-art {
+  position: relative;
+  background: linear-gradient(180deg, #3b2d7a 0%, #2b3a67 55%, #232c4e 100%);
+  overflow: hidden;
+}
+
+.mayhem-mag {
+  position: absolute;
+  bottom: 30%;
+  width: 34px;
+  height: 30px;
+  border: 3px solid var(--line);
+  border-radius: 9px 9px 4px 4px;
+  box-shadow: 2px 2px 0 var(--line);
+}
+
+.mayhem-mag.m1 { left: 20%; background: var(--mint); animation: mayhem-wob 1.6s ease-in-out infinite; }
+.mayhem-mag.m2 { right: 20%; background: #ff8fab; animation: mayhem-wob 1.6s ease-in-out infinite 0.4s; }
+
+.mayhem-mag::after {
+  content: "";
+  position: absolute;
+  left: 3px;
+  right: 3px;
+  bottom: -3px;
+  height: 8px;
+  background: white;
+  border: 3px solid var(--line);
+  border-radius: 0 0 5px 5px;
+}
+
+.mayhem-eye {
+  position: absolute;
+  top: 5px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #10151d;
+  z-index: 1;
+}
+
+.mayhem-eye.e1 { left: 7px; }
+.mayhem-eye.e2 { right: 7px; }
+
+.mayhem-clack {
+  position: absolute;
+  left: 50%;
+  top: 22%;
+  transform: translateX(-50%) rotate(-6deg);
+  background: var(--gold);
+  border: 3px solid var(--line);
+  border-radius: 8px;
+  padding: 1px 8px;
+  font-weight: 900;
+  font-size: 0.85rem;
+  box-shadow: 2px 2px 0 var(--line);
+  animation: mayhem-clack 1.6s ease-in-out infinite;
+}
+
+.mayhem-spark {
+  position: absolute;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #fff8ea;
+  box-shadow: 0 0 6px #f6c445;
+  animation: mayhem-spark 1.6s ease-out infinite;
+}
+
+.mayhem-spark.s1 { left: 44%; top: 44%; }
+.mayhem-spark.s2 { left: 55%; top: 40%; animation-delay: 0.3s; background: var(--gold); }
+.mayhem-spark.s3 { left: 50%; top: 52%; animation-delay: 0.6s; }
+
+@keyframes mayhem-wob {
+  0%, 100% { transform: translateY(0) rotate(-4deg); }
+  50% { transform: translateY(-8px) rotate(4deg); }
+}
+
+@keyframes mayhem-clack {
+  0%, 100% { transform: translateX(-50%) rotate(-6deg) scale(1); }
+  50% { transform: translateX(-50%) rotate(4deg) scale(1.15); }
+}
+
+@keyframes mayhem-spark {
+  0% { transform: scale(0); opacity: 0; }
+  40% { transform: scale(1.8); opacity: 1; }
+  100% { transform: scale(0.4); opacity: 0; }
+}
