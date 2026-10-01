@@ -1,4 +1,4 @@
-const filters = document.querySelectorAll(".filter");
+const filters = document.querySelectorAll(".filter:not(#viewToggle)");
 const cards = [...document.querySelectorAll(".game-card")];
 const saveButtons = document.querySelectorAll(".save-button");
 const playButtons = document.querySelectorAll(".play-button");
