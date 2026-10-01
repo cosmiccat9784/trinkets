@@ -23,7 +23,7 @@
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="trinkets-build" content="dev" />
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" />
-    <link rel="stylesheet" href="styles.css?v=27" />
+    <link rel="stylesheet" href="styles.css?v=29" />
   </head>
   <body>
     <header class="topbar">
@@ -100,9 +100,10 @@
         <div class="game-grid" id="gameGrid">
           <article class="game-card" data-category="puzzle" data-game="switchback">
             <div class="game-art tile-art" aria-hidden="true">
-              <span class="ta-s"></span><span class="ta-p"></span><span class="ta-p"></span>
-              <span class="ta-p"></span><span class="ta-p"></span><span class="ta-p"></span>
-              <span class="ta-p"></span><span class="ta-p"></span><span class="ta-e"></span>
+              <span class="ta-tile ta-start">S</span><span class="ta-tile ta-h lit"></span><span class="ta-tile ta-elbow-dl lit"></span>
+              <span class="ta-tile ta-v"></span><span class="ta-tile ta-elbow-ur"></span><span class="ta-tile ta-v lit"></span>
+              <span class="ta-tile ta-elbow-ul"></span><span class="ta-tile ta-h"></span><span class="ta-tile ta-finish">E</span>
+              <span class="ta-flow"></span>
             </div>
             <div class="game-content">
               <p class="tag">Puzzle</p>
@@ -132,6 +133,11 @@
                 <span class="comet-trail trail-2"></span>
                 <span class="comet-body"></span>
               </span>
+              <span class="comet-flyer green">
+                <span class="comet-trail"></span>
+                <span class="comet-body"></span>
+              </span>
+              <span class="comet-popup">+10</span>
             </div>
             <div class="game-content">
               <p class="tag">Arcade</p>
@@ -146,7 +152,8 @@
 
           <article class="game-card" data-category="word" data-game="forge">
             <div class="game-art word-art" aria-hidden="true">
-              <span>B</span><span>L</span><span>I</span><span>P</span>
+              <span>C</span><span>O</span><span class="forge-change">L</span><span>D</span>
+              <span class="forge-anvil" aria-hidden="true">🔨</span>
             </div>
             <div class="game-content">
               <p class="tag">Word</p>
@@ -180,8 +187,9 @@
           <article class="game-card" data-category="arcade" data-game="bash">
             <div class="game-art paddle-art" aria-hidden="true">
               <span>1</span><span>2</span><span>3</span>
-              <span>4</span><span>5</span><span>6</span>
+              <span>4</span><span class="lit">5</span><span>6</span>
               <span>7</span><span>8</span><span>9</span>
+              <span class="bash-timer"></span>
             </div>
             <div class="game-content">
               <p class="tag">Arcade</p>
@@ -199,6 +207,9 @@
               <span class="crate-lid"></span>
               <span class="crate-body">?</span>
               <span class="crate-lock"></span>
+              <span class="crate-spark k1"></span>
+              <span class="crate-spark k2"></span>
+              <span class="crate-spark k3"></span>
             </div>
             <div class="game-content">
               <p class="tag">Word</p>
@@ -213,10 +224,13 @@
 
           <article class="game-card" data-category="toys" data-game="toybox">
             <div class="game-art toybox-art" aria-hidden="true">
+              <span class="toybox-shelf"></span>
               <span class="toybox-btn"></span>
               <span class="toybox-bubble"></span>
               <span class="toybox-bubble toybox-bubble-2"></span>
               <span class="toybox-star"></span>
+              <span class="toybox-spinner-toy"></span>
+              <span class="toybox-gradient-toy"></span>
             </div>
             <div class="game-content">
               <p class="tag">Toy</p>
@@ -267,6 +281,13 @@
               <span class="powder-grain pg4"></span>
               <span class="powder-grain pg5"></span>
               <span class="powder-grain pg6"></span>
+              <span class="powder-grain pg7"></span>
+              <span class="powder-grain pg8"></span>
+              <span class="powder-grain pg9"></span>
+              <span class="powder-grain pg10"></span>
+              <span class="powder-pile pp1"></span>
+              <span class="powder-pile pp2"></span>
+              <span class="powder-pile pp3"></span>
             </div>
             <div class="game-content">
               <p class="tag">Toy</p>
@@ -301,6 +322,9 @@
               <span class="zen-line zl1"></span>
               <span class="zen-line zl2"></span>
               <span class="zen-line zl3"></span>
+              <span class="zen-ripple zr1"></span>
+              <span class="zen-ripple zr2"></span>
+              <span class="zen-stone"></span>
             </div>
             <div class="game-content">
               <p class="tag">Toy</p>
@@ -315,10 +339,12 @@
 
           <article class="game-card" data-category="toys" data-game="gravity">
             <div class="game-art gravity-art" aria-hidden="true">
+              <span class="grav-box"></span>
               <span class="grav-ball gb1"></span>
               <span class="grav-ball gb2"></span>
               <span class="grav-ball gb3"></span>
               <span class="grav-ball gb4"></span>
+              <span class="grav-floor"></span>
             </div>
             <div class="game-content">
               <p class="tag">Toy</p>
@@ -333,6 +359,7 @@
 
           <article class="game-card" data-category="toys" data-game="spiro">
             <div class="game-art spiro-art" aria-hidden="true">
+              <span class="spiro-flower"></span>
               <span class="spiro-ring sr1"></span>
               <span class="spiro-ring sr2"></span>
               <span class="spiro-ring sr3"></span>
@@ -369,9 +396,11 @@
 
           <article class="game-card" data-category="puzzle" data-game="orchard">
             <div class="game-art orchard-art" aria-hidden="true">
+              <span class="orch-board"></span>
               <span class="orch-dot od1"></span>
               <span class="orch-dot od2"></span>
               <span class="orch-dot od3"></span>
+              <span class="orch-winring"></span>
               <span class="orch-ex" aria-hidden="true"></span>
             </div>
             <div class="game-content">
@@ -387,7 +416,9 @@
 
           <article class="game-card" data-category="toys" data-game="magnet">
             <div class="game-art magnet-art" aria-hidden="true">
-              <span class="magnet-thumb magnet-red"></span>
+              <span class="magnet-u"></span>
+              <span class="magnet-field mf1"></span>
+              <span class="magnet-field mf2"></span>
               <span class="magnet-dot md1"></span>
               <span class="magnet-dot md2"></span>
               <span class="magnet-dot md3"></span>
@@ -406,8 +437,12 @@
 
           <article class="game-card" data-category="puzzle" data-game="ice">
             <div class="game-art ice-art" aria-hidden="true">
+              <span class="ice-gridlines"></span>
               <span class="ice-target"></span>
+              <span class="ice-trail"></span>
               <span class="ice-cube-thumb"></span>
+              <span class="ice-sparkle is1"></span>
+              <span class="ice-sparkle is2"></span>
             </div>
             <div class="game-content">
               <p class="tag">Puzzle</p>
@@ -422,7 +457,12 @@
 
           <article class="game-card" data-category="toys" data-game="coin">
             <div class="game-art coin-art" aria-hidden="true">
+              <span class="coin-arc"></span>
               <span class="coin-thumb">H</span>
+              <span class="coin-spark cs1"></span>
+              <span class="coin-spark cs2"></span>
+              <span class="coin-spark cs3"></span>
+              <span class="coin-shadow"></span>
             </div>
             <div class="game-content">
               <p class="tag">Toy</p>
@@ -437,7 +477,13 @@
 
           <article class="game-card" data-category="arcade" data-game="cheese">
             <div class="game-art cheese-art" aria-hidden="true">
+              <span class="cheese-plate"></span>
               <span class="cheese-wedge"></span>
+              <span class="cheese-hole ch1"></span>
+              <span class="cheese-hole ch2"></span>
+              <span class="cheese-hole ch3"></span>
+              <span class="cheese-crumb cc1"></span>
+              <span class="cheese-crumb cc2"></span>
               <span class="cheese-beam"></span>
             </div>
             <div class="game-content">
@@ -473,6 +519,9 @@
 
           <article class="game-card" data-category="arcade" data-game="onebutton">
             <div class="game-art one-art" aria-hidden="true">
+              <span class="one-hill h1"></span>
+              <span class="one-hill h2"></span>
+              <span class="one-coin"></span>
               <span class="one-floor"></span>
               <span class="one-block"></span>
               <span class="one-arrow">↑</span>
@@ -548,7 +597,9 @@
           <article class="game-card" data-category="arcade" data-game="spider" data-added="2026-09-30">
             <div class="game-art spider-art" aria-hidden="true">
               <span class="spider-art-ceil"></span>
-              <span class="spider-art-spider"></span>
+              <span class="spider-art-web w1"></span>
+              <span class="spider-art-web w2"></span>
+              <span class="spider-art-spider"><span class="spider-eye e1"></span><span class="spider-eye e2"></span></span>
               <span class="spider-art-spike up s1"></span>
               <span class="spider-art-spike down s2"></span>
               <span class="spider-art-floor"></span>
@@ -583,9 +634,15 @@
 
           <article class="game-card" data-category="arcade" data-game="flappy" data-added="2026-10-01">
             <div class="game-art flappy-art" aria-hidden="true">
-              <span class="flappy-art-pipe top"></span>
-              <span class="flappy-art-pipe bottom"></span>
-              <span class="flappy-art-bird"></span>
+              <span class="flappy-art-cloud c1"></span>
+              <span class="flappy-art-cloud c2"></span>
+              <span class="flappy-art-pipe top p1"></span>
+              <span class="flappy-art-pipe bottom p1"></span>
+              <span class="flappy-art-pipe top p2"></span>
+              <span class="flappy-art-pipe bottom p2"></span>
+              <span class="flappy-art-bird"><span class="flappy-wing"></span></span>
+              <span class="flappy-art-ground"></span>
+              <span class="flappy-art-score">3</span>
             </div>
             <div class="game-content">
               <p class="tag">Arcade · New</p>
@@ -638,6 +695,24 @@
               </div>
             </div>
           </article>
+
+          <article class="game-card" data-category="puzzle" data-game="tinyblocks" data-added="2026-10-01">
+            <div class="game-art stack-art" aria-hidden="true">
+              <span class="stack-row r1"><i class="sb c1"></i><i class="sb c2"></i><i class="sb c3"></i><i class="sb c4"></i></span>
+              <span class="stack-row r2"><i class="sb c5"></i><i class="sb c6"></i><i class="sb ice">❄</i></span>
+              <span class="stack-row r3"><i class="sb c7"></i><i class="sb lucky">✨</i></span>
+              <span class="stack-fall"></span>
+            </div>
+            <div class="game-content">
+              <p class="tag">Puzzle · New</p>
+              <h3>Tiny Blocks</h3>
+              <p>Stack tiny blocks, clear messy lines, and survive the world's most confused block machine. 🌀🧊✨</p>
+              <div class="card-actions">
+                <button class="play-button" type="button">Play</button>
+                <button class="save-button" type="button">Save pick</button>
+              </div>
+            </div>
+          </article>
         </div>
       </section>
 
@@ -684,11 +759,12 @@
     <script src="orchard.js?v=4"></script>
     <script src="curios.js?v=6"></script>
     <script src="penguin.js?v=10"></script>
-    <script src="penguin-defence.js?v=9"></script>
+    <script src="penguin-defence.js?v=10"></script>
     <script src="spider.js?v=1"></script>
     <script src="ikea.js?v=1"></script>
     <script src="flappy.js?v=1"></script>
     <script src="zigzag.js?v=1"></script>
     <script src="gravityball.js?v=1"></script>
+    <script src="tetris.js?v=1"></script>
   </body>
 </html>

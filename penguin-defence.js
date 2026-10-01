@@ -565,13 +565,11 @@ function startPenguinDefence() {
     if(!selectedBuild && !selectedTower){
       // nothing
     }
-    requestFit();
   }
   function renderInfo(){
     if(!selectedTower){
       infoEl.hidden = true;
       infoEl.innerHTML="";
-      requestFit();
       return;
     }
     var t = selectedTower;
@@ -598,7 +596,6 @@ function startPenguinDefence() {
     if(upBtn) upBtn.addEventListener("click", function(){ upgradeTower(t); });
     infoEl.querySelector("#defSell").addEventListener("click", function(){ sellTower(t); });
     infoEl.querySelector("#defDeselect").addEventListener("click", function(){ selectedTower=null; renderInfo(); });
-    requestFit();
   }
 
   function updateUI(){
