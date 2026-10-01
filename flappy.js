@@ -204,12 +204,14 @@ function startFlappy() {
     banner = { text, t: 2.0 };
   }
 
-  // --- cheat code: type the magic words, confess, profit ---
+  // --- cheat code: arm with Ctrl+F3, type the magic words, confess, profit ---
   // (Ctrl+F4 can't be used: browsers reserve it to close the tab and
-  // pages cannot intercept it, so the spoken phrase itself is the trigger.)
+  // pages cannot intercept it. Ctrl+F3 reaches the page, so it arms the
+  // listener instead.)
   const CHEAT_CODE = "i solemnly swear i am up to no good";
   const CHEAT_POINTS = 999999;
   let cheatBuffer = "";
+  let cheatArmed = false;
 
   function removeCheatPopup() {
     const popup = document.querySelector("#flCheatPopup");
@@ -257,14 +259,30 @@ function startFlappy() {
   }
 
   function cheatKeydown(e) {
-    if (e.repeat || e.ctrlKey || e.metaKey || e.altKey) return;
-    if (!shopEl.isConnected || document.querySelector("#flCheatPopup")) return;
+    if (e.repeat) return;
+    if (e.ctrlKey && !e.metaKey && !e.altKey && (e.key === "F3" || e.code === "F3")) {
+      e.preventDefault();
+      if (!shopEl.isConnected || document.querySelector("#flCheatPopup")) return;
+      if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
+      cheatArmed = !cheatArmed;
+      if (cheatArmed) {
+        cheatBuffer = "";
+        showBanner("SPEAK THE MAGIC WORDS");
+        message.textContent = "The pipes are listening… type the magic words.";
+      } else {
+        message.textContent = "Never mind. The pipes hear nothing.";
+      }
+      return;
+    }
+    if (e.ctrlKey || e.metaKey || e.altKey) return;
+    if (!cheatArmed) return;
     const tag = (e.target && e.target.tagName) || "";
     if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return;
     if (typeof e.key !== "string" || e.key.length !== 1) return;
     cheatBuffer = (cheatBuffer + e.key.toLowerCase()).slice(-80);
     if (cheatBuffer.endsWith(CHEAT_CODE)) {
       cheatBuffer = "";
+      cheatArmed = false;
       if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
       openCheatPopup();
     }
