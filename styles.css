@@ -6099,3 +6099,117 @@ footer p {
   to { transform: translateY(12px); }
 }
 
+/* ── Tiny Blocks: falling-block thumbnail + in-game canvas ── */
+.tetris-canvas {
+  display: block;
+  width: min(100%, 360px, calc((100dvh - 400px) * 0.6));
+  aspect-ratio: 3 / 5;
+  margin: 0 auto;
+  border: 3px solid var(--line);
+  border-radius: 12px;
+  box-shadow: 8px 8px 0 var(--line);
+  cursor: pointer;
+  touch-action: none;
+  background: #1b2340;
+}
+
+.tetris-controls {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.tetris-btn {
+  min-height: 48px;
+  font-size: 1.2rem;
+  background: white;
+  box-shadow: 4px 4px 0 var(--line);
+}
+
+.tetris-btn:active {
+  transform: translate(2px, 2px);
+  box-shadow: 2px 2px 0 var(--line);
+}
+
+.stack-art {
+  display: grid;
+  place-content: center;
+  gap: 4px;
+  background: linear-gradient(180deg, #1b2340 0%, #2b3a67 100%);
+  overflow: hidden;
+}
+
+.stack-row {
+  display: flex;
+  gap: 4px;
+  justify-content: center;
+}
+
+.sb {
+  width: 30px;
+  height: 30px;
+  border: 3px solid var(--line);
+  border-radius: 5px;
+  box-shadow: 2px 2px 0 var(--line);
+  display: grid;
+  place-items: center;
+  font-style: normal;
+  font-size: 1rem;
+  line-height: 1;
+}
+
+.sb.c1 { background: #4dd7f0; }
+.sb.c2 { background: #b197fc; }
+.sb.c3 { background: #f6c445; }
+.sb.c4 { background: #69db7c; }
+.sb.c5 { background: #74c0fc; }
+.sb.c6 { background: #ffa94d; }
+.sb.c7 { background: #ff6b6b; }
+.sb.ice {
+  background: #a5d8ff;
+  animation: stack-shiver 1.6s ease-in-out infinite;
+}
+.sb.lucky {
+  background: #ffe066;
+  animation: stack-spark 1.2s ease-in-out infinite;
+}
+
+.stack-art .r1 { animation: stack-nudge 3s ease-in-out infinite; }
+.stack-art .r2 { animation: stack-nudge 3s ease-in-out infinite 0.4s; }
+.stack-art .r3 { animation: stack-nudge 3s ease-in-out infinite 0.8s; }
+
+.stack-fall {
+  position: absolute;
+  left: calc(50% - 17px);
+  top: 12px;
+  width: 30px;
+  height: 30px;
+  background: #e599f7;
+  border: 3px solid var(--line);
+  border-radius: 5px;
+  box-shadow: 2px 2px 0 var(--line);
+  animation: stack-drop 2.4s ease-in infinite;
+}
+
+@keyframes stack-drop {
+  0% { transform: translateY(-6px) rotate(0deg); opacity: 0; }
+  15% { opacity: 1; }
+  70% { transform: translateY(56px) rotate(90deg); opacity: 1; }
+  100% { transform: translateY(66px) rotate(90deg); opacity: 0; }
+}
+
+@keyframes stack-nudge {
+  0%, 100% { transform: translateX(0); }
+  50% { transform: translateX(4px); }
+}
+
+@keyframes stack-shiver {
+  0%, 100% { transform: rotate(-4deg); }
+  50% { transform: rotate(4deg); }
+}
+
+@keyframes stack-spark {
+  0%, 100% { transform: scale(1); box-shadow: 2px 2px 0 var(--line), 0 0 0 rgba(255, 224, 102, 0); }
+  50% { transform: scale(1.1); box-shadow: 2px 2px 0 var(--line), 0 0 12px rgba(255, 224, 102, 0.9); }
+}
+
