@@ -1695,23 +1695,24 @@ body.embed {
 
 .fl-cheat-overlay {
   position: fixed;
-  inset: 0;
+  top: 10px;
+  left: 50%;
+  transform: translateX(-50%);
   z-index: 30;
-  display: grid;
-  place-items: center;
-  padding: 18px;
-  background: rgba(25, 33, 43, 0.72);
+  width: min(380px, calc(100vw - 36px));
+  pointer-events: none;
 }
 
 .fl-cheat-box {
-  width: min(380px, 100%);
+  width: 100%;
   background: var(--paper);
   border: 3px solid var(--line);
   border-radius: 8px;
-  box-shadow: 12px 12px 0 rgba(0, 0, 0, 0.35);
-  padding: 20px;
+  box-shadow: 8px 8px 0 rgba(0, 0, 0, 0.35);
+  padding: 14px 16px;
   display: grid;
-  gap: 14px;
+  gap: 10px;
+  pointer-events: auto;
 }
 
 .fl-cheat-text {

@@ -233,7 +233,8 @@ function startFlappy() {
       </div>
     </div>`;
     panel.append(popup);
-    popup.addEventListener("click", (ev) => { if (ev.target === popup) cancelCheat(); });
+    // No backdrop: the overlay is pointer-transparent so the game stays
+    // playable behind this box. Only the box itself takes clicks.
     popup.querySelector(".fl-cheat-yes").addEventListener("click", confirmCheat);
     popup.querySelector(".fl-cheat-no").addEventListener("click", cancelCheat);
     popup.querySelector(".fl-cheat-no").focus();
@@ -256,6 +257,17 @@ function startFlappy() {
     removeCheatPopup();
     if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
     message.textContent = "Phew. The fun survives another day.";
+  }
+
+  // Escape while the cheat box is open dismisses it instead of
+  // closing the whole run. Capture phase runs before the arcade-wide
+  // bubble handler that closes the game on Escape.
+  function cheatEscapeCapture(e) {
+    if (!document.querySelector("#flCheatPopup")) return;
+    if (e.key !== "Escape" && e.code !== "Escape") return;
+    e.preventDefault();
+    e.stopPropagation();
+    cancelCheat();
   }
 
   function cheatKeydown(e) {
@@ -843,6 +855,7 @@ function startFlappy() {
   });
   document.addEventListener("keydown", keydown);
   document.addEventListener("keydown", cheatKeydown);
+  document.addEventListener("keydown", cheatEscapeCapture, true);
 
   // seed clouds
   for (let i = 0; i < 5; i++) {
@@ -865,6 +878,7 @@ function startFlappy() {
     cancelAnimationFrame(raf);
     document.removeEventListener("keydown", keydown);
     document.removeEventListener("keydown", cheatKeydown);
+    document.removeEventListener("keydown", cheatEscapeCapture, true);
     removeCheatPopup();
   };
   bestEl.textContent = `Best: ${best}`;
