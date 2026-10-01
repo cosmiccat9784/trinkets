@@ -1526,26 +1526,14 @@ body.embed {
   position: absolute;
   left: 0;
   right: 0;
-  height: 34px;
-  background: #1a1440;
-  border: 3px solid var(--line);
+  height: 6px;
+  background: var(--gold);
+  box-shadow: 0 0 12px rgba(246,196,69,0.55);
 }
 
-.zigzag-art-wall.top {
-  top: 18px;
-  border-left: none;
-  border-right: none;
-  border-top: none;
-  box-shadow: 0 3px 0 var(--gold);
-}
+.zigzag-art-wall.top { top: 34px; }
 
-.zigzag-art-wall.bottom {
-  bottom: 18px;
-  border-left: none;
-  border-right: none;
-  border-bottom: none;
-  box-shadow: 0 -3px 0 var(--gold);
-}
+.zigzag-art-wall.bottom { bottom: 34px; }
 
 .zigzag-art-trail {
   position: absolute;
@@ -1565,8 +1553,8 @@ body.embed {
 
 .zigzag-art-plane {
   position: absolute;
-  left: 62%;
-  top: 44%;
+  left: calc(56% - 13px);
+  top: calc(49% - 11px);
   width: 0;
   height: 0;
   border-top: 11px solid transparent;
@@ -1585,8 +1573,8 @@ body.embed {
   border: 2px solid var(--line);
 }
 
-.zigzag-art-coin.c1 { left: 30%; top: 30%; }
-.zigzag-art-coin.c2 { left: 78%; top: 62%; }
+.zigzag-art-coin.c1 { left: calc(28% - 7px); top: calc(34% - 7px); }
+.zigzag-art-coin.c2 { left: calc(80% - 7px); top: calc(63% - 7px); }
 
 @keyframes zigzag-drift {
   0%, 100% { transform: translateY(-8px); }
