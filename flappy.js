@@ -6,14 +6,21 @@ function startFlappy() {
       <div class="game-layout">
         <div class="game-topline">
           <span class="game-stat" id="flScore">Score: 0</span>
+          <span class="game-stat" id="flP2" style="display:none">P2: 0</span>
           <span class="game-stat" id="flBest">Best: 0</span>
           <span class="game-stat" id="flPoints">Points: 0</span>
+        </div>
+        <div class="tag-row" role="group" aria-label="Players">
+          <span class="tag-label">Players</span>
+          <button class="game-action tag-pick on" id="fl1P" type="button" title="Solo flight">1 Player</button>
+          <button class="game-action tag-pick" id="fl2P" type="button" title="P1: SPACE/W or left tap. P2: ArrowUp or right tap. Last bird flying wins.">2 Players</button>
         </div>
         <canvas class="flappy-canvas" id="flCanvas" width="720" height="480"></canvas>
         <p class="game-message" id="flMsg">SPACE / CLICK / TAP to flap. Pipes pay points for the bird shop.</p>
         <div class="flappy-shop" id="flShop" aria-label="Bird shop"></div>
         <div class="game-actions">
-          <button class="game-action one-press" id="flBtn" type="button">FLAP</button>
+          <button class="game-action one-press" id="flBtn" type="button">FLAP (P1)</button>
+          <button class="game-action one-press" id="flBtn2" type="button" style="display:none">FLAP (P2)</button>
           <button class="game-action" id="flRetry" type="button">Restart</button>
         </div>
       </div>
@@ -34,11 +41,45 @@ function startFlappy() {
   const PIPE_W = 76;
 
   const scoreEl = document.querySelector("#flScore");
+  const p2El = document.querySelector("#flP2");
   const bestEl = document.querySelector("#flBest");
   const pointsEl = document.querySelector("#flPoints");
   const shopEl = document.querySelector("#flShop");
   const message = document.querySelector("#flMsg");
   const flapBtn = document.querySelector("#flBtn");
+  const flapBtn2 = document.querySelector("#flBtn2");
+
+  // --- 2-player versus: P1 (SPACE/W/left tap) vs P2 (ArrowUp/right tap).
+  // The run ends only when BOTH birds are down. Highest score wins. ---
+  let twoP = false;
+  let alive1 = true;
+  let alive2 = false;
+  let birdY2 = H / 2;
+  let birdV2 = 0;
+  let birdRot2 = 0;
+  let flapAge2 = 99;
+  let score2 = 0;
+
+  function p2skin() {
+    return SKINS.find((s) => s.id === "berry") || SKINS[0];
+  }
+
+  function setTwoP(on) {
+    twoP = on;
+    document.querySelector("#fl1P").classList.toggle("on", !on);
+    document.querySelector("#fl2P").classList.toggle("on", on);
+    p2El.style.display = on ? "" : "none";
+    flapBtn2.style.display = on ? "" : "none";
+    flapBtn.textContent = on ? "FLAP (P1)" : "FLAP";
+    resetRun(true);
+    message.textContent = on
+      ? "P1: SPACE/W or tap LEFT half · P2: ↑ or tap RIGHT half. Last bird flying wins!"
+      : "SPACE / CLICK / TAP to flap. Pipes pay points for the bird shop.";
+    syncHud();
+  }
+
+  document.querySelector("#fl1P").addEventListener("click", () => setTwoP(false));
+  document.querySelector("#fl2P").addEventListener("click", () => setTwoP(true));
 
   const QUIPS = [
     "Bonk. The pipe sends regards.",
@@ -160,12 +201,16 @@ function startFlappy() {
   let shown = {};
   let hillX = 0;
 
+  function leadScore() {
+    return Math.max(score, twoP ? score2 : 0);
+  }
+
   function gapH() {
-    return Math.max(142, 174 - score * 1.1);
+    return Math.max(142, 174 - leadScore() * 1.1);
   }
 
   function pipeSpeed() {
-    return Math.min(390, 230 + score * 4);
+    return Math.min(390, 230 + leadScore() * 4);
   }
 
   function randomGapY() {
@@ -177,7 +222,7 @@ function startFlappy() {
   }
 
   function addPipe(x) {
-    pipes.push({ x: x === undefined ? W + 40 : x, gapY: randomGapY(), scored: false });
+    pipes.push({ x: x === undefined ? W + 40 : x, gapY: randomGapY(), scored: false, s1: false, s2: false });
   }
 
   function burst(x, y, n, color, spread) {
@@ -318,25 +363,40 @@ function startFlappy() {
   }
 
   function syncHud() {
-    scoreEl.textContent = `Score: ${score}`;
-    bestEl.textContent = `Best: ${Math.max(best, score)}`;
+    if (twoP) {
+      scoreEl.textContent = `P1: ${score}`;
+      p2El.textContent = `P2: ${score2}`;
+    } else {
+      scoreEl.textContent = `Score: ${score}`;
+    }
+    bestEl.textContent = `Best: ${Math.max(best, score, twoP ? score2 : 0)}`;
     pointsEl.textContent = `Points: ${shop.points}`;
     setSnapshot({
       mode: mode === "playing" ? "playing" : mode === "dead" ? "ended" : "ready",
       game: "Flappy Bird",
-      score,
-      best: Math.max(best, score),
+      score: leadScore(),
+      best: Math.max(best, score, twoP ? score2 : 0),
       points: shop.points,
-      skin: shop.selected
+      skin: shop.selected,
+      twoP,
+      p1: score,
+      p2: twoP ? score2 : undefined
     });
   }
 
   function resetRun(toReady) {
-    birdY = H / 2;
+    birdY = twoP ? H / 2 - 50 : H / 2;
     birdV = 0;
     birdRot = 0;
     wingT = 0;
     flapAge = 99;
+    alive1 = true;
+    birdY2 = H / 2 + 50;
+    birdV2 = 0;
+    birdRot2 = 0;
+    flapAge2 = 99;
+    alive2 = twoP;
+    score2 = 0;
     pipes = [];
     particles = [];
     popups = [];
@@ -352,18 +412,59 @@ function startFlappy() {
     deadAge = 0;
     mode = toReady ? "ready" : "playing";
     if (toReady) {
-      message.textContent = "SPACE / CLICK / TAP to flap. Pipes pay points for the bird shop.";
+      message.textContent = twoP
+        ? "P1: SPACE/W or tap LEFT half · P2: ↑ or tap RIGHT half. Last bird flying wins!"
+        : "SPACE / CLICK / TAP to flap. Pipes pay points for the bird shop.";
       // a couple of demo pipes drifting behind the ready overlay
       addPipe(W - 60);
       addPipe(W + 300);
     } else {
-      message.textContent = "Go! Flap through the gap.";
+      message.textContent = twoP ? "Go! Last bird flying wins." : "Go! Flap through the gap.";
     }
     syncHud();
   }
 
-  function die(reason) {
+  function finishMatch2P() {
+    mode = "dead";
+    deadAge = 0;
+    let title;
+    if (score > score2) title = "P1 WINS!";
+    else if (score2 > score) title = "P2 WINS!";
+    else title = "DRAW!";
+    shake = 14;
+    flash = 0.45;
+    message.textContent = `${title} Final: P1 ${score} – P2 ${score2}. Press FLAP to retry.`;
+    syncHud();
+  }
+
+  function die(reason, idx) {
     if (mode !== "playing") return;
+    if (twoP && (idx === 1 || idx === 0)) {
+      if (idx === 1) {
+        if (!alive2) return;
+        alive2 = false;
+        burst(BX, birdY2, 22, "#e64980", 260);
+        popup(BX, birdY2 - 30, "P2 OUT!", "#e64980");
+        if (alive1) {
+          message.textContent = "P2 is down! P1, bring it home.";
+          syncHud();
+          return;
+        }
+      } else {
+        if (!alive1) return;
+        alive1 = false;
+        burst(BX, birdY, 22, "#f6c445", 260);
+        burst(BX, birdY, 12, "#fff8ea", 180);
+        popup(BX, birdY - 30, "P1 OUT!", "#f6c445");
+        if (alive2) {
+          message.textContent = "P1 is down! P2, bring it home.";
+          syncHud();
+          return;
+        }
+      }
+      finishMatch2P();
+      return;
+    }
     mode = "dead";
     deadAge = 0;
     const result = recordScore("flappy", score, "high");
@@ -378,14 +479,20 @@ function startFlappy() {
     syncHud();
   }
 
-  function flap() {
-    birdV = FLAP_V;
-    flapAge = 0;
+  function flap(idx) {
+    if (idx === 1) {
+      birdV2 = FLAP_V;
+      flapAge2 = 0;
+    } else {
+      birdV = FLAP_V;
+      flapAge = 0;
+    }
     wingT += 1;
     // little feather puff behind the bird
+    const py = idx === 1 ? birdY2 : birdY;
     for (let i = 0; i < 4; i++) {
       particles.push({
-        x: BX - BR - 4, y: birdY + (Math.random() - 0.5) * 10,
+        x: BX - BR - 4, y: py + (Math.random() - 0.5) * 10,
         vx: -speed * 0.5 - Math.random() * 60,
         vy: 40 + Math.random() * 80,
         life: 0.4, max: 0.4,
@@ -395,18 +502,23 @@ function startFlappy() {
     }
   }
 
-  function primaryAction() {
+  function birdAction(idx) {
     if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
     if (mode === "ready") {
       resetRun(false);
-      flap();
+      flap(idx);
+      if (idx === 0) flap(1); // P2 rides along until its player taps
       showBanner("FLAP TO FLY");
     } else if (mode === "playing") {
-      flap();
+      if (idx === 0 ? alive1 : alive2) flap(idx);
     } else if (mode === "dead" && deadAge > 0.6) {
       resetRun(false);
-      flap();
+      flap(idx);
     }
+  }
+
+  function primaryAction() {
+    birdAction(0);
   }
 
   function milestone() {
@@ -424,18 +536,18 @@ function startFlappy() {
     }
   }
 
-  function circleHitsPipe(pipe) {
+  function circleHitsPipe(pipe, by) {
+    const y = by === undefined ? birdY : by;
     const g = gapH();
     const gapTop = pipe.gapY - g / 2;
     const gapBot = pipe.gapY + g / 2;
     const left = pipe.x;
     const right = pipe.x + PIPE_W;
     const cx = Math.max(left, Math.min(BX, right));
-    // top pipe rect: 0..gapTop, bottom pipe rect: gapBot..FLOOR
-    const cyTop = Math.max(0, Math.min(birdY, gapTop));
-    if ((BX - cx) * (BX - cx) + (birdY - cyTop) * (birdY - cyTop) < (BR - 2) * (BR - 2)) return true;
-    const cyBot = Math.max(gapBot, Math.min(birdY, FLOOR));
-    if ((BX - cx) * (BX - cx) + (birdY - cyBot) * (birdY - cyBot) < (BR - 2) * (BR - 2)) return true;
+    const cyTop = Math.max(0, Math.min(y, gapTop));
+    if ((BX - cx) * (BX - cx) + (y - cyTop) * (y - cyTop) < (BR - 2) * (BR - 2)) return true;
+    const cyBot = Math.max(gapBot, Math.min(y, FLOOR));
+    if ((BX - cx) * (BX - cx) + (y - cyBot) * (y - cyBot) < (BR - 2) * (BR - 2)) return true;
     return false;
   }
 
@@ -448,6 +560,7 @@ function startFlappy() {
     shake = Math.max(0, shake - dt * 32);
     if (flash > 0) flash -= dt;
     flapAge += dt;
+    flapAge2 += dt;
     wingT += dt * (mode === "playing" ? 14 : 6);
 
     // clouds always drift
@@ -473,8 +586,15 @@ function startFlappy() {
     }
 
     if (mode === "ready") {
-      birdY = H / 2 - 40 + Math.sin(time * 3.2) * 12;
-      birdRot += ((Math.sin(time * 3.2) * 0.12) - birdRot) * Math.min(1, dt * 8);
+      if (twoP) {
+        birdY = H / 2 - 50 - 10 + Math.sin(time * 3.2) * 10;
+        birdY2 = H / 2 + 50 + 10 + Math.cos(time * 3.2) * 10;
+        birdRot += ((Math.sin(time * 3.2) * 0.12) - birdRot) * Math.min(1, dt * 8);
+        birdRot2 += ((Math.cos(time * 3.2) * 0.12) - birdRot2) * Math.min(1, dt * 8);
+      } else {
+        birdY = H / 2 - 40 + Math.sin(time * 3.2) * 12;
+        birdRot += ((Math.sin(time * 3.2) * 0.12) - birdRot) * Math.min(1, dt * 8);
+      }
       speed = pipeSpeed();
       for (const p of pipes) p.x -= 120 * dt;
       if (pipes.length && pipes[0].x + PIPE_W < -60) pipes.shift();
@@ -485,11 +605,16 @@ function startFlappy() {
 
     if (mode === "dead") {
       deadAge += dt;
-      // bird tumbles to the ground
+      // birds tumble to the ground
       if (birdY + BR < FLOOR) {
         birdV = Math.min(MAX_FALL, birdV + GRAVITY * dt);
         birdY = Math.min(FLOOR - BR, birdY + birdV * dt);
         birdRot += (1.35 - birdRot) * Math.min(1, dt * 5);
+      }
+      if (twoP && birdY2 + BR < FLOOR) {
+        birdV2 = Math.min(MAX_FALL, birdV2 + GRAVITY * dt);
+        birdY2 = Math.min(FLOOR - BR, birdY2 + birdV2 * dt);
+        birdRot2 += (1.35 - birdRot2) * Math.min(1, dt * 5);
       }
       groundX = (groundX + 0) % 48;
       return;
@@ -497,51 +622,70 @@ function startFlappy() {
 
     // playing
     speed = pipeSpeed();
-    milestone();
+    if (!twoP) milestone();
 
-    birdV = Math.min(MAX_FALL, birdV + GRAVITY * dt);
-    birdY += birdV * dt;
-    const targetRot = birdV < 0 ? -0.42 : Math.min(1.35, -0.1 + (birdV / MAX_FALL) * 1.8);
-    birdRot += (targetRot - birdRot) * Math.min(1, dt * 10);
-
-    if (birdY - BR < 0) {
-      birdY = BR;
-      birdV = Math.max(birdV, 0);
+    // --- physics per bird ---
+    if (alive1) {
+      birdV = Math.min(MAX_FALL, birdV + GRAVITY * dt);
+      birdY += birdV * dt;
+      const targetRot = birdV < 0 ? -0.42 : Math.min(1.35, -0.1 + (birdV / MAX_FALL) * 1.8);
+      birdRot += (targetRot - birdRot) * Math.min(1, dt * 10);
+      if (birdY - BR < 0) { birdY = BR; birdV = Math.max(birdV, 0); }
+      if (birdY + BR >= FLOOR) {
+        birdY = FLOOR - BR;
+        die("Face-plant. The ground sends regards.", 0);
+        if (twoP && alive2) { /* keep P2 alive */ } else return;
+      }
     }
-    if (birdY + BR >= FLOOR) {
-      birdY = FLOOR - BR;
-      die("Face-plant. The ground sends regards.");
-      return;
+    if (twoP && alive2) {
+      birdV2 = Math.min(MAX_FALL, birdV2 + GRAVITY * dt);
+      birdY2 += birdV2 * dt;
+      const targetRot2 = birdV2 < 0 ? -0.42 : Math.min(1.35, -0.1 + (birdV2 / MAX_FALL) * 1.8);
+      birdRot2 += (targetRot2 - birdRot2) * Math.min(1, dt * 10);
+      if (birdY2 - BR < 0) { birdY2 = BR; birdV2 = Math.max(birdV2, 0); }
+      if (birdY2 + BR >= FLOOR) {
+        birdY2 = FLOOR - BR;
+        die("Face-plant. The ground sends regards.", 1);
+        if (alive1) { /* keep P1 alive */ } else return;
+      }
     }
 
     nextSpawn -= speed * dt;
     if (nextSpawn <= 0) {
       addPipe();
       const g = gapH();
-      nextSpawn = Math.max(250, 350 - score * 1.6) + g * 0.35;
+      nextSpawn = Math.max(250, 350 - leadScore() * 1.6) + g * 0.35;
     }
 
     for (let i = pipes.length - 1; i >= 0; i--) {
       const p = pipes[i];
       p.x -= speed * dt;
-      if (!p.scored && p.x + PIPE_W < BX - BR) {
+      const passed = p.x + PIPE_W < BX - BR;
+      if (passed) {
+        if (alive1 && !p.s1) { p.s1 = true; score += 1; shop.points += 1; saveShop(); popup(BX + 26, birdY - 30, "+1", "#f6c445"); burst(BX + 20, birdY, 5, "#f6c445", 140); }
+        if (twoP && alive2 && !p.s2) { p.s2 = true; score2 += 1; shop.points += 1; saveShop(); popup(BX + 26, birdY2 - 30, "+1", "#74c0fc"); burst(BX + 20, birdY2, 5, "#74c0fc", 140); }
+        if (p.s1 || (!twoP && p.s1) || (twoP && (p.s1 || p.s2) && (!alive1 || p.s1) && (!alive2 || p.s2))) {
+          // sync once per pipe group at least
+        }
+        if ((alive1 && p.s1) || (twoP && alive2 && p.s2) || (!twoP && p.s1)) { syncHud(); renderShop(); }
+      }
+      if (!twoP && !p.scored && passed) {
+        // legacy single scoring flag no longer used, but keep for save compat
         p.scored = true;
-        score += 1;
-        shop.points += 1;
-        saveShop();
-        popup(BX + 26, birdY - 30, "+1", "#f6c445");
-        burst(BX + 20, birdY, 5, "#f6c445", 140);
-        syncHud();
-        renderShop();
       }
       if (p.x + PIPE_W < -80) {
-        pipes.splice(i, 1);
-        continue;
+        const bothDone = !twoP ? p.s1 : (p.s1 && p.s2) || (!alive1 && !alive2) || (p.x + PIPE_W < -120);
+        // in 2P, cull once both have passed or it's far off screen
+        if (!twoP || (p.s1 && (p.s2 || !alive2)) || (p.s2 && (p.s1 || !alive1)) || p.x + PIPE_W < -140) {
+          pipes.splice(i, 1);
+          continue;
+        }
+        if (p.x + PIPE_W < -140) { pipes.splice(i, 1); continue; }
       }
-      if (circleHitsPipe(p)) {
-        die();
-        return;
-      }
+      if (alive1 && circleHitsPipe(p, birdY)) { die(undefined, 0); if (!twoP || !alive2) return; }
+      if (twoP && alive2 && circleHitsPipe(p, birdY2)) { die(undefined, 1); if (!alive1) return; }
+      if (!twoP && !alive1) return;
+      if (twoP && !alive1 && !alive2) return;
     }
 
     groundX = (groundX + speed * dt) % 48;
@@ -554,8 +698,13 @@ function startFlappy() {
     hudT += 1;
     if (hudT % 8 === 0) syncHud();
     else {
-      scoreEl.textContent = `Score: ${score}`;
-      bestEl.textContent = `Best: ${Math.max(best, score)}`;
+      if (twoP) {
+        scoreEl.textContent = `P1: ${score}`;
+        p2El.textContent = `P2: ${score2}`;
+      } else {
+        scoreEl.textContent = `Score: ${score}`;
+      }
+      bestEl.textContent = `Best: ${Math.max(best, score, twoP ? score2 : 0)}`;
       pointsEl.textContent = `Points: ${shop.points}`;
     }
   }
@@ -667,91 +816,114 @@ function startFlappy() {
       ctx.textAlign = "center";
       ctx.lineWidth = 6;
       ctx.strokeStyle = "rgba(30,58,36,0.85)";
-      ctx.strokeText(String(score), W / 2, 92);
-      ctx.fillStyle = "#fff";
-      ctx.fillText(String(score), W / 2, 92);
+      if (twoP) {
+        ctx.font = "bold 42px sans-serif";
+        ctx.strokeText(`P1 ${score}  ·  P2 ${score2}`, W / 2, 92);
+        ctx.fillStyle = "#fff";
+        ctx.fillText(`P1 ${score}  ·  P2 ${score2}`, W / 2, 92);
+      } else {
+        ctx.strokeText(String(score), W / 2, 92);
+        ctx.fillStyle = "#fff";
+        ctx.fillText(String(score), W / 2, 92);
+      }
     }
 
-    // bird (hidden on full splat? keep tumbling body visible)
-    const c = skin();
-    const flapWing = Math.sin(wingT) * (flapAge < 0.25 ? 1 : 0.45);
-    ctx.save();
-    ctx.translate(BX, birdY);
-    ctx.rotate(birdRot);
-    // tail
-    ctx.fillStyle = c.tail;
-    ctx.strokeStyle = "#1e3a24";
-    ctx.lineWidth = 2.5;
-    ctx.beginPath();
-    ctx.moveTo(-BR - 2, -2);
-    ctx.lineTo(-BR - 12, -8);
-    ctx.lineTo(-BR - 10, 4);
-    ctx.closePath();
-    ctx.fill();
-    ctx.stroke();
-    // body
-    const bodyGrad = ctx.createRadialGradient(-4, -6, 2, 0, 0, BR + 4);
-    bodyGrad.addColorStop(0, c.bodyHi);
-    bodyGrad.addColorStop(1, c.bodyLo);
-    ctx.fillStyle = bodyGrad;
-    ctx.beginPath();
-    ctx.arc(0, 0, BR, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.strokeStyle = "#1e3a24";
-    ctx.lineWidth = 3;
-    ctx.stroke();
-    // belly
-    ctx.fillStyle = c.belly;
-    ctx.beginPath();
-    ctx.ellipse(-1, 6, 8, 5.5, 0, 0, Math.PI * 2);
-    ctx.fill();
-    // wing
-    ctx.save();
-    ctx.translate(-4, 1);
-    ctx.rotate(-0.5 - flapWing * 0.7);
-    ctx.fillStyle = c.wing;
-    ctx.strokeStyle = "#1e3a24";
-    ctx.lineWidth = 2.5;
-    ctx.beginPath();
-    ctx.ellipse(0, 0, 10, 6, 0, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.stroke();
-    ctx.restore();
-    // penguin face patch for Waddles
-    if (c.penguin) {
-      ctx.fillStyle = "#ffffff";
+    // --- birds ---
+    function drawBird(by, rot, c, wingPhase, alpha) {
+      ctx.save();
+      ctx.globalAlpha = alpha === undefined ? 1 : alpha;
+      ctx.translate(BX, by);
+      ctx.rotate(rot);
+      ctx.fillStyle = c.tail;
+      ctx.strokeStyle = "#1e3a24";
+      ctx.lineWidth = 2.5;
       ctx.beginPath();
-      ctx.ellipse(4.5, -3.5, 7.5, 6.5, 0, 0, Math.PI * 2);
+      ctx.moveTo(-BR - 2, -2);
+      ctx.lineTo(-BR - 12, -8);
+      ctx.lineTo(-BR - 10, 4);
+      ctx.closePath();
       ctx.fill();
+      ctx.stroke();
+      const bodyGrad = ctx.createRadialGradient(-4, -6, 2, 0, 0, BR + 4);
+      bodyGrad.addColorStop(0, c.bodyHi);
+      bodyGrad.addColorStop(1, c.bodyLo);
+      ctx.fillStyle = bodyGrad;
+      ctx.beginPath();
+      ctx.arc(0, 0, BR, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = "#1e3a24";
+      ctx.lineWidth = 3;
+      ctx.stroke();
+      ctx.fillStyle = c.belly;
+      ctx.beginPath();
+      ctx.ellipse(-1, 6, 8, 5.5, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.save();
+      ctx.translate(-4, 1);
+      ctx.rotate(-0.5 - wingPhase * 0.7);
+      ctx.fillStyle = c.wing;
+      ctx.strokeStyle = "#1e3a24";
+      ctx.lineWidth = 2.5;
+      ctx.beginPath();
+      ctx.ellipse(0, 0, 10, 6, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+      ctx.restore();
+      if (c.penguin) {
+        ctx.fillStyle = "#ffffff";
+        ctx.beginPath();
+        ctx.ellipse(4.5, -3.5, 7.5, 6.5, 0, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.fillStyle = "#fff";
+      ctx.beginPath();
+      ctx.arc(5, -5, 5.2, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = "#1e3a24";
+      ctx.lineWidth = 2;
+      ctx.stroke();
+      ctx.fillStyle = "#1e3a24";
+      ctx.beginPath();
+      ctx.arc(7, -5, 2.4, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = "#fff";
+      ctx.beginPath();
+      ctx.arc(7.8, -5.8, 0.9, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = c.beak;
+      ctx.strokeStyle = "#1e3a24";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(11, -1);
+      ctx.lineTo(20, 2);
+      ctx.lineTo(11, 6);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+      ctx.restore();
     }
-    // eye
-    ctx.fillStyle = "#fff";
-    ctx.beginPath();
-    ctx.arc(5, -5, 5.2, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.strokeStyle = "#1e3a24";
-    ctx.lineWidth = 2;
-    ctx.stroke();
-    ctx.fillStyle = "#1e3a24";
-    ctx.beginPath();
-    ctx.arc(7, -5, 2.4, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.fillStyle = "#fff";
-    ctx.beginPath();
-    ctx.arc(7.8, -5.8, 0.9, 0, Math.PI * 2);
-    ctx.fill();
-    // beak
-    ctx.fillStyle = c.beak;
-    ctx.strokeStyle = "#1e3a24";
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.moveTo(11, -1);
-    ctx.lineTo(20, 2);
-    ctx.lineTo(11, 6);
-    ctx.closePath();
-    ctx.fill();
-    ctx.stroke();
-    ctx.restore();
+
+    const c1 = skin();
+    const flapWing = Math.sin(wingT) * (flapAge < 0.25 ? 1 : 0.45);
+    if (alive1 || mode !== "playing" || !twoP) {
+      drawBird(birdY, birdRot, c1, flapWing, alive1 ? 1 : 0.35);
+    }
+    if (twoP) {
+      const c2 = p2skin();
+      const flapWing2 = Math.sin(wingT + 0.9) * (flapAge2 < 0.25 ? 1 : 0.45);
+      if (alive2 || mode !== "playing") {
+        drawBird(birdY2, birdRot2, c2, flapWing2, alive2 ? 1 : 0.35);
+      }
+      // P-labels
+      ctx.save();
+      ctx.font = "bold 11px sans-serif";
+      ctx.textAlign = "center";
+      ctx.fillStyle = alive1 ? c1.dot : "rgba(0,0,0,0.35)";
+      ctx.fillText("P1", BX, birdY - BR - 10);
+      ctx.fillStyle = alive2 ? c2.dot : "rgba(0,0,0,0.35)";
+      ctx.fillText("P2", BX, birdY2 - BR - 10);
+      ctx.restore();
+    }
 
     // particles
     for (const p of particles) {
@@ -813,12 +985,22 @@ function startFlappy() {
       ctx.fillStyle = "rgba(20,16,12,0.45)";
       ctx.fillRect(0, 0, W, FLOOR);
       ctx.textAlign = "center";
-      ctx.fillStyle = "#ff6b6b";
-      ctx.font = "bold 54px sans-serif";
-      ctx.fillText("SPLAT", W / 2, H / 2 - 46);
-      ctx.fillStyle = "#fff";
-      ctx.font = "bold 20px sans-serif";
-      ctx.fillText(`Score ${score} · +${score} pts · Best ${Math.max(best, score)}`, W / 2, H / 2 - 10);
+      if (twoP) {
+        ctx.fillStyle = score > score2 ? "#f59f00" : score2 > score ? "#e64980" : "#fff3bf";
+        ctx.font = "bold 42px sans-serif";
+        const title = score > score2 ? "P1 WINS!" : score2 > score ? "P2 WINS!" : "DRAW!";
+        ctx.fillText(title, W / 2, H / 2 - 46);
+        ctx.fillStyle = "#fff";
+        ctx.font = "bold 18px sans-serif";
+        ctx.fillText(`P1 ${score}  ·  P2 ${score2}  ·  Best ${Math.max(best, score, score2)}`, W / 2, H / 2 - 10);
+      } else {
+        ctx.fillStyle = "#ff6b6b";
+        ctx.font = "bold 54px sans-serif";
+        ctx.fillText("SPLAT", W / 2, H / 2 - 46);
+        ctx.fillStyle = "#fff";
+        ctx.font = "bold 20px sans-serif";
+        ctx.fillText(`Score ${score} · +${score} pts · Best ${Math.max(best, score)}`, W / 2, H / 2 - 10);
+      }
       if (deadAge > 0.6) {
         ctx.fillStyle = "#69db7c";
         ctx.font = "bold 17px sans-serif";
@@ -833,8 +1015,13 @@ function startFlappy() {
       ctx.fillRect(0, 0, W, H);
     }
 
-    scoreEl.textContent = `Score: ${score}`;
-    bestEl.textContent = `Best: ${Math.max(best, score)}`;
+    if (twoP) {
+      scoreEl.textContent = `P1: ${score}`;
+      p2El.textContent = `P2: ${score2}`;
+    } else {
+      scoreEl.textContent = `Score: ${score}`;
+    }
+    bestEl.textContent = `Best: ${Math.max(best, score, twoP ? score2 : 0)}`;
     pointsEl.textContent = `Points: ${shop.points}`;
   }
 
@@ -849,26 +1036,60 @@ function startFlappy() {
   function keydown(e) {
     const tag = (e.target && e.target.tagName) || "";
     if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return;
-    if (e.code === "Space" || e.code === "ArrowUp" || e.code === "KeyW") {
+    if (twoP) {
+      if (e.code === "ArrowUp") {
+        e.preventDefault();
+        if (e.repeat) return;
+        birdAction(1);
+        return;
+      }
+      if (e.code === "Space" || e.code === "KeyW" || e.code === "KeyA") {
+        e.preventDefault();
+        if (e.repeat) return;
+        birdAction(0);
+        return;
+      }
+    } else {
+      if (e.code === "Space" || e.code === "ArrowUp" || e.code === "KeyW") {
+        e.preventDefault();
+        if (e.repeat) return;
+        primaryAction();
+        return;
+      }
+    }
+    if (e.code === "Enter" && mode !== "playing") {
       e.preventDefault();
-      if (e.repeat) return;
-      primaryAction();
-    } else if (e.code === "Enter" && mode !== "playing") {
       primaryAction();
     }
   }
 
+  function tapWhich(e) {
+    if (!twoP) return 0;
+    const rect = canvas.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    return x > rect.width / 2 ? 1 : 0;
+  }
+
   canvas.addEventListener("pointerdown", (e) => {
     e.preventDefault();
-    primaryAction();
+    if (twoP) birdAction(tapWhich(e));
+    else primaryAction();
   });
   flapBtn.addEventListener("click", (e) => {
     e.preventDefault();
-    primaryAction();
+    birdAction(0);
+  });
+  flapBtn2.addEventListener("click", (e) => {
+    e.preventDefault();
+    birdAction(1);
   });
   document.querySelector("#flRetry").addEventListener("click", () => {
     resetRun(false);
-    message.textContent = "Go! Flap through the gap.";
+    if (mode === "playing") {
+      birdAction(0);
+      if (twoP) flap(1);
+    }
+    message.textContent = twoP ? "Go! Last bird flying wins." : "Go! Flap through the gap.";
     showBanner("FLAP TO FLY");
     syncHud();
   });
@@ -899,6 +1120,8 @@ function startFlappy() {
     document.removeEventListener("keydown", cheatKeydown);
     document.removeEventListener("keydown", cheatEscapeCapture, true);
     removeCheatPopup();
+    // return HUD to shelf state if needed
+    scoreEl.textContent = "Score: 0";
   };
   bestEl.textContent = `Best: ${best}`;
   renderShop();

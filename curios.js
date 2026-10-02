@@ -26,6 +26,8 @@ function startMagnetMess() {
   let links = [];
   let raf = 0;
   let last = performance.now();
+  document.querySelector("#one1P").addEventListener("click", ()=>setTwoP(false));
+  document.querySelector("#one2P").addEventListener("click", ()=>setTwoP(true));
   const mag = { x: W / 2, y: H / 2, vx: 0, vy: 0, r: 26 };
   let grab = false;
   let grabDX = 0;
@@ -1671,12 +1673,19 @@ function startOneButton() {
       <div class="game-layout">
         <div class="game-topline">
           <span class="game-stat" id="oneScore">0 m</span>
+          <span class="game-stat" id="oneP2Score" style="display:none">P2: 0 m</span>
           <span class="game-stat" id="oneBest">Best: 0 m</span>
           <span class="game-stat" id="oneChaos">CHAOS 0%</span>
         </div>
+        <div class="tag-row" role="group" aria-label="Players">
+          <span class="tag-label">Players</span>
+          <button class="game-action tag-pick on" id="one1P" type="button">1 Player</button>
+          <button class="game-action tag-pick" id="one2P" type="button" title="P1: SPACE/W · P2: ↑ — last runner wins">2 Players</button>
+        </div>
         <canvas class="one-canvas" id="oneCanvas" width="720" height="480"></canvas>
         <div class="game-actions">
-          <button class="game-action one-press" id="oneBtn" type="button">PRESS</button>
+          <button class="game-action one-press" id="oneBtn" type="button">PRESS (P1)</button>
+          <button class="game-action one-press" id="oneBtn2" type="button" style="display:none">PRESS (P2)</button>
         </div>
         <p class="game-message" id="oneMsg">One button. Press to jump. That's the whole game. Probably.</p>
       </div>
@@ -1697,6 +1706,30 @@ function startOneButton() {
   const chaosLabel = document.querySelector("#oneChaos");
   const message = document.querySelector("#oneMsg");
   const pressBtn = document.querySelector("#oneBtn");
+  const pressBtn2 = document.querySelector("#oneBtn2");
+  const p2ScoreEl = document.querySelector("#oneP2Score");
+
+  // --- 2P: last runner standing. Two runners, shared chaos. ---
+  let twoP = false;
+  let alive1 = true;
+  let alive2 = false;
+  let distAtDeath1 = 0;
+  let distAtDeath2 = 0;
+  const PX1 = 130;
+  const PX2 = 190;
+  function pxFor(i){ return i===1 ? PX2 : (twoP ? PX1 : PX); }
+
+  function setTwoP(on){
+    twoP = on;
+    document.querySelector("#one1P").classList.toggle("on", !on);
+    document.querySelector("#one2P").classList.toggle("on", on);
+    p2ScoreEl.style.display = on ? "" : "none";
+    pressBtn.textContent = on ? "PRESS (P1)" : "PRESS";
+    pressBtn2.style.display = on ? "" : "none";
+    resetRun();
+    message.textContent = on ? "P1: SPACE/W · P2: ↑ — last runner wins!" : "One button. Press to jump. That's the whole game. Probably.";
+    syncHud();
+  }
 
   const QUIPS = [
     "SPLAT.",
@@ -1732,6 +1765,7 @@ function startOneButton() {
   let chaos = 0;
   let shownTiers = {};
   let player = { y: FLOOR - PH / 2, vy: 0, grounded: true, coyote: 0, buffer: 0 };
+  let player2 = { y: FLOOR - PH / 2, vy: 0, grounded: true, coyote: 0, buffer: 0 };
   let obstacles = [];
   let parts = [];
   let ghosts = [];
@@ -1778,30 +1812,37 @@ function startOneButton() {
     banner = { text, t: 2.4 };
   }
 
-  function jumpAttempt() {
+  function jumpAttempt(idx) {
+    const who = idx===1 ? 1 : 0;
+    const pl = who===1 ? player2 : player;
+    const alive = who===1 ? alive2 : alive1;
+    if (twoP && !alive) return;
     if (dead || frozen) return;
-    if (player.grounded || player.coyote > 0) {
-      player.vy = -950 * g * jumpPower;
+    if (pl.grounded || pl.coyote > 0) {
+      pl.vy = -950 * g * jumpPower;
       jumpPower = 1;
-      player.grounded = false;
-      player.coyote = 0;
-      player.buffer = 0;
+      pl.grounded = false;
+      pl.coyote = 0;
+      pl.buffer = 0;
     } else {
-      player.buffer = 0.12;
+      pl.buffer = 0.12;
     }
   }
 
-  function pressDown() {
+  function pressDown(idx) {
+    const who = idx===1 ? 1 : 0;
+    if (twoP && !(who===0 ? alive1 : alive2)) return;
     if (dead || frozen) return;
     const now = performance.now();
     if (delayT > 0) {
-      delayQueue.push(now + 500);
+      delayQueue.push({ t: now + 500, who });
       return;
     }
     if (reverseT > 0) {
-      if (!player.grounded) {
-        player.vy = 1400 * g;
-        player.buffer = 0;
+      const pl = who===1 ? player2 : player;
+      if (!pl.grounded) {
+        pl.vy = 1400 * g;
+        pl.buffer = 0;
       } else if (now - lastDodgeMsg > 2500) {
         lastDodgeMsg = now;
         message.textContent = "no. down, not up.";
@@ -1809,8 +1850,9 @@ function startOneButton() {
       return;
     }
     if (pressMode === "red") {
-      if (!player.grounded) {
-        player.vy *= 0.3;
+      const pl = who===1 ? player2 : player;
+      if (!pl.grounded) {
+        pl.vy *= 0.3;
         cam.shake = Math.min(14, cam.shake + 6);
       } else if (now - lastDodgeMsg > 2500) {
         lastDodgeMsg = now;
@@ -1821,7 +1863,7 @@ function startOneButton() {
     if (pressMode === "blue") {
       if (now - lastTapT < 350) {
         tapCount = 0;
-        jumpAttempt();
+        jumpAttempt(who);
       } else {
         tapCount = 1;
         if (now - lastDodgeMsg > 2500) {
@@ -1838,7 +1880,7 @@ function startOneButton() {
       lastTapT = now;
       if (tapCount >= 3) {
         tapCount = 0;
-        jumpAttempt();
+        jumpAttempt(who);
       } else if (now - lastDodgeMsg > 2500) {
         lastDodgeMsg = now;
         message.textContent = "three. THREE.";
@@ -1850,10 +1892,11 @@ function startOneButton() {
       holdT = 0;
       return;
     }
-    jumpAttempt();
+    jumpAttempt(who);
   }
 
-  function pressUp() {
+  function pressUp(idx) {
+    const who = idx===1 ? 1 : 0;
     if (!holding) return;
     holding = false;
     if (pressMode !== "yellow" || dead || frozen) {
@@ -1861,7 +1904,7 @@ function startOneButton() {
       return;
     }
     jumpPower = holdT >= 0.45 ? 1.55 : 0.45;
-    jumpAttempt();
+    jumpAttempt(who);
   }
 
   function burst(x, y, n, color) {
@@ -1872,7 +1915,51 @@ function startOneButton() {
     }
   }
 
-  function die() {
+  function syncHudOne(){
+    const d = Math.floor(dist);
+    if (twoP) {
+      scoreLabel.textContent = `P1: ${alive1 ? d : distAtDeath1} m`;
+      p2ScoreEl.textContent = `P2: ${alive2 ? d : distAtDeath2} m`;
+    } else {
+      scoreLabel.textContent = `${d} m`;
+    }
+    chaosLabel.textContent = chaosLabelText();
+  }
+
+  function finishMatchOne(){
+    dead = true;
+    deadT = 1.4;
+    const d1 = distAtDeath1 || Math.floor(dist);
+    const d2 = distAtDeath2 || Math.floor(dist);
+    let title;
+    if (d1 > d2) title = "P1 WINS!";
+    else if (d2 > d1) title = "P2 WINS!";
+    else title = "DRAW!";
+    message.textContent = `${title} P1 ${d1} m · P2 ${d2} m · Best ${best} m.`;
+    bestLabel.textContent = `Best: ${best} m`;
+    burst(PX1, player.y, 12, "#f59f00");
+    burst(PX2, player2.y, 12, "#74c0fc");
+    setSnapshot({ mode: "ended", game: "One Button", dist: Math.max(d1,d2), best, chaos: Math.floor(chaos), twoP:true, p1:d1, p2:d2 });
+  }
+
+  function die(idx) {
+    const who = (idx===1 ? 1 : 0);
+    if (twoP) {
+      const d = Math.floor(dist);
+      if (who===1) {
+        if (!alive2) return;
+        alive2 = false; distAtDeath2 = d;
+        burst(PX2, player2.y, 18, "#74c0fc");
+        if (alive1) { message.textContent = "P2 wiped! P1 keeps running…"; syncHudOne(); return; }
+      } else {
+        if (!alive1) return;
+        alive1 = false; distAtDeath1 = d;
+        burst(PX1, player.y, 18, "#ff6b6b");
+        if (alive2) { message.textContent = "P1 wiped! P2 keeps running…"; syncHudOne(); return; }
+      }
+      finishMatchOne();
+      return;
+    }
     if (dead) return;
     dead = true;
     deadT = 1.4;
@@ -1887,6 +1974,10 @@ function startOneButton() {
 
   function resetRun() {
     dead = false;
+    alive1 = true;
+    alive2 = twoP;
+    distAtDeath1 = 0;
+    distAtDeath2 = 0;
     dist = 0;
     speed = 280;
     g = 1;
@@ -1908,7 +1999,6 @@ function startOneButton() {
     holding = false;
     jumpPower = 1;
     tapCount = 0;
-    delayQueue = [];
     delayQueue = [];
     delayT = 0;
     reverseT = 0;
@@ -1932,12 +2022,14 @@ function startOneButton() {
     cam.shake = 0;
     clearDecoys();
     player = { y: FLOOR - PH / 2, vy: 0, grounded: true, coyote: 0, buffer: 0 };
+    player2 = { y: FLOOR - PH / 2, vy: 0, grounded: true, coyote: 0, buffer: 0 };
     pressBtn.style.transform = "";
     pressBtn.style.opacity = "";
     pressBtn.style.rotate = "";
+    if (pressBtn2) { pressBtn2.style.transform = ""; pressBtn2.style.opacity = ""; pressBtn2.style.rotate = ""; }
     setPressLook();
     message.classList.remove("tshake");
-    message.textContent = "One button. Press to jump. That's the whole game. Probably.";
+    message.textContent = twoP ? "P1: SPACE/W · P2: ↑ — last runner wins!" : "One button. Press to jump. That's the whole game. Probably.";
   }
 
   function chaosTier() {
@@ -2023,23 +2115,26 @@ function startOneButton() {
     return { x: ox, y: by, w: o.w, h: o.h };
   }
 
-  function collides(o) {
+  function collides(o, idx) {
+    const who = idx === 1 ? 1 : 0;
+    const px = who === 1 ? PX2 : pxFor(who);
+    const pl = who === 1 ? player2 : player;
     if (o.kind === "fake" || o.kind === "fakepit") return false;
     if (o.kind === "block") {
       const r = blockRect(o);
-      return PX + PW / 2 > r.x && PX - PW / 2 < r.x + r.w &&
-        player.y + PH / 2 > r.y && player.y - PH / 2 < r.y + r.h;
+      return px + PW / 2 > r.x && px - PW / 2 < r.x + r.w &&
+        pl.y + PH / 2 > r.y && pl.y - PH / 2 < r.y + r.h;
     }
     if (o.kind === "fall") {
-      return PX + PW / 2 > o.x && PX - PW / 2 < o.x + o.w &&
-        player.y + PH / 2 > o.y && player.y - PH / 2 < o.y + o.h;
+      return px + PW / 2 > o.x && px - PW / 2 < o.x + o.w &&
+        pl.y + PH / 2 > o.y && pl.y - PH / 2 < o.y + o.h;
     }
     if (o.kind === "fly") {
       const fy = flyY(o);
-      const cx = Math.max(o.x - o.r, Math.min(PX, o.x + o.r));
-      const cy = Math.max(fy - o.r, Math.min(player.y, fy + o.r));
-      const dx = PX - cx;
-      const dy = player.y - cy;
+      const cx = Math.max(o.x - o.r, Math.min(px, o.x + o.r));
+      const cy = Math.max(fy - o.r, Math.min(pl.y, fy + o.r));
+      const dx = px - cx;
+      const dy = pl.y - cy;
       return dx * dx + dy * dy < (o.r + 12) * (o.r + 12) * 0.5;
     }
     return false;
@@ -2269,9 +2364,10 @@ function startOneButton() {
     if (holding && pressMode === "yellow") holdT += dt;
 
     const nowMs = performance.now();
-    while (delayQueue.length && delayQueue[0] <= nowMs) {
-      delayQueue.shift();
-      jumpAttempt();
+    while (delayQueue.length && (typeof delayQueue[0]==="number" ? delayQueue[0] <= nowMs : delayQueue[0].t <= nowMs)) {
+      const item = delayQueue.shift();
+      const who = typeof item==="number" ? 0 : item.who;
+      jumpAttempt(who);
     }
     if (reverseT > 0) reverseT -= dt;
     if (tier >= 4 && reverseT <= 0 && Math.random() < dt * 0.05) {
@@ -2346,22 +2442,34 @@ function startOneButton() {
     if (flashWhite > 0) flashWhite -= dt;
 
     const FY = FLOOR + (tier >= 1 ? Math.sin(time * 0.8) * 10 : 0);
-    player.vy += 2600 * g * gravMul * dt;
-    player.y += player.vy * dt;
-    const groundY = g === 1 ? FY : CEIL;
-    const supported = overFloor(PX);
-    if (supported && (g === 1 ? player.y + PH / 2 >= groundY : player.y - PH / 2 <= groundY)) {
-      player.y = g === 1 ? groundY - PH / 2 : groundY + PH / 2;
-      player.vy = 0;
-      player.grounded = true;
-      player.coyote = 0.08;
-    } else {
-      player.grounded = false;
-      player.coyote -= dt;
+    function stepPlayer(pl, px){
+      pl.vy += 2600 * g * gravMul * dt;
+      pl.y += pl.vy * dt;
+      const groundY = g === 1 ? FY : CEIL;
+      const supported = overFloor(px);
+      if (supported && (g === 1 ? pl.y + PH / 2 >= groundY : pl.y - PH / 2 <= groundY)) {
+        pl.y = g === 1 ? groundY - PH / 2 : groundY + PH / 2;
+        pl.vy = 0;
+        pl.grounded = true;
+        pl.coyote = 0.08;
+      } else {
+        pl.grounded = false;
+        pl.coyote -= dt;
+      }
+      if (pl.buffer > 0) {
+        pl.buffer -= dt;
+        if (pl.grounded) {
+          // need who for jumpAttempt
+          const who = pl===player2 ? 1 : 0;
+          jumpAttempt(who);
+        }
+      }
     }
-    if (player.buffer > 0) {
-      player.buffer -= dt;
-      if (player.grounded) jumpAttempt();
+    if (!twoP) {
+      stepPlayer(player, PX);
+    } else {
+      if (alive1) stepPlayer(player, PX1);
+      if (alive2) stepPlayer(player2, PX2);
     }
 
     for (let i = obstacles.length - 1; i >= 0; i--) {
@@ -2385,18 +2493,24 @@ function startOneButton() {
         obstacles.splice(i, 1);
         continue;
       }
-      if (collides(o)) {
-        die();
-        return;
+      if (!twoP) {
+        if (collides(o, 0)) { die(0); return; }
+      } else {
+        let killed = false;
+        if (alive1 && collides(o, 0)) { die(0); killed = true; if (!alive1 && !alive2) return; }
+        if (alive2 && collides(o, 1)) { die(1); killed = true; if (!alive1 && !alive2) return; }
       }
     }
-    if (g === 1 && player.y - PH / 2 > H + 30) {
-      die();
-      return;
+    function outOfBounds(pl){
+      if (g === 1 && pl.y - PH / 2 > H + 30) return true;
+      if (g === -1 && pl.y + PH / 2 < -30) return true;
+      return false;
     }
-    if (g === -1 && player.y + PH / 2 < -30) {
-      die();
-      return;
+    if (!twoP) {
+      if (outOfBounds(player)) { die(0); return; }
+    } else {
+      if (alive1 && outOfBounds(player)) { die(0); if (!alive1 && !alive2) return; }
+      if (alive2 && outOfBounds(player2)) { die(1); if (!alive1 && !alive2) return; }
     }
     nextSpawn -= speed * dt;
     if (nextSpawn <= 0) {
@@ -2556,28 +2670,43 @@ function startOneButton() {
       ctx.fillRect(gh.x - PW / 2, gh.y - PH / 2, PW, PH);
     }
     ctx.globalAlpha = 1;
-    ctx.save();
-    ctx.translate(PX, player.y);
-    if (g === -1) ctx.rotate(Math.PI);
-    if (dead) ctx.rotate(time * 9);
-    ctx.fillStyle = "#ff6b6b";
-    ctx.strokeStyle = "#0f1320";
-    ctx.lineWidth = 3;
-    ctx.beginPath();
-    ctx.roundRect(-PW / 2, -PH / 2, PW, PH, 8);
-    ctx.fill();
-    ctx.stroke();
-    ctx.fillStyle = "#fff";
-    ctx.beginPath();
-    ctx.arc(-4, -4, 4.5, 0, Math.PI * 2);
-    ctx.arc(8, -4, 4.5, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.fillStyle = "#0f1320";
-    ctx.beginPath();
-    ctx.arc(-3, -4, 2, 0, Math.PI * 2);
-    ctx.arc(9, -4, 2, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.restore();
+    function drawRunner(px, pl, color, label, isDead){
+      if (twoP && ((label==="P1" && !alive1) || (label==="P2" && !alive2)) && !dead) return;
+      ctx.save();
+      ctx.translate(px, pl.y);
+      if (g === -1) ctx.rotate(Math.PI);
+      if (isDead) ctx.rotate(time * 9);
+      ctx.fillStyle = color;
+      ctx.strokeStyle = "#0f1320";
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.roundRect(-PW / 2, -PH / 2, PW, PH, 8);
+      ctx.fill();
+      ctx.stroke();
+      ctx.fillStyle = "#fff";
+      ctx.beginPath();
+      ctx.arc(-4, -4, 4.5, 0, Math.PI * 2);
+      ctx.arc(8, -4, 4.5, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = "#0f1320";
+      ctx.beginPath();
+      ctx.arc(-3, -4, 2, 0, Math.PI * 2);
+      ctx.arc(9, -4, 2, 0, Math.PI * 2);
+      ctx.fill();
+      if (twoP) {
+        ctx.fillStyle = "#fff";
+        ctx.font = "bold 9px sans-serif";
+        ctx.textAlign = "center";
+        ctx.fillText(label, 0, -PH/2 - 8);
+      }
+      ctx.restore();
+    }
+    if (!twoP) {
+      drawRunner(PX, player, "#ff6b6b", "P1", dead);
+    } else {
+      drawRunner(PX1, player, "#ff8f8f", "P1", !alive1);
+      drawRunner(PX2, player2, "#74c0fc", "P2", !alive2);
+    }
     for (const p of parts) {
       ctx.globalAlpha = Math.max(0, p.life / p.max);
       ctx.fillStyle = p.color;
@@ -2631,40 +2760,81 @@ function startOneButton() {
 
   let lastPtr = 0;
   function keydown(e) {
+    const tag = (e.target && e.target.tagName) || "";
+    if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return;
+    if (twoP) {
+      if (e.code === "Space" || e.code === "KeyW") {
+        e.preventDefault();
+        if (e.type === "keyup") { pressUp(0); return; }
+        if (e.repeat) return;
+        pressDown(0);
+        return;
+      }
+      if (e.code === "ArrowUp") {
+        e.preventDefault();
+        if (e.type === "keyup") { pressUp(1); return; }
+        if (e.repeat) return;
+        pressDown(1);
+        return;
+      }
+      if (e.code === "Enter" && !dead) { e.preventDefault(); pressDown(0); return; }
+      return;
+    }
     if (e.code === "Space" || e.code === "ArrowUp" || e.code === "KeyW") {
       e.preventDefault();
       if (e.type === "keyup") {
-        pressUp();
+        pressUp(0);
         return;
       }
       if (e.repeat) return;
-      pressDown();
+      pressDown(0);
     }
   }
   function keyup(e) {
+    const tag = (e.target && e.target.tagName) || "";
+    if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return;
+    if (twoP) {
+      if (e.code === "Space" || e.code === "KeyW") pressUp(0);
+      if (e.code === "ArrowUp") pressUp(1);
+      return;
+    }
     if (e.code === "Space" || e.code === "ArrowUp" || e.code === "KeyW") {
-      pressUp();
+      pressUp(0);
     }
   }
 
+  function tapWhichOne(e){
+    const rect = canvas.getBoundingClientRect();
+    return (e.clientX - rect.left) > rect.width/2 ? 1 : 0;
+  }
   canvas.addEventListener("pointerdown", (e) => {
     e.preventDefault();
     lastPtr = performance.now();
-    pressDown();
+    if (twoP) pressDown(tapWhichOne(e)); else pressDown(0);
   });
-  canvas.addEventListener("pointerup", () => pressUp());
-  canvas.addEventListener("pointercancel", () => pressUp());
+  canvas.addEventListener("pointerup", (e) => {
+    if (twoP) pressUp(tapWhichOne(e)); else pressUp(0);
+  });
+  canvas.addEventListener("pointercancel", () => { if (twoP) { pressUp(0); pressUp(1); } else pressUp(0); });
   pressBtn.addEventListener("pointerdown", (e) => {
     e.preventDefault();
     lastPtr = performance.now();
-    pressDown();
+    if (twoP) pressDown(0); else pressDown(0);
   });
-  pressBtn.addEventListener("pointerup", () => pressUp());
-  pressBtn.addEventListener("pointercancel", () => pressUp());
+  pressBtn.addEventListener("pointerup", () => pressUp(0));
+  pressBtn.addEventListener("pointercancel", () => pressUp(0));
+  pressBtn2.addEventListener("pointerdown", (e) => { e.preventDefault(); lastPtr = performance.now(); pressDown(1); });
+  pressBtn2.addEventListener("pointerup", () => pressUp(1));
+  pressBtn2.addEventListener("pointercancel", () => pressUp(1));
+  pressBtn2.addEventListener("click", () => {
+    if (performance.now() - lastPtr < 600) return;
+    pressDown(1);
+    setTimeout(()=>pressUp(1), 120);
+  });
   pressBtn.addEventListener("click", () => {
     if (performance.now() - lastPtr < 600) return;
-    pressDown();
-    pressUp();
+    pressDown(0);
+    setTimeout(()=>pressUp(0), 120);
   });
   pressBtn.addEventListener("pointerenter", () => {
     if (chaos < 60) return;

@@ -6,14 +6,21 @@ function startSpider() {
       <div class="game-layout">
         <div class="game-topline">
           <span class="game-stat" id="spDist">0 m</span>
+          <span class="game-stat" id="spP2Dist" style="display:none">P2: 0 m</span>
           <span class="game-stat" id="spScore">Score: 0</span>
           <span class="game-stat" id="spCombo">Combo x0</span>
           <span class="game-stat" id="spBest">Best: 0 m</span>
         </div>
+        <div class="tag-row" role="group" aria-label="Players">
+          <span class="tag-label">Players</span>
+          <button class="game-action tag-pick on" id="sp1P" type="button">1 Player</button>
+          <button class="game-action tag-pick" id="sp2P" type="button" title="P1: SPACE/W · P2: ArrowUp — last spider standing wins">2 Players</button>
+        </div>
         <canvas class="spider-canvas" id="spCanvas" width="720" height="480"></canvas>
         <p class="game-message" id="spMsg">SPACE / TAP to teleport between floor and ceiling. Dodge everything.</p>
         <div class="game-actions">
-          <button class="game-action one-press" id="spBtn" type="button">TELEPORT</button>
+          <button class="game-action one-press" id="spBtn" type="button">TELEPORT (P1)</button>
+          <button class="game-action one-press" id="spBtn2" type="button" style="display:none">TELEPORT (P2)</button>
           <button class="game-action" id="spRetry" type="button">Restart</button>
         </div>
       </div>
@@ -30,11 +37,41 @@ function startSpider() {
   const PR = 13;
 
   const distEl = document.querySelector("#spDist");
+  const p2DistEl = document.querySelector("#spP2Dist");
   const scoreEl = document.querySelector("#spScore");
   const comboEl = document.querySelector("#spCombo");
   const bestEl = document.querySelector("#spBest");
   const message = document.querySelector("#spMsg");
   const teleportBtn = document.querySelector("#spBtn");
+  const teleportBtn2 = document.querySelector("#spBtn2");
+
+  // --- 2P: last spider standing. Two spiders share the same hurtling world. ---
+  let twoP = false;
+  let alive1 = true;
+  let alive2 = false;
+  let lane2 = 0;
+  let teleFlash2 = 0;
+  let zap2 = null;
+  let distAtDeath1 = 0;
+  let distAtDeath2 = 0;
+  let PX2 = 250;
+  const PX1 = 150;
+
+  function setTwoP(on) {
+    twoP = on;
+    document.querySelector("#sp1P").classList.toggle("on", !on);
+    document.querySelector("#sp2P").classList.toggle("on", on);
+    p2DistEl.style.display = on ? "" : "none";
+    teleportBtn.textContent = on ? "TELEPORT (P1)" : "TELEPORT";
+    teleportBtn2.style.display = on ? "" : "none";
+    resetRun(true);
+    message.textContent = on
+      ? "P1: SPACE/W or tap LEFT half · P2: ↑ or tap RIGHT half. Last spider wins!"
+      : "SPACE / TAP to teleport between floor and ceiling. Dodge everything.";
+    syncHud();
+  }
+  document.querySelector("#sp1P").addEventListener("click", () => setTwoP(false));
+  document.querySelector("#sp2P").addEventListener("click", () => setTwoP(true));
 
   const QUIPS = [
     "SPLAT. The ceiling sends regards.",
@@ -83,6 +120,7 @@ function startSpider() {
   let shown = {};
   let teleportFlash = 0;
 
+  function pxFor(idx) { return idx === 1 ? PX2 : (twoP ? PX1 : PX); }
   function laneY(l) {
     return l === 0 ? FLOOR - PR - 2 : CEIL + PR + 2;
   }
@@ -123,7 +161,12 @@ function startSpider() {
 
   function syncHud() {
     const d = distM();
-    distEl.textContent = `${d} m`;
+    if (twoP) {
+      distEl.textContent = `P1: ${alive1 ? d : distAtDeath1} m`;
+      p2DistEl.textContent = `P2: ${alive2 ? d : distAtDeath2} m`;
+    } else {
+      distEl.textContent = `${d} m`;
+    }
     scoreEl.textContent = `Score: ${score}`;
     comboEl.textContent = `Combo x${combo}`;
     bestEl.textContent = `Best: ${Math.max(best, d)} m`;
@@ -134,7 +177,10 @@ function startSpider() {
       best: Math.max(best, d),
       score,
       combo,
-      perfects
+      perfects,
+      twoP,
+      p1Alive: alive1,
+      p2Alive: twoP ? alive2 : undefined
     });
   }
 
@@ -142,10 +188,16 @@ function startSpider() {
     distPx = 0;
     speed = 300;
     lane = 0;
+    lane2 = 0;
+    alive1 = true;
+    alive2 = twoP;
+    distAtDeath1 = 0;
+    distAtDeath2 = 0;
     obstacles = [];
     particles = [];
     popups = [];
     zap = null;
+    zap2 = null;
     shake = 0;
     flash = 0;
     nextSpawn = 560;
@@ -158,14 +210,52 @@ function startSpider() {
     banner = null;
     shown = {};
     teleportFlash = 0;
+    teleFlash2 = 0;
     mode = toReady ? "ready" : "playing";
     deadT = 0;
-    if (toReady) message.textContent = "SPACE / TAP to teleport between floor and ceiling. Dodge everything.";
+    if (toReady) message.textContent = twoP
+      ? "P1: SPACE/W or tap LEFT half · P2: ↑ or tap RIGHT half. Last spider wins!"
+      : "SPACE / TAP to teleport between floor and ceiling. Dodge everything.";
     syncHud();
   }
 
-  function die(reason) {
+  function finishMatch2P() {
+    mode = "dead";
+    deadT = 1.7;
+    const d1 = distAtDeath1 || distM();
+    const d2 = distAtDeath2 || distM();
+    let title;
+    if (d1 > d2) title = "P1 WINS!";
+    else if (d2 > d1) title = "P2 WINS!";
+    else title = "DRAW!";
+    shake = 14;
+    flash = 0.45;
+    message.textContent = `${title} P1 ${d1} m · P2 ${d2} m · Combo x${combo} · Score ${score}.`;
+    syncHud();
+  }
+
+  function die(reason, idx) {
     if (mode !== "playing") return;
+    if (twoP && (idx === 0 || idx === 1)) {
+      const d = distM();
+      if (idx === 1) {
+        if (!alive2) return;
+        alive2 = false;
+        distAtDeath2 = d;
+        burst(PX2, laneY(lane2), 22, "#74c0fc", -120);
+        popup(PX2, laneY(lane2) - 24, "P2 OUT!", "#74c0fc");
+        if (alive1) { message.textContent = "P2 splatted! P1 still running…"; syncHud(); return; }
+      } else {
+        if (!alive1) return;
+        alive1 = false;
+        distAtDeath1 = d;
+        burst(PX1, laneY(lane), 22, "#ff6b6b", -120);
+        popup(PX1, laneY(lane) - 24, "P1 OUT!", "#ff6b6b");
+        if (alive2) { message.textContent = "P1 splatted! P2 still running…"; syncHud(); return; }
+      }
+      finishMatch2P();
+      return;
+    }
     mode = "dead";
     deadT = 1.7;
     const d = distM();
@@ -174,8 +264,8 @@ function startSpider() {
     if (combo > bestCombo) bestCombo = combo;
     if (score > bestScore) bestScore = score;
     saveExtra();
-    burst(PX, laneY(lane), 22, "#ff6b6b", -120);
-    burst(PX, laneY(lane), 10, "#fff8ea", -60);
+    burst(pxFor(0), laneY(lane), 22, "#ff6b6b", -120);
+    burst(pxFor(0), laneY(lane), 10, "#fff8ea", -60);
     shake = 14;
     flash = 0.45;
     message.textContent = `${reason || QUIPS[Math.floor(Math.random() * QUIPS.length)]}` +
@@ -249,10 +339,11 @@ function startSpider() {
     }
   }
 
-  function gateAtPlayer() {
+  function gateAtPlayer(idx) {
+    const px = pxFor(idx);
     for (const o of obstacles) {
       if (o.kind !== "gate") continue;
-      if (PX + 10 > o.x && PX - 10 < o.x + o.w) return o;
+      if (px + 10 > o.x && px - 10 < o.x + o.w) return o;
     }
     return null;
   }
@@ -270,38 +361,42 @@ function startSpider() {
     return bestObs;
   }
 
-  function teleport() {
+  function teleport(idx) {
     if (mode !== "playing") return;
-    // walls block the teleport path itself
-    if (gateAtPlayer()) {
-      die("Bonk. Can't teleport through a wall.");
+    const who = idx === 1 ? 1 : 0;
+    if (twoP && !(who === 0 ? alive1 : alive2)) return;
+    if (gateAtPlayer(who)) {
+      die("Bonk. Can't teleport through a wall.", who);
       return;
     }
-    const oldLane = lane;
+    const oldLane = who === 1 ? lane2 : lane;
     const threat = nearestThreatOn(oldLane);
-    lane = oldLane === 0 ? 1 : 0;
+    const px = pxFor(who);
+    if (who === 1) lane2 = oldLane === 0 ? 1 : 0;
+    else lane = oldLane === 0 ? 1 : 0;
+    const newLane = who === 1 ? lane2 : lane;
     const fromY = laneY(oldLane);
-    const toY = laneY(lane);
+    const toY = laneY(newLane);
     combo += 1;
-    teleportFlash = 0.15;
-    zap = { x: PX, y1: fromY, y2: toY, t: 0.16 };
-    burst(PX, fromY, 8, "#43c6ac", 0);
-    burst(PX, toY, 10, "#fff8ea", 0);
+    if (who === 1) { teleFlash2 = 0.15; zap2 = { x: px, y1: fromY, y2: toY, t: 0.16 }; }
+    else { teleportFlash = 0.15; zap = { x: px, y1: fromY, y2: toY, t: 0.16 }; }
+    burst(px, fromY, 8, "#43c6ac", 0);
+    burst(px, toY, 10, "#fff8ea", 0);
 
     if (threat) {
-      const dx = threat.x - PX;
+      const dx = threat.x - px;
       if (dx >= -24 && dx <= 85) {
         score += 100;
         perfects += 1;
-        popup(PX + 30, (fromY + toY) / 2, "PERFECT +100", "#f6c445");
+        popup(px + 30, (fromY + toY) / 2, "PERFECT +100", "#f6c445");
         shake = Math.max(shake, 4);
       } else if (dx > 85 && dx <= 180) {
         score += 25;
         goods += 1;
-        popup(PX + 30, toY - 24, "GOOD +25", "#43c6ac");
+        popup(px + 30, toY - 24, "GOOD +25", "#43c6ac");
       } else if (dx > 180 && dx <= 330) {
         score += 10;
-        popup(PX + 30, toY - 24, "+10", "#fff8ea");
+        popup(px + 30, toY - 24, "+10", "#fff8ea");
       }
     }
     if (combo > bestCombo) bestCombo = combo;
@@ -309,16 +404,21 @@ function startSpider() {
     syncHud();
   }
 
-  function primaryAction() {
+  function primaryAction(idx) {
     if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
+    const who = idx === 1 ? 1 : 0;
     if (mode === "ready") {
       resetRun(false);
       message.textContent = "Go! Teleport before the spikes.";
       showBanner("FLOOR → CEILING → FLOOR");
       syncHud();
-    } else if (mode === "playing") {
-      teleport();
-    } else if (mode === "dead" && deadT < 1.0) {
+      return;
+    }
+    if (mode === "playing") {
+      teleport(who);
+      return;
+    }
+    if (mode === "dead" && deadT < 1.0) {
       resetRun(false);
       message.textContent = "Go! Teleport before the spikes.";
       syncHud();
@@ -348,9 +448,14 @@ function startSpider() {
       if (banner.t <= 0) banner = null;
     }
     if (teleportFlash > 0) teleportFlash -= dt;
+    if (teleFlash2 > 0) teleFlash2 -= dt;
     if (zap) {
       zap.t -= dt;
       if (zap.t <= 0) zap = null;
+    }
+    if (zap2) {
+      zap2.t -= dt;
+      if (zap2.t <= 0) zap2 = null;
     }
     shake = Math.max(0, shake - dt * 30);
     if (flash > 0) flash -= dt;
@@ -394,21 +499,41 @@ function startSpider() {
       const o = obstacles[i];
       o.x -= speed * dt;
       if (o.x + (o.w || 40) < -60) {
-        // dodged it
         if ((o.kind === "spike") && !o.counted) {
           o.counted = true;
           const safeSide = o.side === 1 ? 0 : 1;
-          if (lane === safeSide) dodged += 1;
+          if (!twoP) { if (lane === safeSide) dodged += 1; }
+          else {
+            if (alive1 && lane === safeSide) dodged += 1;
+            if (alive2 && lane2 === safeSide) dodged += 1;
+          }
         }
         obstacles.splice(i, 1);
         continue;
       }
       if (o.kind === "spike") {
         const top = o.side === 1 ? FLOOR - 30 : CEIL;
-        if (PX + PR - 4 > o.x + 4 && PX - PR + 4 < o.x + o.w - 4 &&
-            laneY(lane) + PR > top && laneY(lane) - PR < top + 30) {
-          die();
-          return;
+        if (twoP) {
+          let killedAny = false;
+          if (alive1 && pxFor(0) + PR - 4 > o.x + 4 && pxFor(0) - PR + 4 < o.x + o.w - 4 &&
+              laneY(lane) + PR > top && laneY(lane) - PR < top + 30) {
+            die(undefined, 0);
+            killedAny = true;
+            if (!alive1 && !alive2) return;
+          }
+          if (alive2 && pxFor(1) + PR - 4 > o.x + 4 && pxFor(1) - PR + 4 < o.x + o.w - 4 &&
+              laneY(lane2) + PR > top && laneY(lane2) - PR < top + 30) {
+            die(undefined, 1);
+            killedAny = true;
+            if (!alive1 && !alive2) return;
+          }
+          if (killedAny && !alive1 && !alive2) return;
+        } else {
+          if (PX + PR - 4 > o.x + 4 && PX - PR + 4 < o.x + o.w - 4 &&
+              laneY(lane) + PR > top && laneY(lane) - PR < top + 30) {
+            die();
+            return;
+          }
         }
       }
     }
@@ -531,28 +656,92 @@ function startSpider() {
       }
     }
 
-    // teleport zap
-    if (zap) {
-      const a = Math.max(0, zap.t / 0.16);
-      const grad = ctx.createLinearGradient(0, zap.y1, 0, zap.y2);
+    // teleport zaps
+    function drawZap(z) {
+      if (!z) return;
+      const a = Math.max(0, z.t / 0.16);
+      const grad = ctx.createLinearGradient(0, z.y1, 0, z.y2);
       grad.addColorStop(0, `rgba(67,198,172,${(0.9 * a).toFixed(2)})`);
       grad.addColorStop(1, `rgba(246,196,69,${(0.9 * a).toFixed(2)})`);
       ctx.strokeStyle = grad;
       ctx.lineWidth = 5;
       ctx.beginPath();
-      ctx.moveTo(zap.x, zap.y1);
-      ctx.lineTo(zap.x, zap.y2);
+      ctx.moveTo(z.x, z.y1);
+      ctx.lineTo(z.x, z.y2);
       ctx.stroke();
       ctx.strokeStyle = `rgba(255,255,255,${(0.8 * a).toFixed(2)})`;
       ctx.lineWidth = 2;
       ctx.beginPath();
-      ctx.moveTo(zap.x, zap.y1);
-      ctx.lineTo(zap.x, zap.y2);
+      ctx.moveTo(z.x, z.y1);
+      ctx.lineTo(z.x, z.y2);
       ctx.stroke();
     }
+    drawZap(zap);
+    drawZap(zap2);
 
-    // spider
+    // spider(s)
+    function drawSpider(px, laneVal, flashVal, isP2) {
+      const y = laneY(laneVal);
+      const flip = laneVal === 1 ? -1 : 1;
+      ctx.save();
+      ctx.translate(px, y);
+      ctx.scale(1, flip);
+      if (flashVal > 0) ctx.globalAlpha = 0.6 + Math.random() * 0.4;
+      ctx.strokeStyle = "#0f1320";
+      ctx.lineWidth = 3;
+      ctx.lineCap = "round";
+      const sc = Math.sin(time * 22 + (isP2 ? 1.1 : 0)) * 4;
+      for (let l = -1; l <= 1; l++) {
+        ctx.beginPath();
+        ctx.moveTo(-6 + l * 7, 2);
+        ctx.lineTo(-11 + l * 7, 10 + (l % 2 === 0 ? sc : -sc));
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(6 - l * 1 + l * 6 * 0.2, 2);
+        ctx.lineTo(11 + l * 2, 10 + (l % 2 === 0 ? -sc : sc));
+        ctx.stroke();
+      }
+      const bodyGrad = ctx.createRadialGradient(-4, -5, 2, 0, 0, PR + 3);
+      if (isP2) { bodyGrad.addColorStop(0, "#a5d8ff"); bodyGrad.addColorStop(1, "#1971c2"); }
+      else { bodyGrad.addColorStop(0, "#ff8f8f"); bodyGrad.addColorStop(1, "#e14b4b"); }
+      ctx.fillStyle = bodyGrad;
+      ctx.strokeStyle = "#0f1320";
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.arc(0, 0, PR, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+      ctx.fillStyle = "#fff";
+      ctx.beginPath();
+      ctx.arc(3, -4, 4.6, 0, Math.PI * 2);
+      ctx.arc(10, -3, 3.4, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = "#0f1320";
+      ctx.beginPath();
+      ctx.arc(4.5, -4, 2, 0, Math.PI * 2);
+      ctx.arc(11, -3, 1.5, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+      if (twoP) {
+        ctx.save();
+        ctx.font = "bold 11px sans-serif";
+        ctx.textAlign = "center";
+        ctx.fillStyle = isP2 ? "#1971c2" : "#e14b4b";
+        ctx.fillText(isP2 ? "P2" : "P1", px, y - PR - 10);
+        ctx.restore();
+      }
+    }
+
     if (!(mode === "dead")) {
+      if (twoP) {
+        if (alive1) drawSpider(PX1, lane, teleportFlash, false);
+        if (alive2) drawSpider(PX2, lane2, teleFlash2, true);
+        // leg dust per alive spider
+        if (mode === "playing") {
+          if (alive1 && Math.random() < 0.35) particles.push({ x: PX1 - 12, y: laneY(lane) + (lane === 0 ? 12 : -12), vx: -speed * 0.25, vy: (Math.random() - 0.5) * 40, life: 0.35, max: 0.35, color: "rgba(255,255,255,0.5)", size: 2 });
+          if (alive2 && Math.random() < 0.35) particles.push({ x: PX2 - 12, y: laneY(lane2) + (lane2 === 0 ? 12 : -12), vx: -speed * 0.25, vy: (Math.random() - 0.5) * 40, life: 0.35, max: 0.35, color: "rgba(255,255,255,0.5)", size: 2 });
+        }
+      } else {
       const y = laneY(lane);
       const flip = lane === 1 ? -1 : 1;
       ctx.save();
@@ -606,6 +795,7 @@ function startSpider() {
           life: 0.35, max: 0.35, color: "rgba(255,255,255,0.5)", size: 2
         });
       }
+      }
     }
 
     // particles
@@ -656,30 +846,51 @@ function startSpider() {
       ctx.fillText("You don't jump. You teleport.", W / 2, H / 2 - 8);
       ctx.fillStyle = "#fff8ea";
       ctx.font = "16px sans-serif";
-      ctx.fillText("SPACE · CLICK · TAP — switch floor / ceiling", W / 2, H / 2 + 22);
+      if (twoP) {
+        ctx.fillText("P1: SPACE/W or tap LEFT · P2: ↑ or tap RIGHT", W / 2, H / 2 + 22);
+      } else {
+        ctx.fillText("SPACE · CLICK · TAP — switch floor / ceiling", W / 2, H / 2 + 22);
+      }
       ctx.fillText("Gold timing = PERFECT +100. Walls block teleports.", W / 2, H / 2 + 46);
       ctx.fillStyle = "#43c6ac";
       ctx.font = "bold 18px sans-serif";
       ctx.fillText("— press anything to start —", W / 2, H / 2 + 78);
-      // demo spider
-      ctx.fillStyle = "#ff6b6b";
-      ctx.strokeStyle = "#0f1320";
-      ctx.lineWidth = 3;
-      ctx.beginPath();
-      ctx.arc(PX, FLOOR - PR - 2, PR, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.stroke();
+      // demo spiders
+      if (twoP) {
+        ctx.fillStyle = "#ff6b6b"; ctx.beginPath(); ctx.arc(PX1, FLOOR - PR - 2, PR, 0, Math.PI * 2); ctx.fill(); ctx.strokeStyle = "#0f1320"; ctx.lineWidth = 3; ctx.stroke();
+        ctx.fillStyle = "#74c0fc"; ctx.beginPath(); ctx.arc(PX2, FLOOR - PR - 2, PR, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+      } else {
+        ctx.fillStyle = "#ff6b6b";
+        ctx.strokeStyle = "#0f1320";
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.arc(pxFor(0), FLOOR - PR - 2, PR, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+      }
     }
 
     if (mode === "dead") {
       ctx.fillStyle = "rgba(10,8,16,0.45)";
       ctx.fillRect(0, 0, W, H);
-      ctx.fillStyle = "#ff6b6b";
-      ctx.font = "bold 54px sans-serif";
-      ctx.fillText("SPLAT", W / 2, H / 2 - 10);
-      ctx.fillStyle = "#fff8ea";
-      ctx.font = "bold 18px sans-serif";
-      ctx.fillText(`${distM()} m · Combo x${combo} · Score ${score}`, W / 2, H / 2 + 24);
+      if (twoP) {
+        const d1 = distAtDeath1 || distM();
+        const d2 = distAtDeath2 || distM();
+        const title = d1 > d2 ? "P1 WINS!" : d2 > d1 ? "P2 WINS!" : "DRAW!";
+        ctx.fillStyle = d1 > d2 ? "#ff8f8f" : d2 > d1 ? "#74c0fc" : "#ffe066";
+        ctx.font = "bold 42px sans-serif";
+        ctx.fillText(title, W / 2, H / 2 - 10);
+        ctx.fillStyle = "#fff8ea";
+        ctx.font = "bold 16px sans-serif";
+        ctx.fillText(`P1 ${d1} m · P2 ${d2} m · Score ${score}`, W / 2, H / 2 + 24);
+      } else {
+        ctx.fillStyle = "#ff6b6b";
+        ctx.font = "bold 54px sans-serif";
+        ctx.fillText("SPLAT", W / 2, H / 2 - 10);
+        ctx.fillStyle = "#fff8ea";
+        ctx.font = "bold 18px sans-serif";
+        ctx.fillText(`${distM()} m · Combo x${combo} · Score ${score}`, W / 2, H / 2 + 24);
+      }
     }
 
     ctx.restore();
@@ -691,7 +902,12 @@ function startSpider() {
 
     // DOM hud (cheap part every frame)
     const d = distM();
-    distEl.textContent = `${d} m`;
+    if (twoP) {
+      distEl.textContent = `P1: ${alive1 ? d : distAtDeath1} m`;
+      p2DistEl.textContent = `P2: ${alive2 ? d : distAtDeath2} m`;
+    } else {
+      distEl.textContent = `${d} m`;
+    }
     scoreEl.textContent = `Score: ${score}`;
     comboEl.textContent = `Combo x${combo}`;
   }
@@ -705,22 +921,52 @@ function startSpider() {
   }
 
   function keydown(e) {
-    if (e.code === "Space" || e.code === "ArrowUp" || e.code === "KeyW") {
-      e.preventDefault();
-      if (e.repeat) return;
-      primaryAction();
-    } else if (e.code === "Enter" && mode !== "playing") {
-      primaryAction();
+    const tag = (e.target && e.target.tagName) || "";
+    if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return;
+    if (twoP) {
+      if (e.code === "Space" || e.code === "KeyW") {
+        e.preventDefault();
+        if (e.repeat) return;
+        primaryAction(0);
+        return;
+      }
+      if (e.code === "ArrowUp") {
+        e.preventDefault();
+        if (e.repeat) return;
+        primaryAction(1);
+        return;
+      }
+    } else {
+      if (e.code === "Space" || e.code === "ArrowUp" || e.code === "KeyW") {
+        e.preventDefault();
+        if (e.repeat) return;
+        primaryAction(0);
+        return;
+      }
     }
+    if (e.code === "Enter" && mode !== "playing") {
+      e.preventDefault();
+      primaryAction(0);
+    }
+  }
+
+  function tapWhich(e) {
+    const rect = canvas.getBoundingClientRect();
+    return (e.clientX - rect.left) > rect.width / 2 ? 1 : 0;
   }
 
   canvas.addEventListener("pointerdown", (e) => {
     e.preventDefault();
-    primaryAction();
+    if (twoP) primaryAction(tapWhich(e));
+    else primaryAction(0);
   });
   teleportBtn.addEventListener("click", (e) => {
     e.preventDefault();
-    primaryAction();
+    primaryAction(0);
+  });
+  teleportBtn2.addEventListener("click", (e) => {
+    e.preventDefault();
+    primaryAction(1);
   });
   document.querySelector("#spRetry").addEventListener("click", () => {
     resetRun(false);

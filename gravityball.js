@@ -6,14 +6,21 @@ function startGravityBall() {
       <div class="game-layout">
         <div class="game-topline">
           <span class="game-stat" id="gbDist">0 m</span>
+          <span class="game-stat" id="gbP2" style="display:none">P2: 0 m</span>
           <span class="game-stat" id="gbScore">Score: 0</span>
           <span class="game-stat" id="gbStage">Stage 1 · Gravity</span>
           <span class="game-stat" id="gbBest">Best: 0 m</span>
         </div>
+        <div class="tag-row" role="group" aria-label="Players">
+          <span class="tag-label">Players</span>
+          <button class="game-action tag-pick on" id="gb1P" type="button">1 Player</button>
+          <button class="game-action tag-pick" id="gb2P" type="button" title="P1: SPACE/W · P2: ↑ — last ball wins">2 Players</button>
+        </div>
         <canvas class="gravball-canvas" id="gbCanvas" width="720" height="480"></canvas>
         <p class="game-message" id="gbMsg">Roll along the platforms. CLICK / TAP / SPACE flips gravity — but only while rolling. No mid-air saves!</p>
         <div class="game-actions">
-          <button class="game-action one-press" id="gbFlip" type="button">⇅ FLIP GRAVITY</button>
+          <button class="game-action one-press" id="gbFlip" type="button">⇅ FLIP (P1)</button>
+          <button class="game-action one-press" id="gbFlip2" type="button" style="display:none">⇅ FLIP (P2)</button>
           <button class="game-action" id="gbRetry" type="button">Restart</button>
         </div>
       </div>
@@ -31,11 +38,48 @@ function startGravityBall() {
   const CEIL_Y = 70;      // bottom face of ceiling platforms
 
   const distEl = document.querySelector("#gbDist");
+  const p2El = document.querySelector("#gbP2");
   const scoreEl = document.querySelector("#gbScore");
   const stageEl = document.querySelector("#gbStage");
   const bestEl = document.querySelector("#gbBest");
   const message = document.querySelector("#gbMsg");
   const flipBtn = document.querySelector("#gbFlip");
+  const flipBtn2 = document.querySelector("#gbFlip2");
+
+  // --- 2P: last ball rolling. Two balls, shared world, independent gravity. ---
+  let twoP = false;
+  let alive1 = true;
+  let alive2 = false;
+  let distAtDeath1 = 0;
+  let distAtDeath2 = 0;
+  const PX1 = 150;
+  const PX2 = 210;
+  function pxFor(i){ return i===1 ? PX2 : (twoP ? PX1 : PX); }
+  let playerY2 = FLOOR_Y - PR;
+  let vy2 = 0;
+  let grav2 = 1;
+  let gScale2 = 1;
+  let grounded2 = null;
+  let coyote2 = 0;
+  let trail2 = [];
+  let flipFlash2 = 0;
+  let squash2 = 0;
+
+  function setTwoP(on){
+    twoP = on;
+    document.querySelector("#gb1P").classList.toggle("on", !on);
+    document.querySelector("#gb2P").classList.toggle("on", on);
+    p2El.style.display = on ? "" : "none";
+    flipBtn.textContent = on ? "⇅ FLIP (P1)" : "⇅ FLIP GRAVITY";
+    flipBtn2.style.display = on ? "" : "none";
+    resetRun(true);
+    message.textContent = on
+      ? "P1: SPACE/W or tap LEFT · P2: ↑ or tap RIGHT. Last ball wins!"
+      : "Roll along the platforms. CLICK / TAP / SPACE flips gravity — but only while rolling. No mid-air saves!";
+    syncHud();
+  }
+  document.querySelector("#gb1P").addEventListener("click", ()=>setTwoP(false));
+  document.querySelector("#gb2P").addEventListener("click", ()=>setTwoP(true));
 
   const QUIPS = [
     "SKEWERED. The spike sends regards.",
@@ -390,19 +434,28 @@ function startGravityBall() {
   function syncHud() {
     const d = distM();
     const st = stageFor(d);
-    distEl.textContent = `${d} m`;
-    scoreEl.textContent = `Score: ${Math.floor(score)}`;
+    if (twoP) {
+      distEl.textContent = `P1: ${alive1 ? d : distAtDeath1} m`;
+      p2El.textContent = `P2: ${alive2 ? d : distAtDeath2} m`;
+      scoreEl.textContent = `P1: ${Math.floor(score)}`;
+    } else {
+      distEl.textContent = `${d} m`;
+      scoreEl.textContent = `Score: ${Math.floor(score)}`;
+    }
     stageEl.textContent = `Stage ${st + 1} · ${STAGE_NAMES[st]}`;
     bestEl.textContent = `Best: ${Math.max(best, d)} m`;
     setSnapshot({
       mode: mode === "playing" ? "playing" : mode === "dead" ? "ended" : "ready",
       game: "Gravity Ball",
       dist: d,
-      score: Math.floor(score),
+      score: Math.floor(twoP ? Math.max(score, score) : score),
       flips,
       coins: coinsGot,
       stage: STAGE_NAMES[st],
-      best: Math.max(best, d)
+      best: Math.max(best, d),
+      twoP,
+      p1Alive: alive1,
+      p2Alive: twoP ? alive2 : undefined
     });
   }
 
@@ -413,6 +466,19 @@ function startGravityBall() {
     grav = 1;
     gScale = 1;
     coyote = 0;
+    playerY2 = FLOOR_Y - PR;
+    vy2 = 0;
+    grav2 = 1;
+    gScale2 = 1;
+    coyote2 = 0;
+    grounded2 = toReady ? null : "floor";
+    alive1 = true;
+    alive2 = twoP;
+    distAtDeath1 = 0;
+    distAtDeath2 = 0;
+    trail2 = [];
+    flipFlash2 = 0;
+    squash2 = 0;
     swayAmp = 0;
     swayOff = 0;
     grounded = toReady ? null : "floor";
@@ -428,6 +494,7 @@ function startGravityBall() {
     particles = [];
     popups = [];
     trail = [];
+    trail2 = [];
     lastSpike.floor = -1e9;
     lastSpike.ceil = -1e9;
     genX = 0;
@@ -446,8 +513,43 @@ function startGravityBall() {
     syncHud();
   }
 
-  function die(reason) {
+  function finishMatch2P(){
+    mode = "dead";
+    deadAge = 0;
+    const d1 = distAtDeath1 || distM();
+    const d2 = distAtDeath2 || distM();
+    let title;
+    if (d1 > d2) title = "P1 WINS!";
+    else if (d2 > d1) title = "P2 WINS!";
+    else title = "DRAW!";
+    shake = 15;
+    flash = 0.45;
+    burst(pxFor(0), playerY, 20, "#b197fc", 220);
+    burst(pxFor(1), playerY2, 20, "#74c0fc", 220);
+    message.textContent = `${title} P1 ${d1} m · P2 ${d2} m · Score ${Math.floor(score)}. Best ${best} m.`;
+    syncHud();
+  }
+
+  function die(reason, idx) {
     if (mode !== "playing") return;
+    if (twoP && (idx===0 || idx===1)) {
+      const d = distM();
+      if (idx===1) {
+        if (!alive2) return;
+        alive2 = false; distAtDeath2 = d; squash2 = 1;
+        burst(PX2, playerY2, 20, "#74c0fc", 220);
+        popup(PX2 + 24, playerY2 - 26, "P2 OUT!", "#74c0fc");
+        if (alive1) { message.textContent = "P2 is down! P1 still rolling…"; syncHud(); return; }
+      } else {
+        if (!alive1) return;
+        alive1 = false; distAtDeath1 = d; squash = 1;
+        burst(PX1, playerY, 20, "#b197fc", 220);
+        popup(PX1 + 24, playerY - 26, "P1 OUT!", "#b197fc");
+        if (alive2) { message.textContent = "P1 is down! P2 still rolling…"; syncHud(); return; }
+      }
+      finishMatch2P();
+      return;
+    }
     mode = "dead";
     deadAge = 0;
     squash = 1;
@@ -467,7 +569,9 @@ function startGravityBall() {
     syncHud();
   }
 
-  function flip() {
+  function flip(idx) {
+    const who = (idx===1 ? 1 : 0);
+    if (twoP && !(who===0 ? alive1 : alive2)) return;
     if (mode === "ready") {
       resetRun(false);
       showBanner("ROLL · TAP TO FLIP · LAND IT");
@@ -476,15 +580,32 @@ function startGravityBall() {
       return;
     }
     if (mode !== "playing") return;
-    // No mid-air jumps: flips only work while rolling on a platform
-    // (plus a split-second coyote grace just past an edge).
+    if (twoP) {
+      if (who===1) {
+        if (grounded2 === null && coyote2 <= 0) return;
+        grav2 = grav2 === 1 ? -1 : 1;
+        grounded2 = null; coyote2 = 0;
+        vy2 = vy2 * 0.25 + grav2 * KICK * 0.4;
+        flipFlash2 = 0.16;
+        burst(PX2, playerY2, 6, grav2 === 1 ? "#a5d8ff" : "#ffc078", 120);
+      } else {
+        if (grounded === null && coyote <= 0) return;
+        grav = grav === 1 ? -1 : 1;
+        grounded = null; coyote = 0;
+        vy = vy * 0.25 + grav * KICK * 0.4;
+        flipFlash = 0.16;
+        burst(PX1, playerY, 6, grav === 1 ? "#a5d8ff" : "#ffc078", 120);
+      }
+      flips += 1;
+      if (stageFor(distM()) >= 5) shake = Math.max(shake, 5);
+      if (flips > bestFlips) bestFlips = flips;
+      return;
+    }
     if (grounded === null && coyote <= 0) return;
     grav = grav === 1 ? -1 : 1;
     flips += 1;
     grounded = null;
     coyote = 0;
-    // damp old momentum so rapid flips stay controllable, plus a small
-    // kick toward the new fall direction so the response feels snappy
     vy = vy * 0.25 + grav * KICK * 0.4;
     flipFlash = 0.16;
     if (stageFor(distM()) >= 5) shake = Math.max(shake, 5);
@@ -514,18 +635,154 @@ function startGravityBall() {
     return { x: sp.wx - 10, y: sy, w: 20, h: 26 };
   }
 
-  function closeCallBonus() {
-    const playerWX = worldX + PX;
+  function closeCallBonus(px, py) {
+    const playerWX = worldX + px;
     for (const sp of spikes) {
       if (sp.fake) continue;
       if (Math.abs(sp.wx - playerWX) < 52) {
         closes += 1;
         score += 15;
-        popup(PX + 30, playerY - 26, "CLOSE +15", "#43c6ac");
-        burst(PX, playerY, 5, "#43c6ac", 120);
+        popup(px + 30, py - 26, "CLOSE +15", "#43c6ac");
+        burst(px, py, 5, "#43c6ac", 120);
         return;
       }
     }
+  }
+
+  function stepBall(idx, dt, d, st){
+    const is2 = idx===1;
+    let py = is2 ? playerY2 : playerY;
+    let vy_ = is2 ? vy2 : vy;
+    let grav_ = is2 ? grav2 : grav;
+    let gScale_ = is2 ? gScale2 : gScale;
+    let grounded_ = is2 ? grounded2 : grounded;
+    let coyote_ = is2 ? coyote2 : coyote;
+    const px = pxFor(idx);
+    const playerWX = worldX + px;
+    const prevY = py;
+
+    if (grounded_ === "floor" || grounded_ === "ceil") {
+      const arr = grounded_ === "floor" ? floorSegs : ceilSegs;
+      const seg = segAt(arr, playerWX);
+      const sy = seg ? surfYAt(seg, time) : null;
+      const surfaceY = grounded_ === "floor" ? (sy === null ? null : sy - PR) : (sy === null ? null : sy + PR);
+      if (seg && surfaceY !== null && Math.abs(surfaceY - py) <= 8) {
+        py = surfaceY;
+        vy_ = 0;
+        const front = segAt(arr, playerWX + PR + 2);
+        if (front) {
+          const fsy = surfYAt(front, time);
+          if (grounded_ === "floor" ? fsy < py + PR - 4 : fsy > py - PR + 4) {
+            die(undefined, idx);
+            return false;
+          }
+        }
+      } else {
+        if (grounded_ !== null) coyote_ = COYOTE_TIME;
+        grounded_ = null;
+        vy_ = 0;
+      }
+    }
+
+    if (grounded_ === null) {
+      if (coyote_ > 0) coyote_ = Math.max(0, coyote_ - dt);
+      vy_ += grav_ * GRAV * gScale_ * dt;
+      if (vy_ > MAXFALL) vy_ = MAXFALL;
+      if (vy_ < -MAXFALL) vy_ = -MAXFALL;
+      py += vy_ * dt;
+
+      let landedSeg = null;
+      if (vy_ >= 0) {
+        const seg = segAt(floorSegs, playerWX);
+        if (seg) {
+          const sy = surfYAt(seg, time);
+          if (prevY + PR <= sy + 10 && py + PR >= sy) {
+            py = sy - PR;
+            vy_ = 0;
+            grounded_ = "floor";
+            coyote_ = 0;
+            landedSeg = seg;
+            closeCallBonus(px, py);
+          }
+        }
+      } else {
+        const seg = segAt(ceilSegs, playerWX);
+        if (seg) {
+          const sy = surfYAt(seg, time);
+          if (prevY - PR >= sy - 10 && py - PR <= sy) {
+            py = sy + PR;
+            vy_ = 0;
+            grounded_ = "ceil";
+            coyote_ = 0;
+            landedSeg = seg;
+            closeCallBonus(px, py);
+          }
+        }
+      }
+
+      if (grounded_ === null || landedSeg) {
+        const lists = [floorSegs, ceilSegs];
+        for (let li = 0; li < 2; li++) {
+          const arr = lists[li];
+          for (let i = 0; i < arr.length; i++) {
+            const sg = arr[i];
+            if (sg === landedSeg) continue;
+            if (sg.x1 < playerWX - 60 || sg.x0 > playerWX + 60) continue;
+            const sy = surfYAt(sg, time);
+            const r = li === 0
+              ? { x: sg.x0, y: sy, w: sg.x1 - sg.x0, h: TH }
+              : { x: sg.x0, y: sy - TH, w: sg.x1 - sg.x0, h: TH };
+            if (circleRect(playerWX, py, PR - 2, r.x, r.y, r.w, r.h)) {
+              die(undefined, idx);
+              return false;
+            }
+          }
+        }
+      }
+    }
+
+    // spikes kill rolling and flying alike (fakes don't)
+    for (const sp of spikes) {
+      if (sp.fake) continue;
+      if (Math.abs(sp.wx - playerWX) > 40) continue;
+      const r = spikeRect(sp, time);
+      if (circleRect(playerWX, py, PR - 2, r.x, r.y, r.w, r.h)) {
+        die(undefined, idx);
+        return false;
+      }
+    }
+
+    // lost to the void (missed a landing entirely)
+    if (py < -60 || py > H + 60) {
+      die("Lost to the void. It is very dark down there.", idx);
+      return false;
+    }
+
+    // write back
+    if (is2) {
+      playerY2 = py; vy2 = vy_; grav2 = grav_; gScale2 = gScale_; grounded2 = grounded_; coyote2 = coyote_;
+      trail2.push({ x: PX2, y: py }); if (trail2.length > 46) trail2.shift();
+      if (grounded2 !== null && Math.random() < 0.3) {
+        particles.push({
+          x: PX2 - 12,
+          y: py + (grounded2 === "floor" ? PR : -PR),
+          vx: -speed * 0.25, vy: (Math.random() - 0.5) * 40,
+          life: 0.3, max: 0.3, color: "rgba(255,255,255,0.5)", size: 2
+        });
+      }
+    } else {
+      playerY = py; vy = vy_; grav = grav_; gScale = gScale_; grounded = grounded_; coyote = coyote_;
+      trail.push({ x: pxFor(idx), y: py }); if (trail.length > 46) trail.shift();
+      if (grounded !== null && Math.random() < 0.3) {
+        particles.push({
+          x: pxFor(idx) - 12,
+          y: py + (grounded === "floor" ? PR : -PR),
+          vx: -speed * 0.25, vy: (Math.random() - 0.5) * 40,
+          life: 0.3, max: 0.3, color: "rgba(255,255,255,0.5)", size: 2
+        });
+      }
+    }
+    return true;
   }
 
   function update(dt) {
@@ -537,7 +794,9 @@ function startGravityBall() {
     shake = Math.max(0, shake - dt * 30);
     if (flash > 0) flash -= dt;
     if (flipFlash > 0) flipFlash -= dt;
+    if (flipFlash2 > 0) flipFlash2 -= dt;
     if (squash > 0) squash = Math.max(0, squash - dt * 1.4);
+    if (squash2 > 0) squash2 = Math.max(0, squash2 - dt * 1.4);
 
     particles = particles.filter((p) => p.life > 0);
     for (const p of particles) {
@@ -554,9 +813,16 @@ function startGravityBall() {
 
     if (mode === "ready") {
       ensureGen();
-      playerY = FLOOR_Y - PR + Math.sin(time * 2.2) * 5;
-      trail.push({ x: PX, y: playerY });
-      if (trail.length > 40) trail.shift();
+      if (twoP) {
+        playerY = FLOOR_Y - PR + Math.sin(time * 2.2) * 5;
+        playerY2 = FLOOR_Y - PR + Math.cos(time * 2.2) * 5;
+        trail.push({ x: PX1, y: playerY }); if (trail.length > 40) trail.shift();
+        trail2.push({ x: PX2, y: playerY2 }); if (trail2.length > 40) trail2.shift();
+      } else {
+        playerY = FLOOR_Y - PR + Math.sin(time * 2.2) * 5;
+        trail.push({ x: PX, y: playerY });
+        if (trail.length > 40) trail.shift();
+      }
       return;
     }
 
@@ -578,10 +844,11 @@ function startGravityBall() {
 
     // chaos gravity: strength breathes; telegraphed by HUD + tint
     if (st >= 5) {
-      gScale = 1 + 0.4 * Math.sin(time * 1.6);
+      const gs = 1 + 0.4 * Math.sin(time * 1.6);
+      gScale = gs; gScale2 = gs;
       chaosShake = 2.2;
     } else {
-      gScale = 1;
+      gScale = 1; gScale2 = 1;
       chaosShake = 0;
     }
 
@@ -590,152 +857,49 @@ function startGravityBall() {
     swayAmp += (swayTarget - swayAmp) * Math.min(1, dt * 1.5);
     swayOff = swayAmp * Math.sin(time * 1.8);
 
-    const playerWX = worldX + PX;
-    const prevY = playerY;
-
-    if (grounded === "floor" || grounded === "ceil") {
-      const arr = grounded === "floor" ? floorSegs : ceilSegs;
-      const seg = segAt(arr, playerWX);
-      const sy = seg ? surfYAt(seg, time) : null;
-      const surfaceY = grounded === "floor" ? (sy === null ? null : sy - PR) : (sy === null ? null : sy + PR);
-      if (seg && surfaceY !== null && Math.abs(surfaceY - playerY) <= 8) {
-        // keep rolling
-        playerY = surfaceY;
-        vy = 0;
-        // ran into a step-up wall?
-        const front = segAt(arr, playerWX + PR + 2);
-        if (front) {
-          const fsy = surfYAt(front, time);
-          if (grounded === "floor" ? fsy < playerY + PR - 4 : fsy > playerY - PR + 4) {
-            die("Bonk. Walls are solid. You are not.");
-            return;
-          }
-        }
-      } else {
-        // ran off the edge (or platform moved away): airborne, with a
-        // split-second coyote grace to still flip
-        if (grounded !== null) coyote = COYOTE_TIME;
-        grounded = null;
-        vy = 0;
-      }
+    if (!twoP) {
+      const ok = stepBall(0, dt, d, st);
+      if (!ok) return;
+    } else {
+      const aliveBefore1 = alive1;
+      const aliveBefore2 = alive2;
+      if (alive1) { const ok = stepBall(0, dt, d, st); if (!ok && !alive1 && !alive2) return; }
+      if (alive2) { const ok = stepBall(1, dt, d, st); if (!ok && !alive1 && !alive2) return; }
+      if (!alive1 && !alive2) return;
     }
 
-    if (grounded === null) {
-      if (coyote > 0) coyote = Math.max(0, coyote - dt);
-      // --- always accelerating, never jumping ---
-      vy += grav * GRAV * gScale * dt;
-      if (vy > MAXFALL) vy = MAXFALL;
-      if (vy < -MAXFALL) vy = -MAXFALL;
-      playerY += vy * dt;
-
-      let landedSeg = null;
-      if (vy >= 0) {
-        const seg = segAt(floorSegs, playerWX);
-        if (seg) {
-          const sy = surfYAt(seg, time);
-          if (prevY + PR <= sy + 10 && playerY + PR >= sy) {
-            playerY = sy - PR;
-            vy = 0;
-            grounded = "floor";
-            coyote = 0;
-            landedSeg = seg;
-            closeCallBonus();
-          }
-        }
-      } else {
-        const seg = segAt(ceilSegs, playerWX);
-        if (seg) {
-          const sy = surfYAt(seg, time);
-          if (prevY - PR >= sy - 10 && playerY - PR <= sy) {
-            playerY = sy + PR;
-            vy = 0;
-            grounded = "ceil";
-            coyote = 0;
-            landedSeg = seg;
-            closeCallBonus();
-          }
-        }
-      }
-
-      // side-on into a block that isn't the one we just landed on
-      if (grounded === null || landedSeg) {
-        const lists = [floorSegs, ceilSegs];
-        for (let li = 0; li < 2; li++) {
-          const arr = lists[li];
-          for (let i = 0; i < arr.length; i++) {
-            const s = arr[i];
-            if (s === landedSeg) continue;
-            if (s.x1 < playerWX - 60 || s.x0 > playerWX + 60) continue;
-            const sy = surfYAt(s, time);
-            const r = li === 0
-              ? { x: s.x0, y: sy, w: s.x1 - s.x0, h: TH }
-              : { x: s.x0, y: sy - TH, w: s.x1 - s.x0, h: TH };
-            if (circleRect(playerWX, playerY, PR - 2, r.x, r.y, r.w, r.h)) {
-              die("Bonk. Walls are solid. You are not.");
-              return;
-            }
-          }
-        }
-      }
-    }
-
-    trail.push({ x: PX, y: playerY });
-    if (trail.length > 46) trail.shift();
-
-    if (grounded !== null && Math.random() < 0.3) {
-      particles.push({
-        x: PX - 12,
-        y: playerY + (grounded === "floor" ? PR : -PR),
-        vx: -speed * 0.25, vy: (Math.random() - 0.5) * 40,
-        life: 0.3, max: 0.3, color: "rgba(255,255,255,0.5)", size: 2
-      });
-    }
-
-    // spikes kill rolling and flying alike (fakes don't)
-    for (const sp of spikes) {
-      if (sp.fake) continue;
-      if (Math.abs(sp.wx - playerWX) > 40) continue;
-      const r = spikeRect(sp, time);
-      if (circleRect(playerWX, playerY, PR - 2, r.x, r.y, r.w, r.h)) {
-        die();
-        return;
-      }
-    }
-
-    // lost to the void (missed a landing entirely)
-    if (playerY < -60 || playerY > H + 60) {
-      die("Lost to the void. It is very dark down there.");
-      return;
-    }
-
-    // coins
+    // coins (shared pool)
     for (const cn of coins) {
       if (cn.taken) continue;
-      const sx = cn.wx - worldX;
-      if (sx < -20 || sx > W + 20) continue;
       const cy = cn.y + Math.sin(time * 3 + cn.phase) * 3;
-      if (Math.hypot(sx - PX, cy - playerY) < PR + 11) {
+      let taker = -1;
+      let takerX = 0;
+      let takerY = 0;
+      if (!twoP) {
+        const sx = cn.wx - worldX;
+        if (sx > -20 && sx < W + 20 && Math.hypot(sx - pxFor(0), cy - playerY) < PR + 11) { taker = 0; takerX = sx; takerY = cy; }
+      } else {
+        const sx = cn.wx - worldX;
+        if (sx > -20 && sx < W + 20) {
+          const d1 = alive1 ? Math.hypot(sx - PX1, cy - playerY) : 999;
+          const d2 = alive2 ? Math.hypot(sx - PX2, cy - playerY2) : 999;
+          if (d1 < PR + 11 && d1 <= d2) { taker = 0; takerX = sx; takerY = cy; }
+          else if (d2 < PR + 11) { taker = 1; takerX = sx; takerY = cy; }
+        }
+      }
+      if (taker >= 0) {
         cn.taken = true;
         coinsGot += 1;
         score += 25;
-        popup(PX + 24, playerY - 26, "+25", "#f6c445");
-        burst(sx, cy, 8, "#f6c445", 160);
+        const px = taker===1 ? PX2 : pxFor(taker);
+        const py = taker===1 ? playerY2 : playerY;
+        popup(px + 24, py - 26, "+25", "#f6c445");
+        burst(takerX, takerY, 8, "#f6c445", 160);
       }
     }
 
     score += speed * dt * 0.06;
     syncHudThrottled();
-  }
-
-  let hudT = 0;
-  function syncHudThrottled() {
-    hudT += 1;
-    if (hudT % 6 === 0) syncHud();
-    else {
-      const d = distM();
-      distEl.textContent = `${d} m`;
-      scoreEl.textContent = `Score: ${Math.floor(score)}`;
-    }
   }
 
   function drawSeg(s, side, t) {
@@ -883,34 +1047,38 @@ function startGravityBall() {
       ctx.restore();
     }
 
-    // trail ribbon
-    if (trail.length > 1) {
-      for (let i = 1; i < trail.length; i++) {
-        const a = i / trail.length;
-        ctx.strokeStyle = grav === 1
+    // trail ribbons
+    function drawTrail(tr, gravVal, px) {
+      if (tr.length <= 1) return;
+      for (let i = 1; i < tr.length; i++) {
+        const a = i / tr.length;
+        ctx.strokeStyle = gravVal === 1
           ? `rgba(165,216,255,${(a * 0.55).toFixed(2)})`
           : `rgba(255,192,120,${(a * 0.55).toFixed(2)})`;
         ctx.lineWidth = 3 + a * 7;
         ctx.lineCap = "round";
         ctx.beginPath();
-        ctx.moveTo(trail[i - 1].x - (trail.length - i) * (speed / 2400), trail[i - 1].y);
-        ctx.lineTo(trail[i].x - (trail.length - 1 - i) * (speed / 2400) - 2, trail[i].y);
+        ctx.moveTo(tr[i - 1].x - (tr.length - i) * (speed / 2400), tr[i - 1].y);
+        ctx.lineTo(tr[i].x - (tr.length - 1 - i) * (speed / 2400) - 2, tr[i].y);
         ctx.stroke();
       }
     }
+    if (!twoP) drawTrail(trail, grav, PX);
+    else { if (alive1) drawTrail(trail, grav, PX1); if (alive2) drawTrail(trail2, grav2, PX2); }
 
-    // ball (squashes into a pancake on death)
-    if (mode !== "dead" || squash > 0.15) {
-      const flat = mode === "dead" ? (1 - squash) * 0.75 : 0;
-      const roll = grounded !== null ? 1 + Math.sin(time * 30) * 0.04 : 1;
+    function drawBall(px, py, gravVal, flashVal, squashVal, groundedVal, alive, label) {
+      if (!alive && mode !== "dead") return;
+      if (mode === "dead" && squashVal <= 0.15) return;
+      const flat = mode === "dead" ? (1 - squashVal) * 0.75 : 0;
+      const roll = groundedVal !== null ? 1 + Math.sin(time * 30) * 0.04 : 1;
       ctx.save();
-      ctx.translate(PX, playerY + (mode === "dead" ? (1 - squash) * 8 : 0));
+      ctx.translate(px, py + (mode === "dead" ? (1 - squashVal) * 8 : 0));
       ctx.scale((1 + flat) * roll, (1 - flat) / roll);
-      if (flipFlash > 0) ctx.globalAlpha = 0.6 + Math.random() * 0.4;
-      const g = ctx.createRadialGradient(-4, grav === 1 ? 5 : -5, 2, 0, 0, PR + 3);
+      if (flashVal > 0) ctx.globalAlpha = 0.6 + Math.random() * 0.4;
+      const g = ctx.createRadialGradient(-4, gravVal === 1 ? 5 : -5, 2, 0, 0, PR + 3);
       g.addColorStop(0, "#e5dbff");
       g.addColorStop(0.55, "#9775fa");
-      g.addColorStop(1, "#5f3dc4");
+      g.addColorStop(1, label === "P2" ? "#74c0fc" : "#5f3dc4");
       ctx.fillStyle = g;
       ctx.strokeStyle = "#0f1320";
       ctx.lineWidth = 3;
@@ -920,32 +1088,46 @@ function startGravityBall() {
       ctx.stroke();
       ctx.fillStyle = "rgba(255,255,255,0.55)";
       ctx.beginPath();
-      ctx.arc(-PR * 0.3, grav === 1 ? -PR * 0.35 : PR * 0.35, PR * 0.28, 0, Math.PI * 2);
+      ctx.arc(-PR * 0.3, gravVal === 1 ? -PR * 0.35 : PR * 0.35, PR * 0.28, 0, Math.PI * 2);
       ctx.fill();
       ctx.fillStyle = "#fff";
       ctx.font = "bold 13px sans-serif";
       ctx.textAlign = "center";
-      ctx.fillText(grav === 1 ? "↓" : "↑", 0, 5);
+      ctx.fillText(gravVal === 1 ? "↓" : "↑", 0, 5);
+      if (twoP) {
+        ctx.font = "bold 9px sans-serif";
+        ctx.fillText(label, 0, -PR - 8);
+      }
       ctx.restore();
       ctx.globalAlpha = 1;
-      if (mode === "playing") {
+      if (mode === "playing" && alive) {
         ctx.font = "bold 15px sans-serif";
         ctx.textAlign = "center";
-        ctx.fillStyle = grav === 1 ? "#a5d8ff" : "#ffc078";
-        ctx.fillText(grav === 1 ? "▼" : "▲", PX, playerY + (grav === 1 ? 26 : -20));
+        ctx.fillStyle = gravVal === 1 ? "#a5d8ff" : "#ffc078";
+        ctx.fillText(gravVal === 1 ? "▼" : "▲", px, py + (gravVal === 1 ? 26 : -20));
       }
     }
 
-    // flip beam
-    if (flipFlash > 0) {
-      const a = Math.max(0, flipFlash / 0.16);
+    if (!twoP) {
+      drawBall(PX, playerY, grav, flipFlash, squash, grounded, true, "P1");
+    } else {
+      drawBall(PX1, playerY, grav, flipFlash, squash, grounded, alive1, "P1");
+      drawBall(PX2, playerY2, grav2, flipFlash2, squash2, grounded2, alive2, "P2");
+    }
+
+    // flip beams
+    function drawBeam(px, py, flashVal) {
+      if (flashVal <= 0) return;
+      const a = Math.max(0, flashVal / 0.16);
       ctx.strokeStyle = `rgba(177,151,252,${(0.8 * a).toFixed(2)})`;
       ctx.lineWidth = 4;
       ctx.beginPath();
-      ctx.moveTo(PX, playerY - 34);
-      ctx.lineTo(PX, playerY + 34);
+      ctx.moveTo(px, py - 34);
+      ctx.lineTo(px, py + 34);
       ctx.stroke();
     }
+    if (!twoP) drawBeam(PX, playerY, flipFlash);
+    else { if (alive1) drawBeam(PX1, playerY, flipFlash); if (alive2) drawBeam(PX2, playerY2, flipFlash2); }
 
     // particles
     for (const p of particles) {
@@ -1005,8 +1187,13 @@ function startGravityBall() {
       ctx.fillText("You don't jump. You fall — up or down.", W / 2, H / 2 - 28);
       ctx.fillStyle = "#fff8ea";
       ctx.font = "16px sans-serif";
-      ctx.fillText("AUTO-RUN · SPACE / CLICK / TAP flips gravity", W / 2, H / 2 + 2);
-      ctx.fillText("Flip only while rolling. Land on the other side.", W / 2, H / 2 + 26);
+      if (twoP) {
+        ctx.fillText("P1: SPACE/W or tap LEFT · P2: ↑ or tap RIGHT to FLIP", W / 2, H / 2 + 2);
+        ctx.fillText("Flip only while rolling. Last ball wins.", W / 2, H / 2 + 26);
+      } else {
+        ctx.fillText("AUTO-RUN · SPACE / CLICK / TAP flips gravity", W / 2, H / 2 + 2);
+        ctx.fillText("Flip only while rolling. Land on the other side.", W / 2, H / 2 + 26);
+      }
       ctx.fillText("Red spikes kill. Ghost spikes (?) are fake.", W / 2, H / 2 + 50);
       ctx.fillStyle = "#69db7c";
       ctx.font = "bold 18px sans-serif";
@@ -1017,12 +1204,23 @@ function startGravityBall() {
       ctx.fillStyle = "rgba(10,8,16,0.45)";
       ctx.fillRect(0, 0, W, H);
       ctx.textAlign = "center";
-      ctx.fillStyle = "#b197fc";
-      ctx.font = "bold 54px sans-serif";
-      ctx.fillText("PANCAKE", W / 2, H / 2 - 10);
-      ctx.fillStyle = "#fff8ea";
-      ctx.font = "bold 18px sans-serif";
-      ctx.fillText(`${distM()} m · Score ${Math.floor(score)} · Flips ${flips}`, W / 2, H / 2 + 24);
+      if (twoP) {
+        const d1 = distAtDeath1 || distM(), d2 = distAtDeath2 || distM();
+        const title = d1 > d2 ? "P1 WINS!" : d2 > d1 ? "P2 WINS!" : "DRAW!";
+        ctx.fillStyle = d1 > d2 ? "#a5d8ff" : d2 > d1 ? "#74c0fc" : "#b197fc";
+        ctx.font = "bold 38px sans-serif";
+        ctx.fillText(title, W / 2, H / 2 - 10);
+        ctx.fillStyle = "#fff8ea";
+        ctx.font = "bold 15px sans-serif";
+        ctx.fillText(`P1 ${d1} m · P2 ${d2} m · Score ${Math.floor(score)}`, W / 2, H / 2 + 24);
+      } else {
+        ctx.fillStyle = "#b197fc";
+        ctx.font = "bold 54px sans-serif";
+        ctx.fillText("PANCAKE", W / 2, H / 2 - 10);
+        ctx.fillStyle = "#fff8ea";
+        ctx.font = "bold 18px sans-serif";
+        ctx.fillText(`${distM()} m · Score ${Math.floor(score)} · Flips ${flips}`, W / 2, H / 2 + 24);
+      }
     }
 
     ctx.restore();
@@ -1033,7 +1231,8 @@ function startGravityBall() {
     }
 
     const d = distM();
-    distEl.textContent = `${d} m`;
+    if (twoP) { distEl.textContent = `P1: ${alive1 ? d : distAtDeath1} m`; p2El.textContent = `P2: ${alive2 ? d : distAtDeath2} m`; }
+    else { distEl.textContent = `${d} m`; }
     scoreEl.textContent = `Score: ${Math.floor(score)}`;
   }
 
@@ -1046,23 +1245,50 @@ function startGravityBall() {
   }
 
   function keydown(e) {
-    if (e.code === "Space" || e.code === "ArrowUp" || e.code === "KeyW" || e.code === "ArrowDown") {
-      e.preventDefault();
-      if (e.repeat) return;
-      if (mode === "dead") return;
-      flip();
-    } else if (e.code === "Enter" && mode !== "playing") {
-      flip();
+    const tag = (e.target && e.target.tagName) || "";
+    if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return;
+    if (twoP) {
+      if (e.code === "Space" || e.code === "KeyW") {
+        e.preventDefault(); if (e.repeat) return;
+        if (mode === "dead") return;
+        flip(0);
+        return;
+      }
+      if (e.code === "ArrowUp") {
+        e.preventDefault(); if (e.repeat) return;
+        if (mode === "dead") return;
+        flip(1);
+        return;
+      }
+      if (e.code === "Enter" && mode !== "playing") { e.preventDefault(); flip(0); return; }
+    } else {
+      if (e.code === "Space" || e.code === "ArrowUp" || e.code === "KeyW" || e.code === "ArrowDown") {
+        e.preventDefault();
+        if (e.repeat) return;
+        if (mode === "dead") return;
+        flip(0);
+        return;
+      }
+      if (e.code === "Enter" && mode !== "playing") { e.preventDefault(); flip(0); return; }
     }
+  }
+
+  function tapWhichGB(e){
+    const rect = canvas.getBoundingClientRect();
+    return (e.clientX - rect.left) > rect.width/2 ? 1 : 0;
   }
 
   canvas.addEventListener("pointerdown", (e) => {
     e.preventDefault();
-    flip();
+    if (twoP) flip(tapWhichGB(e)); else flip(0);
   });
   flipBtn.addEventListener("click", (e) => {
     e.preventDefault();
-    flip();
+    flip(0);
+  });
+  flipBtn2.addEventListener("click", (e) => {
+    e.preventDefault();
+    flip(1);
   });
   document.querySelector("#gbRetry").addEventListener("click", () => {
     resetRun(false);
