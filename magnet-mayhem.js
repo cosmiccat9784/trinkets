@@ -103,7 +103,7 @@ function startMagnetMayhem() {
       name, color, dark,
       x, y, vx: 0, vy: 0,
       hearts: 3, alive: true,
-      inv: 0, bumpCd: 0,
+      inv: 0, bumpCd: 0, stun: 0,
       falling: -1, fallT: 0,
       squash: 0, mood: 0, moodKind: "happy",
       faceX: 0, faceY: 0,
@@ -232,7 +232,7 @@ function startMagnetMayhem() {
     for (const p of players) {
       p.vx = 0; p.vy = 0;
       p.hearts = 3; p.alive = true;
-      p.inv = 0; p.bumpCd = 0;
+      p.inv = 0; p.bumpCd = 0; p.stun = 0;
       p.falling = -1; p.fallT = 0;
       p.squash = 0; p.mood = 0; p.moodKind = "happy";
     }
@@ -352,6 +352,7 @@ function startMagnetMayhem() {
       if (p.squash > 0) p.squash = Math.max(0, p.squash - dt * 3);
       if (p.inv > 0) p.inv -= dt;
       if (p.bumpCd > 0) p.bumpCd -= dt;
+      if (p.stun > 0) p.stun -= dt;
       if (p.mood > 0) { p.mood -= dt; if (p.mood <= 0) p.moodKind = "happy"; }
     }
 
@@ -445,7 +446,9 @@ function startMagnetMayhem() {
       const m = Math.hypot(dir.x, dir.y);
       if (m > 1) { dir = { x: dir.x / m, y: dir.y / m }; }
       const slide = 11;
-      const k = Math.min(1, dt * slide);
+      // stunned magnets can't fight the push: input barely grips
+      const grip = p.stun > 0 ? 0.18 : 1;
+      const k = Math.min(1, dt * slide) * grip;
       p.vx += (dir.x * BASE - p.vx) * k;
       p.vy += (dir.y * BASE - p.vy) * k;
     }
@@ -461,15 +464,15 @@ function startMagnetMayhem() {
         a.vx += nx * F * dt; a.vy += ny * F * dt;
         b.vx -= nx * F * dt; b.vy -= ny * F * dt;
       }
-      if (d < 120) {
-        const R = 1150 * (1 - d / 120);
+      if (d < 135) {
+        const R = 1500 * (1 - d / 135);
         a.vx -= nx * R * dt; a.vy -= ny * R * dt;
         b.vx += nx * R * dt; b.vy += ny * R * dt;
       }
       // cap speed
       for (const p of [a, b]) {
         const sp = Math.hypot(p.vx, p.vy);
-        if (sp > 430) { p.vx = (p.vx / sp) * 430; p.vy = (p.vy / sp) * 430; }
+        if (sp > 520) { p.vx = (p.vx / sp) * 520; p.vy = (p.vy / sp) * 520; }
       }
     }
 
@@ -505,9 +508,14 @@ function startMagnetMayhem() {
         const rvx = b.vx - a.vx, rvy = b.vy - a.vy;
         const vn = rvx * nx + rvy * ny;
         if (vn < 0) {
-          const j = -(1 + 1.12) * vn / 2;
+          const j = -(1 + 1.3) * vn / 2;
           a.vx -= j * nx; a.vy -= j * ny;
           b.vx += j * nx; b.vy += j * ny;
+          // body-check: ramming speed becomes extra shove on the victim
+          const aRam = Math.max(0, a.vx * nx + a.vy * ny);
+          const bRam = Math.max(0, -(b.vx * nx + b.vy * ny));
+          b.vx += nx * aRam * 0.55; b.vy += ny * aRam * 0.55;
+          a.vx -= nx * bRam * 0.55; a.vy -= ny * bRam * 0.55;
         }
         const impact = Math.abs(vn);
         if (clackCd <= 0 && (impact > 90 || d < min - 2)) {
@@ -520,6 +528,12 @@ function startMagnetMayhem() {
           burst(mx, my, 6, "#f6c445", 180);
           shake = Math.max(shake, 5 + impact / 60);
           a.squash = 1; b.squash = 1;
+          // hard hits stagger both magnets so the shove actually carries
+          if (impact > 140) {
+            const stun = Math.min(0.35, 0.18 + impact / 1500);
+            a.stun = Math.max(a.stun, stun);
+            b.stun = Math.max(b.stun, stun);
+          }
         }
       }
     }
@@ -595,8 +609,8 @@ function startMagnetMayhem() {
           p.mood = 1.2; p.moodKind = "ouch";
           const dx = p.x - s.x, dy = p.y - s.y;
           const d = Math.max(1, Math.hypot(dx, dy));
-          p.vx = (dx / d) * 430;
-          p.vy = (dy / d) * 430;
+          p.vx = (dx / d) * 470;
+          p.vy = (dy / d) * 470;
           p.squash = 1;
           sfxOuch();
           burst(p.x, p.y, 12, "#ff6b6b", 240);
