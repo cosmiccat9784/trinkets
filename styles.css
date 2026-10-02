@@ -6316,3 +6316,74 @@ footer p {
   40% { transform: scale(1.8); opacity: 1; }
   100% { transform: scale(0.4); opacity: 0; }
 }
+
+/* ── Ludo ── */
+.ludo-layout { gap: 10px; }
+.ludo-countrow { gap: 8px; }
+.ludo-countrow .game-action { background: var(--gold); }
+.ludo-sub { margin: 0; color: var(--muted); font-size: 0.85rem; font-weight: 700; line-height: 1.5; }
+.ludo-top { align-items: center; }
+.ludo-turn-red { background: #ffd6d6; }
+.ludo-turn-green { background: #d3f9d8; }
+.ludo-turn-yellow { background: #ffec99; }
+.ludo-turn-blue { background: #d0ebff; }
+.ludo-dicebox { gap: 6px; font-size: 1.05rem; }
+.ludo-dice { font-size: 1.6rem; line-height: 1; display: inline-block; min-width: 1.6em; text-align: center; }
+.ludo-dice.rolling { animation: ludo-shake 0.4s linear infinite; }
+@keyframes ludo-shake { 0% { transform: rotate(-12deg) scale(1.1); } 50% { transform: rotate(12deg) scale(0.95); } 100% { transform: rotate(-12deg) scale(1.1); } }
+.ludo-roll { background: var(--coral); color: #fff; }
+.ludo-roll:disabled { opacity: 0.45; cursor: default; transform: none; }
+.ludo-mid { display: flex; gap: 14px; align-items: flex-start; justify-content: center; flex-wrap: wrap; }
+.ludo-board { position: relative; width: min(100%, 440px, calc((100dvh - 390px))); min-width: 240px; aspect-ratio: 1; border: 3px solid var(--line); border-radius: 12px; overflow: hidden; box-shadow: 8px 8px 0 var(--line); background: #fffdf6; flex: none; }
+.ludo-grid { position: absolute; inset: 0; display: grid; grid-template-columns: repeat(15, 1fr); grid-template-rows: repeat(15, 1fr); }
+.ludo-cell { border: 1px solid rgba(39,49,63,0.18); display: grid; place-items: center; font-size: clamp(6px, 1.6vw, 12px); font-weight: 900; }
+.ludo-cell.track { background: #fff; }
+.ludo-cell.blank { background: #f1ead8; border-color: transparent; }
+.ludo-cell.yard-red { background: #ff8787; }
+.ludo-cell.yard-green { background: #69db7c; }
+.ludo-cell.yard-yellow { background: #ffd43b; }
+.ludo-cell.yard-blue { background: #74c0fc; }
+.ludo-cell.yard-dot { background-image: radial-gradient(circle, rgba(255,255,255,0.95) 26%, transparent 27%); }
+.ludo-cell.center { background: linear-gradient(135deg, #ff8787 0 25%, #69db7c 25% 50%, #ffd43b 50% 75%, #74c0fc 75%); border-color: var(--line); }
+.ludo-cell.lane-red { background: #ffc9c9; }
+.ludo-cell.lane-green { background: #b2f2bb; }
+.ludo-cell.lane-yellow { background: #ffec99; }
+.ludo-cell.lane-blue { background: #a5d8ff; }
+.ludo-cell.start-red { background: #ffc9c9; color: #c92a2a; }
+.ludo-cell.start-green { background: #b2f2bb; color: #2b8a3e; }
+.ludo-cell.start-yellow { background: #ffec99; color: #946200; }
+.ludo-cell.start-blue { background: #a5d8ff; color: #1864ab; }
+.ludo-cell.star { color: #868e96; }
+.ludo-pieces { position: absolute; inset: 0; pointer-events: none; }
+.ludo-piece { position: absolute; width: 6.666%; height: 6.666%; transform: translate(-16%, -16%); border-radius: 50%; border: 2px solid var(--line); font-size: clamp(7px, 1.8vw, 11px); font-weight: 900; color: #fff; cursor: default; pointer-events: none; display: grid; place-items: center; box-shadow: 1px 1px 0 var(--line); transition: left 0.16s ease, top 0.16s ease, transform 0.16s ease; text-shadow: 0 1px 0 rgba(0,0,0,0.4); }
+.pc-red { background: #e03131; }
+.pc-green { background: #2f9e44; }
+.pc-yellow { background: #e8a100; }
+.pc-blue { background: #1971c2; }
+.ludo-piece.finished { opacity: 0.95; box-shadow: 0 0 0 2px var(--gold), 1px 1px 0 var(--line); }
+.ludo-piece.legal { pointer-events: auto; cursor: pointer; animation: ludo-pulse 0.9s ease-in-out infinite; transform: translate(-16%, -16%) scale(1.12); z-index: 3; }
+@keyframes ludo-pulse { 0%, 100% { box-shadow: 0 0 0 3px #fff, 0 0 0 5px var(--gold), 1px 1px 0 var(--line); } 50% { box-shadow: 0 0 0 3px #fff, 0 0 0 7px var(--gold), 1px 1px 0 var(--line); } }
+.ludo-pieces.capture-flash { animation: ludo-flash 0.45s ease; }
+@keyframes ludo-flash { 0%, 100% { filter: none; } 50% { filter: brightness(1.6) saturate(1.6); } }
+.ludo-side { display: grid; gap: 10px; width: min(100%, 300px); flex: 1 1 220px; }
+.ludo-players { display: grid; gap: 6px; }
+.ludo-player { display: flex; justify-content: space-between; gap: 8px; padding: 6px 10px; background: white; border: 3px solid var(--line); border-radius: 8px; font-weight: 900; font-size: 0.82rem; box-shadow: 3px 3px 0 var(--line); }
+.ludo-player.active { outline: 3px solid var(--gold); }
+.ludo-player.done { opacity: 0.85; }
+.pl-red { border-left: 8px solid #e03131; }
+.pl-green { border-left: 8px solid #2f9e44; }
+.pl-yellow { border-left: 8px solid #e8a100; }
+.pl-blue { border-left: 8px solid #1971c2; }
+.ludo-msg { min-height: 40px; }
+.ludo-results { display: grid; gap: 6px; padding: 12px; background: white; border: 3px solid var(--line); border-radius: 10px; box-shadow: 4px 4px 0 var(--line); }
+.ludo-result { font-weight: 900; }
+.ludo-art { position: relative; background: linear-gradient(135deg, #ff8787 0 25%, #fff8ea 25% 50%, #69db7c 50% 75%, #ffd43b 75%); overflow: hidden; display: grid; place-items: center; }
+.ludo-art-track { width: 72%; height: 72%; background: white; border: 3px solid var(--line); border-radius: 12px; box-shadow: 4px 4px 0 var(--line); position: relative; }
+.ludo-art-dot { position: absolute; width: 22px; height: 22px; border-radius: 50%; border: 3px solid var(--line); }
+.ludo-art-dot.dr { left: 12%; top: 12%; background: #e03131; animation: ludo-hop 1.6s ease-in-out infinite; }
+.ludo-art-dot.dg { right: 12%; top: 12%; background: #2f9e44; animation: ludo-hop 1.6s ease-in-out infinite 0.2s; }
+.ludo-art-dot.dy { right: 12%; bottom: 12%; background: #e8a100; animation: ludo-hop 1.6s ease-in-out infinite 0.4s; }
+.ludo-art-dot.db { left: 12%; bottom: 12%; background: #1971c2; animation: ludo-hop 1.6s ease-in-out infinite 0.6s; }
+.ludo-art-dice { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); background: white; border: 3px solid var(--line); border-radius: 8px; width: 34px; height: 34px; display: grid; place-items: center; font-weight: 900; font-size: 1.2rem; box-shadow: 2px 2px 0 var(--line); animation: ludo-hop 1.6s ease-in-out infinite 0.8s; }
+@keyframes ludo-hop { 0%, 100% { transform: translateY(0) scale(1); } 50% { transform: translateY(-6px) scale(1.08); } }
+.ludo-art-dice.ludo-art-dice { transform: translate(-50%, -50%); }
