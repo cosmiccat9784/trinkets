@@ -26,6 +26,7 @@
     <link rel="stylesheet" href="styles.css?v=29" />
   </head>
   <body>
+    <div class="small-screen-warning" role="alert"><span class="material-symbols-outlined" aria-hidden="true">warning</span> Trinkets Arcade is not supported on very small screens — please enlarge your window or rotate your device.</div>
     <header class="topbar">
       <a class="brand" href="#home" aria-label="Trinkets Arcade home">
         <span class="brand-mark" aria-hidden="true"></span>
@@ -696,6 +697,25 @@
             </div>
           </article>
 
+          <article class="game-card" data-category="arcade" data-game="tag" data-added="2026-10-02">
+            <div class="game-art tag-art" aria-hidden="true">
+              <span class="tag-art-runner r1"></span>
+              <span class="tag-art-runner r2"></span>
+              <span class="tag-art-runner r3"></span>
+              <span class="tag-art-runner it"></span>
+              <span class="tag-art-burst"></span>
+            </div>
+            <div class="game-content">
+              <p class="tag">Arcade · New</p>
+              <h3>Trinkets Tag</h3>
+              <p>Don't be IT. 4 modes, 7 arenas, bots with personalities, and mid-round chaos. 🏃🔴</p>
+              <div class="card-actions">
+                <button class="play-button" type="button">Play</button>
+                <button class="save-button" type="button">Save pick</button>
+              </div>
+            </div>
+          </article>
+
           <article class="game-card" data-category="puzzle" data-game="tinyblocks" data-added="2026-10-01">
             <div class="game-art stack-art" aria-hidden="true">
               <span class="stack-row r1"><i class="sb c1"></i><i class="sb c2"></i><i class="sb c3"></i><i class="sb c4"></i></span>
@@ -806,6 +826,7 @@
     <script src="zigzag.js?v=1"></script>
     <script src="gravityball.js?v=1"></script>
     <script src="tetris.js?v=1"></script>
+    <script src="tag.js?v=1"></script>
     <script src="ludo.js?v=1"></script>
     <script src="magnet-mayhem.js?v=1"></script>
   </body>

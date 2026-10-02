@@ -84,6 +84,7 @@ const gameSlugs = {
   zigzag: "zigzag",
   gravityball: "gravity_ball",
   tinyblocks: "tiny_blocks",
+  tag: "trinkets_tag",
   ludo: "ludo",
   mayhem: "magnet_mayhem"
 };
@@ -417,6 +418,12 @@ function embedStatText(snap) {
   if (snap.game === "Tiny Blocks") {
     if (typeof snap.lines === "number") parts.push(snap.lines + " lines");
     if (typeof snap.level === "number") parts.push("Level " + snap.level);
+  }
+  if (snap.game === "Trinkets Tag") {
+    if (typeof snap.tagMode === "string") parts.push(snap.tagMode);
+    if (typeof snap.survived === "number") parts.push("Survived " + snap.survived + "s");
+    if (typeof snap.tags === "number") parts.push("Tags " + snap.tags);
+    if (Array.isArray(snap.it) && snap.it.length) parts.push("IT: " + snap.it.join(", "));
   }
   if (snap.game === "Ludo") {
     if (typeof snap.turn === "string") parts.push("Turn: " + snap.turn);

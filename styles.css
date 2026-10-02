@@ -54,6 +54,37 @@ body {
   font-family: "Trebuchet MS", "Segoe UI", sans-serif;
 }
 
+.small-screen-warning {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 40;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 14px;
+  background: var(--coral);
+  color: #fff;
+  border-bottom: 3px solid var(--line);
+  font-weight: 900;
+  font-size: 0.85rem;
+  line-height: 1.4;
+  text-align: center;
+}
+
+.small-screen-warning .material-symbols-outlined {
+  font-size: 20px;
+  flex: 0 0 auto;
+}
+
+@media (max-width: 359px), (max-height: 479px) {
+  .small-screen-warning {
+    display: flex;
+  }
+}
+
 button,
 a {
   font: inherit;
@@ -5198,6 +5229,10 @@ footer p {
     width: min(100%, 720px, calc((100vh - 460px) * 3 / 2));
   }
 
+  .tag-canvas {
+    width: min(100%, 720px, calc((100vh - 560px) * 3 / 2));
+  }
+
   .coin-canvas {
     width: min(100%, 720px, calc((100vh - 420px) * 12 / 7));
   }
@@ -6387,3 +6422,117 @@ footer p {
 .ludo-art-dice { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); background: white; border: 3px solid var(--line); border-radius: 8px; width: 34px; height: 34px; display: grid; place-items: center; font-weight: 900; font-size: 1.2rem; box-shadow: 2px 2px 0 var(--line); animation: ludo-hop 1.6s ease-in-out infinite 0.8s; }
 @keyframes ludo-hop { 0%, 100% { transform: translateY(0) scale(1); } 50% { transform: translateY(-6px) scale(1.08); } }
 .ludo-art-dice.ludo-art-dice { transform: translate(-50%, -50%); }
+
+/* ── Trinkets Tag ── */
+.tag-canvas {
+  display: block;
+  width: min(100%, 720px, calc((100dvh - 560px) * 3 / 2));
+  aspect-ratio: 3 / 2;
+  margin: 0 auto;
+  border: 3px solid var(--line);
+  border-radius: 12px;
+  box-shadow: 8px 8px 0 var(--line);
+  cursor: pointer;
+  touch-action: none;
+  background: #fff8ea;
+}
+
+.tag-setup {
+  display: grid;
+  gap: 8px;
+  max-width: 720px;
+  margin: 0 auto;
+}
+
+.tag-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+.tag-label {
+  font-weight: 900;
+  font-size: 0.85rem;
+  color: var(--muted);
+  margin-right: 2px;
+}
+
+.tag-pick,
+.tag-arena,
+.tag-p2,
+.tag-bots,
+.tag-chaos {
+  opacity: 0.55;
+}
+
+.tag-pick.on,
+.tag-arena.on,
+.tag-p2.on,
+.tag-bots.on,
+.tag-chaos.on {
+  opacity: 1;
+  outline: 3px solid var(--gold);
+}
+
+.tag-art {
+  position: relative;
+  background: linear-gradient(180deg, #fff3d6 0%, #ffe3a3 55%, #8ce99a 55%, #69b56a 100%);
+  overflow: hidden;
+}
+
+.tag-art-runner {
+  position: absolute;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: 3px solid var(--line);
+  box-shadow: 2px 2px 0 var(--line);
+}
+
+.tag-art-runner.r1 { left: 18%; bottom: 34%; background: var(--mint); animation: tag-dash 2.2s ease-in-out infinite; }
+.tag-art-runner.r2 { left: 44%; bottom: 52%; background: var(--gold); animation: tag-dash 2.2s ease-in-out infinite 0.3s; }
+.tag-art-runner.r3 { left: 62%; bottom: 30%; background: #74c0fc; animation: tag-dash 2.2s ease-in-out infinite 0.6s; }
+.tag-art-runner.it {
+  left: 32%;
+  bottom: 40%;
+  background: var(--coral);
+  animation: tag-chase 2.2s ease-in-out infinite;
+}
+.tag-art-runner.it::after {
+  content: "IT";
+  position: absolute;
+  top: -20px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 0.65rem;
+  font-weight: 900;
+  color: var(--coral);
+}
+
+.tag-art-burst {
+  position: absolute;
+  left: 38%;
+  bottom: 44%;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--gold);
+  animation: tag-pop 2.2s ease-out infinite;
+}
+
+@keyframes tag-dash {
+  0%, 100% { transform: translate(0, 0); }
+  50% { transform: translate(26px, -10px); }
+}
+
+@keyframes tag-chase {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  50% { transform: translate(20px, -8px) scale(1.15); }
+}
+
+@keyframes tag-pop {
+  0%, 60% { transform: scale(0); opacity: 0; }
+  75% { transform: scale(2.2); opacity: 1; }
+  100% { transform: scale(0.4); opacity: 0; }
+}
