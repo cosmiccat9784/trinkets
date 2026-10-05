@@ -285,13 +285,17 @@ function startPenguinTycoon() {
     var b = Math.min(255, Math.max(0, Math.round((n & 255) * f)));
     return "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
   }
+  // Screen-space sprite helper: critters stand UPRIGHT (billboarded, like the
+  // engine's own sprites) instead of sheared into the ground plane. Units are
+  // engine-local px (64 = 1 tile width); only the glide offset uses tile math.
   function spHelper(T, dx, dy, bobFrac) {
     var k = T.k;
     var ox = (dx - dy) * 32 * k, oy = (dx + dy) * 16 * k - (bobFrac || 0) * k;
-    function pt(u, v) { return [T.cx + ox + (u - v) * 32 * k, T.cy + oy + (u + v) * 16 * k]; }
+    var cx = T.cx + ox, cy = T.cy + oy;
+    function pt(u, v) { return [cx + u * k, cy + v * k]; }
     function ell(cu, cv, ru, rv, rot, n) {
       var pts = [], i, a, ex, ey, cr = Math.cos(rot || 0), sr = Math.sin(rot || 0);
-      n = n || 12;
+      n = n || 14;
       for (i = 0; i < n; i++) {
         a = i / n * 6.2832;
         ex = Math.cos(a) * ru; ey = Math.sin(a) * rv;
@@ -306,26 +310,28 @@ function startPenguinTycoon() {
     var H = spHelper(T, e.fx - e.x, e.fy - e.y, T.bob());
     var Sh = spHelper(T, e.fx - e.x, e.fy - e.y, 0);
     var flip = o.flip ? -1 : 1;
-    Sh.poly(Sh.ell(0.02, 0.03, 0.22, 0.08), "rgba(47,84,134,.25)", null);
-    H.poly(H.ell(-0.07 * flip, 0.0, 0.07, 0.035), "#ff9f43");
-    H.poly(H.ell(0.08 * flip, 0.0, 0.07, 0.035), "#ff9f43");
-    H.poly(H.ell(-0.18 * flip, -0.2, 0.05, 0.12, 0.3 * flip), "#16263f");
-    H.poly(H.ell(0.18 * flip, -0.2, 0.05, 0.12, -0.3 * flip), "#16263f");
-    H.poly(H.ell(0, -0.22, 0.17, 0.23), "#27406b");
-    // dark back rim on the left edge + white sparkle = round, not flat
-    H.poly(H.ell(-0.1 * flip, -0.22, 0.075, 0.2, 0.12 * flip), "#16263f", null);
-    H.poly(H.ell(-0.06 * flip, -0.36, 0.035, 0.05, -0.3 * flip), "rgba(255,255,255,.75)", null);
-    H.poly(H.ell(0.02 * flip, -0.18, 0.11, 0.17), "#ffffff", null);
-    H.poly(H.ell(-0.055 * flip, -0.33, 0.04, 0.04), "#ffffff", null);
-    H.poly(H.ell(0.06 * flip, -0.33, 0.04, 0.04), "#ffffff", null);
-    H.poly(H.ell(-0.05 * flip, -0.33, 0.018, 0.018), "#2a3f66", null);
-    H.poly(H.ell(0.065 * flip, -0.33, 0.018, 0.018), "#2a3f66", null);
-    H.poly(H.ell(-0.1 * flip, -0.27, 0.028, 0.028), "rgba(255,154,168,.85)", null);
-    H.poly(H.ell(0.11 * flip, -0.27, 0.028, 0.028), "rgba(255,154,168,.85)", null);
-    H.poly([H.pt(-0.02 * flip, -0.30), H.pt(0.1 * flip, -0.28), H.pt(-0.02 * flip, -0.24)], "#ffb02e");
+    Sh.poly(Sh.ell(2, 1, 12, 4), "rgba(47,84,134,.25)", null);
+    H.poly(H.ell(-4.5 * flip, -1, 4.5, 2.2), "#ff9f43");
+    H.poly(H.ell(5 * flip, -1, 4.5, 2.2), "#ff9f43");
+    H.poly(H.ell(-11 * flip, -14, 3, 8, 0.25 * flip), "#16263f");
+    H.poly(H.ell(11 * flip, -14, 3, 8, -0.25 * flip), "#16263f");
+    // body + dark back rim + belly
+    H.poly(H.ell(0, -15, 11, 15), "#27406b");
+    H.poly(H.ell(-6 * flip, -15, 5, 13, -0.06 * flip), "#16263f", null);
+    H.poly(H.ell(2 * flip, -12, 7, 11), "#ffffff", null);
+    // sparkle so it reads round, not flat
+    H.poly(H.ell(-7 * flip, -26, 2.5, 3.5, -0.35 * flip), "rgba(255,255,255,.8)", null);
+    // face
+    H.poly(H.ell(0, -22, 2.5, 2.5), "#ffffff", null);
+    H.poly(H.ell(7 * flip, -22, 2.5, 2.5), "#ffffff", null);
+    H.poly(H.ell(0.8 * flip, -22, 1.2, 1.2), "#2a3f66", null);
+    H.poly(H.ell(7.8 * flip, -22, 1.2, 1.2), "#2a3f66", null);
+    H.poly(H.ell(-2 * flip, -18, 1.8, 1.8), "rgba(255,154,168,.85)", null);
+    H.poly(H.ell(10 * flip, -18, 1.8, 1.8), "rgba(255,154,168,.85)", null);
+    H.poly([H.pt(3 * flip, -19.5), H.pt(11.5 * flip, -18), H.pt(3 * flip, -15.5)], "#ffb02e");
     if (o.scarf) {
-      H.poly([H.pt(-0.15 * flip, -0.21), H.pt(0.15 * flip, -0.21), H.pt(0.15 * flip, -0.15), H.pt(-0.15 * flip, -0.15)], o.scarf);
-      H.poly([H.pt(0.06 * flip, -0.15), H.pt(0.12 * flip, -0.15), H.pt(0.12 * flip, -0.04), H.pt(0.06 * flip, -0.04)], o.scarf);
+      H.poly([H.pt(-9 * flip, -16), H.pt(11 * flip, -16), H.pt(11 * flip, -11), H.pt(-9 * flip, -11)], o.scarf);
+      H.poly([H.pt(5 * flip, -11), H.pt(9.5 * flip, -11), H.pt(9.5 * flip, -2), H.pt(5 * flip, -2)], o.scarf);
     }
   }
   function drawGlideVisitor(T, o, e) {
@@ -334,51 +340,51 @@ function startPenguinTycoon() {
     var coat = o.coat || "#6c8cff", hat = o.hat || "#ffffff";
     var dark = shade(coat, 0.72), darker = shade(coat, 0.55);
     var hatDark = shade(hat, 0.78);
-    Sh.poly(Sh.ell(0, 0.05, 0.19, 0.07), "rgba(47,84,134,.25)", null);
-    // boots: dark legs with foot nubs
-    H.poly([H.pt(-0.095, -0.03), H.pt(-0.025, -0.03), H.pt(-0.025, 0.05), H.pt(-0.095, 0.05)], "#232f4d");
-    H.poly([H.pt(0.025, -0.03), H.pt(0.095, -0.03), H.pt(0.095, 0.05), H.pt(0.025, 0.05)], "#232f4d");
-    H.poly(H.ell(-0.06, 0.05, 0.045, 0.025), "#161d31", null);
-    H.poly(H.ell(0.06, 0.05, 0.045, 0.025), "#161d31", null);
-    // arms behind the coat: sleeves + skin mittens
-    H.poly(H.ell(-0.14, -0.2, 0.042, 0.095, 0.15), dark);
-    H.poly(H.ell(0.14, -0.2, 0.042, 0.095, -0.15), dark);
-    H.poly(H.ell(-0.15, -0.1, 0.032, 0.032), "#ffd3b0", null);
-    H.poly(H.ell(0.15, -0.1, 0.032, 0.032), "#ffd3b0", null);
-    // coat: main + dark right side + light left rim + belt
-    H.poly([H.pt(-0.12, -0.38), H.pt(0.12, -0.38), H.pt(0.12, -0.1), H.pt(-0.12, -0.1)], coat);
-    H.poly([H.pt(0.04, -0.38), H.pt(0.12, -0.38), H.pt(0.12, -0.1), H.pt(0.04, -0.1)], dark);
-    H.poly([H.pt(-0.12, -0.38), H.pt(-0.08, -0.38), H.pt(-0.08, -0.1), H.pt(-0.12, -0.1)], "rgba(255,255,255,.55)", null);
-    H.poly([H.pt(-0.12, -0.18), H.pt(0.12, -0.18), H.pt(0.12, -0.14), H.pt(-0.12, -0.14)], darker);
-    // buttons
-    H.poly(H.ell(-0.02, -0.28, 0.014, 0.014), darker, null);
-    H.poly(H.ell(-0.02, -0.22, 0.014, 0.014), darker, null);
-    // head with cheek blush + shaded chin
-    H.poly(H.ell(0, -0.46, 0.1, 0.1), "#ffd3b0");
-    H.poly(H.ell(0.03, -0.42, 0.07, 0.06), "rgba(230,160,120,.6)", null);
-    H.poly(H.ell(-0.06, -0.44, 0.022, 0.022), "rgba(255,140,140,.7)", null);
-    H.poly(H.ell(-0.035, -0.47, 0.015, 0.015), "#2a3f66", null);
-    H.poly(H.ell(0.035, -0.47, 0.015, 0.015), "#2a3f66", null);
-    // hat: dome + dark brim + pompom
+    Sh.poly(Sh.ell(0, 1, 11, 3.5), "rgba(47,84,134,.25)", null);
+    // legs + boots
+    H.poly([H.pt(-5.5, -10), H.pt(-1, -10), H.pt(-1, -1), H.pt(-5.5, -1)], "#2e3f66");
+    H.poly([H.pt(1, -10), H.pt(5.5, -10), H.pt(5.5, -1), H.pt(1, -1)], "#2e3f66");
+    H.poly(H.ell(-3.25, -0.5, 2.8, 1.6), "#161d31", null);
+    H.poly(H.ell(3.25, -0.5, 2.8, 1.6), "#161d31", null);
+    // arms: sleeves + skin mittens
+    H.poly(H.ell(-9, -16, 2.6, 6, 0.17), dark);
+    H.poly(H.ell(9, -16, 2.6, 6, -0.17), dark);
+    H.poly(H.ell(-10, -9.5, 2, 2), "#ffd3b0", null);
+    H.poly(H.ell(10, -9.5, 2, 2), "#ffd3b0", null);
+    // coat: main + dark side + light rim + belt + buttons
+    H.poly([H.pt(-7.5, -25), H.pt(7.5, -25), H.pt(7.5, -8), H.pt(-7.5, -8)], coat);
+    H.poly([H.pt(2.5, -25), H.pt(7.5, -25), H.pt(7.5, -8), H.pt(2.5, -8)], dark);
+    H.poly([H.pt(-7.5, -25), H.pt(-4.5, -25), H.pt(-4.5, -8), H.pt(-7.5, -8)], "rgba(255,255,255,.5)", null);
+    H.poly([H.pt(-7.5, -17), H.pt(7.5, -17), H.pt(7.5, -14), H.pt(-7.5, -14)], darker);
+    H.poly(H.ell(-1, -21, 1, 1), darker, null);
+    H.poly(H.ell(-1, -17.5, 1, 1), darker, null);
+    // head: skin + chin shade + blush + eyes
+    H.poly(H.ell(0, -31, 6.5, 6.5), "#ffd3b0");
+    H.poly(H.ell(2, -28.5, 4.5, 3.5), "rgba(230,160,120,.6)", null);
+    H.poly(H.ell(-3.5, -29, 1.6, 1.6), "rgba(255,140,140,.7)", null);
+    H.poly(H.ell(-2.3, -30.5, 1, 1), "#2a3f66", null);
+    H.poly(H.ell(2.7, -30.5, 1, 1), "#2a3f66", null);
+    // hat: dome + dark brim + highlight + pompom
     var hatPts = [], i, a;
-    for (i = 0; i <= 8; i++) { a = Math.PI + i / 8 * Math.PI; hatPts.push(H.pt(Math.cos(a) * 0.105, -0.485 + Math.sin(a) * 0.105)); }
+    for (i = 0; i <= 8; i++) { a = Math.PI + i / 8 * Math.PI; hatPts.push(H.pt(Math.cos(a) * 6.8, -32 + Math.sin(a) * 6.8)); }
     H.poly(hatPts, hat);
-    H.poly([H.pt(-0.115, -0.5), H.pt(0.115, -0.5), H.pt(0.115, -0.46), H.pt(-0.115, -0.46)], hatDark);
-    H.poly([H.pt(-0.115, -0.5), H.pt(-0.06, -0.5), H.pt(-0.06, -0.46), H.pt(-0.115, -0.46)], "rgba(255,255,255,.5)", null);
-    H.poly(H.ell(0, -0.6, 0.042, 0.042), "#ffffff", null);
-    H.poly(H.ell(-0.015, -0.61, 0.015, 0.015), "rgba(180,200,220,.9)", null);
+    H.poly([H.pt(-8, -33.5), H.pt(8, -33.5), H.pt(8, -30.5), H.pt(-8, -30.5)], hatDark);
+    H.poly([H.pt(-8, -33.5), H.pt(-3.5, -33.5), H.pt(-3.5, -30.5), H.pt(-8, -30.5)], "rgba(255,255,255,.5)", null);
+    H.poly(H.ell(0, -40, 2.8, 2.8), "#ffffff", null);
+    H.poly(H.ell(-1, -41, 1, 1), "rgba(180,200,220,.9)", null);
   }
   function drawGlideSwimmer(T, o, e) {
     var H = spHelper(T, e.fx - e.x, e.fy - e.y, T.bob() * 0.5);
     var flip = o.flip ? -1 : 1;
-    H.poly(H.ell(0, 0.03, 0.44, 0.16, 0, 18), null, "rgba(255,255,255,.85)", 2);
-    H.poly(H.ell(0, 0.045, 0.32, 0.1, 0, 16), "#9fdcf3", "#ffffff", 2);
-    H.poly(H.ell(-0.22 * flip, -0.02, 0.07, 0.03), "#1f3358");
-    H.poly(H.ell(-0.05 * flip, -0.05, 0.2, 0.1), "#27406b");
-    H.poly(H.ell(0.13 * flip, -0.13, 0.115, 0.115), "#27406b");
-    H.poly(H.ell(0.17 * flip, -0.15, 0.035, 0.035), "#ffffff", null);
-    H.poly(H.ell(0.175 * flip, -0.15, 0.016, 0.016), "#2a3f66", null);
-    H.poly([H.pt(0.21 * flip, -0.12), H.pt(0.33 * flip, -0.09), H.pt(0.21 * flip, -0.06)], "#ffb02e");
+    H.poly(H.ell(0, 2, 28, 10, 0, 20), null, "rgba(255,255,255,.85)", 2);
+    H.poly(H.ell(0, 3, 21, 6, 0, 18), "#9fdcf3", "#ffffff", 2);
+    H.poly(H.ell(-14 * flip, -2, 5, 2), "#1f3358");
+    H.poly(H.ell(-4 * flip, -5, 13, 7), "#27406b");
+    H.poly(H.ell(-4 * flip, -6, 8, 4, -0.1 * flip), "#16263f", null);
+    H.poly(H.ell(8 * flip, -10, 7.5, 7.5), "#27406b");
+    H.poly(H.ell(10.5 * flip, -11.5, 2.4, 2.4), "#ffffff", null);
+    H.poly(H.ell(11.2 * flip, -11.5, 1.1, 1.1), "#2a3f66", null);
+    H.poly([H.pt(14 * flip, -11), H.pt(22 * flip, -9), H.pt(14 * flip, -7)], "#ffb02e");
   }
   function registerSmoothCritters() {
     try {
