@@ -1,0 +1,392 @@
+/* Penguin Park Tycoon — own stylesheet (keeps styles.css lean).
+   Signature look: chunky pills, toy-like buttons, isometric park canvas,
+   bottom-sheet shop, bubbly event wipes. Viewport-capped, no-scroll. */
+
+.pty-layout { gap: 10px; }
+
+.pty-hud {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: stretch;
+  justify-content: space-between;
+}
+
+.pty-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 40px;
+  padding: 0 14px;
+  background: #fff;
+  border: 3px solid var(--line);
+  border-radius: 999px;
+  box-shadow: 3px 3px 0 var(--line);
+  font-weight: 900;
+  font-size: 0.95rem;
+  white-space: nowrap;
+}
+
+.pty-level { gap: 8px; }
+
+.pty-bar {
+  display: inline-block;
+  width: 90px;
+  height: 10px;
+  background: #e3e9f2;
+  border: 2px solid var(--line);
+  border-radius: 999px;
+  overflow: hidden;
+  vertical-align: middle;
+}
+
+.pty-fill {
+  display: block;
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg, #43c6ac, #7dff9a);
+  transition: width 0.4s ease;
+}
+
+.pty-stage {
+  position: relative;
+  width: min(100%, 720px, calc((100dvh - 430px) * 720 / 440));
+  margin: 0 auto;
+}
+
+.pty-canvas {
+  display: block;
+  width: 100%;
+  aspect-ratio: 720 / 440;
+  border: 3px solid var(--line);
+  border-radius: 12px;
+  box-shadow: 8px 8px 0 var(--line);
+  background: #bfe3f5;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.pty-fx {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 4;
+  padding: 4px 10px;
+  background: #fff8ea;
+  border: 3px solid var(--line);
+  border-radius: 999px;
+  box-shadow: 2px 2px 0 var(--line);
+  font-weight: 900;
+  font-size: 0.78rem;
+  animation: pty-bob 1s ease-in-out infinite;
+}
+
+@keyframes pty-bob {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-3px); }
+}
+
+.pty-actions {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  width: min(100%, 720px);
+  margin: 0 auto;
+}
+
+.pty-btn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 52px;
+  padding: 0 10px;
+  border: 3px solid var(--line);
+  border-radius: 12px;
+  box-shadow: 0 5px 0 var(--line);
+  color: #fff;
+  font-weight: 900;
+  font-size: 1rem;
+  letter-spacing: 0.02em;
+  text-shadow: 0 2px 0 rgba(0, 0, 0, 0.25);
+  cursor: pointer;
+  transition: transform 0.08s ease, box-shadow 0.08s ease, filter 0.15s ease;
+}
+
+.pty-btn:active { transform: translateY(3px); box-shadow: 0 2px 0 var(--line); }
+.pty-btn.build { background: linear-gradient(180deg, #3ddc84, #22b45e); }
+.pty-btn.peng { background: linear-gradient(180deg, #5aa9e6, #2f7fc4); }
+.pty-btn.up { background: linear-gradient(180deg, #ffb14e, #f08a1d); }
+.pty-btn:hover { filter: brightness(1.06); }
+
+.pty-dot {
+  position: absolute;
+  top: -6px;
+  right: -4px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #ff3b3b;
+  border: 3px solid #fff;
+  box-shadow: 0 0 0 2px var(--line);
+}
+
+.pty-sub { justify-content: center; }
+.pty-sub .game-action { min-height: 36px; font-size: 0.82rem; }
+
+/* ——— shop bottom sheet (absolute inside stage: scales with fitGameShell) ——— */
+.pty-sheet {
+  position: absolute;
+  left: 8px;
+  right: 8px;
+  bottom: 8px;
+  z-index: 5;
+  max-height: 82%;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+  background: var(--paper);
+  border: 3px solid var(--line);
+  border-radius: 12px;
+  box-shadow: 6px 6px 0 rgba(0, 0, 0, 0.3);
+  overflow: hidden;
+}
+
+.pty-sheet[hidden] { display: none !important; }
+
+.pty-sheet-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 1.05rem;
+}
+
+.pty-x { min-height: 36px; font-size: 0.85rem; background: var(--gold); }
+
+.pty-coins { font-weight: 900; font-size: 0.92rem; color: #394354; }
+.pty-coins span { font-weight: 700; opacity: 0.75; }
+
+.pty-items {
+  display: grid;
+  gap: 8px;
+  overflow: auto;
+  padding-right: 2px;
+}
+
+.pty-item {
+  display: grid;
+  grid-template-columns: 40px 1fr auto;
+  gap: 10px;
+  align-items: center;
+  padding: 8px 10px;
+  background: #fff;
+  border: 3px solid var(--line);
+  border-radius: 10px;
+  box-shadow: 3px 3px 0 var(--line);
+}
+
+.pty-item.owned { opacity: 0.75; }
+
+.pty-emoji { font-size: 1.5rem; text-align: center; }
+
+.pty-info { display: grid; gap: 2px; min-width: 0; }
+.pty-info strong { font-size: 0.9rem; }
+.pty-info span { font-size: 0.76rem; color: var(--muted); font-weight: 700; }
+
+.pty-buy {
+  min-height: 40px;
+  min-width: 74px;
+  padding: 0 12px;
+  background: var(--mint);
+  border: 3px solid var(--line);
+  border-radius: 8px;
+  box-shadow: 3px 3px 0 var(--line);
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.pty-buy:disabled { background: #c7cfdb; cursor: not-allowed; opacity: 0.8; }
+.pty-buy:not(:disabled):hover { transform: translate(-1px, -1px); }
+
+/* ——— bubble event wipe ——— */
+.pty-bubbles {
+  position: absolute;
+  inset: 0;
+  z-index: 6;
+  display: grid;
+  place-items: center;
+  padding: 14px;
+  border-radius: 12px;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 12% 18%, rgba(255, 255, 255, 0.75) 0 34px, transparent 35px),
+    radial-gradient(circle at 88% 12%, rgba(255, 255, 255, 0.6) 0 46px, transparent 47px),
+    radial-gradient(circle at 85% 85%, rgba(255, 255, 255, 0.65) 0 52px, transparent 53px),
+    radial-gradient(circle at 8% 82%, rgba(255, 255, 255, 0.6) 0 40px, transparent 41px),
+    radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.35) 0 70px, transparent 71px),
+    rgba(150, 200, 240, 0.62);
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
+}
+
+.pty-bubbles[hidden] { display: none !important; }
+
+.pty-bubbles.show { animation: pty-wipe-in 0.45s ease-out; }
+.pty-bubbles.pop { animation: pty-pop-out 0.38s ease-in forwards; }
+
+@keyframes pty-wipe-in {
+  0% { opacity: 0; transform: scale(0.6); }
+  60% { opacity: 1; transform: scale(1.04); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+@keyframes pty-pop-out {
+  0% { opacity: 1; transform: scale(1); }
+  100% { opacity: 0; transform: scale(1.25); }
+}
+
+.pty-card {
+  position: relative;
+  width: min(420px, 100%);
+  display: grid;
+  gap: 6px;
+  justify-items: center;
+  text-align: center;
+  padding: 22px 20px 18px;
+  background: radial-gradient(circle at 30% 20%, rgba(255, 255, 255, 0.95), rgba(214, 236, 250, 0.92) 60%, rgba(170, 205, 240, 0.94));
+  border: 3px solid #fff;
+  outline: 3px solid var(--line);
+  border-radius: 50% / 42%;
+  box-shadow: 0 12px 40px rgba(25, 33, 43, 0.3), inset 0 0 0 4px rgba(255, 255, 255, 0.5);
+  animation: pty-wobble 2.4s ease-in-out infinite;
+  overflow: hidden;
+}
+
+.pty-card::after {
+  content: "";
+  position: absolute;
+  left: 18%;
+  top: 10%;
+  width: 52px;
+  height: 26px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.85);
+  transform: rotate(-18deg);
+  pointer-events: none;
+}
+
+@keyframes pty-wobble {
+  0%, 100% { transform: scale(1) rotate(-0.6deg); }
+  50% { transform: scale(1.02) rotate(0.6deg); }
+}
+
+.pty-card-emoji { font-size: 2rem; line-height: 1; }
+.pty-card-title {
+  margin: 0;
+  font-size: 1.5rem;
+  color: #22354f;
+  letter-spacing: 0.01em;
+}
+.pty-card-sub { font-weight: 900; color: #ff5b6e; letter-spacing: 0.06em; }
+.pty-card-body { margin: 0; font-weight: 800; color: #33415a; font-size: 0.9rem; line-height: 1.45; }
+.pty-card-btn { margin-top: 8px; min-width: 200px; }
+
+/* ——— shelf card art: mini iso park ——— */
+.tycoon-art {
+  position: relative;
+  background: linear-gradient(180deg, #a9d4f2 0%, #d8ecfa 70%, #eef6fd 100%);
+  overflow: hidden;
+}
+
+.tycoon-art-iso {
+  position: absolute;
+  left: 50%;
+  top: 54%;
+  width: 150px;
+  height: 76px;
+  transform: translate(-50%, -50%) rotate(0deg);
+  background: linear-gradient(180deg, #ffffff, #dceefb);
+  border: 3px solid var(--line);
+  clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%);
+  box-shadow: 4px 4px 0 var(--line);
+}
+
+.tycoon-art-pool {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 56px;
+  height: 26px;
+  transform: translate(-10%, -50%);
+  background: #7ab8e0;
+  border: 3px solid var(--line);
+  border-radius: 50%;
+}
+
+.tycoon-art-penguin {
+  position: absolute;
+  left: 38%;
+  bottom: 30%;
+  width: 24px;
+  height: 28px;
+  background: radial-gradient(circle at 35% 25%, #2a3a52, #1e2a3a 70%);
+  border: 2px solid var(--line);
+  border-radius: 50% / 58%;
+  animation: pty-hop 1.2s ease-in-out infinite;
+}
+
+.tycoon-art-penguin::after {
+  content: "";
+  position: absolute;
+  left: 6px;
+  right: 6px;
+  top: 9px;
+  bottom: 4px;
+  background: #fff8ea;
+  border-radius: 50% / 60%;
+}
+
+.tycoon-art-coin {
+  position: absolute;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #ffe9a8, #d9a92f 75%);
+  border: 2px solid #8a5f14;
+  font-size: 0.7rem;
+  font-weight: 900;
+  color: #8a5f14;
+  display: grid;
+  place-items: center;
+  animation: pty-hop 1.6s ease-in-out infinite;
+}
+
+.tycoon-art-coin.c1 { right: 18%; top: 20%; }
+.tycoon-art-coin.c2 { right: 30%; top: 12%; animation-delay: 0.5s; }
+
+.tycoon-art-tree {
+  position: absolute;
+  width: 0;
+  height: 0;
+  border-left: 12px solid transparent;
+  border-right: 12px solid transparent;
+  border-bottom: 22px solid #2f9e44;
+  filter: drop-shadow(2px 2px 0 var(--line));
+}
+
+.tycoon-art-tree.t1 { left: 14%; bottom: 26%; }
+.tycoon-art-tree.t2 { right: 12%; bottom: 30%; }
+
+@keyframes pty-hop {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-7px); }
+}
+
+@media (max-width: 520px) {
+  .pty-btn { min-height: 48px; font-size: 0.85rem; }
+  .pty-card-title { font-size: 1.25rem; }
+  .pty-bar { width: 64px; }
+}

@@ -86,7 +86,8 @@ const gameSlugs = {
   tinyblocks: "tiny_blocks",
   tag: "trinkets_tag",
   ludo: "ludo",
-  mayhem: "magnet_mayhem"
+  mayhem: "magnet_mayhem",
+  tycoon: "penguin_tycoon"
 };
 
 function slugToGame(slug) {
@@ -433,6 +434,12 @@ function embedStatText(snap) {
   if (snap.game === "Magnet Mayhem") {
     if (typeof snap.round === "number") parts.push("Round " + snap.round);
     if (typeof snap.p1wins === "number" && typeof snap.p2wins === "number") parts.push(`P1 ${snap.p1wins} – ${snap.p2wins} P2`);
+  }
+  if (snap.game === "Penguin Park Tycoon") {
+    if (typeof snap.coins === "number") parts.push("Coins $" + snap.coins);
+    if (typeof snap.visitors === "number") parts.push(snap.visitors + " visitors");
+    if (typeof snap.level === "number") parts.push("Level " + snap.level);
+    if (typeof snap.penguins === "number") parts.push(snap.penguins + " penguins");
   }
   return parts.join(" · ");
 }
