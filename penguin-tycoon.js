@@ -43,13 +43,13 @@ var TYCOON_LEVELS = [
   { at: 0,    name: "Tiny Ice" },
   { at: 100,  name: "Penguin Park" },
   { at: 300,  name: "Penguin Village" },
-  { at: 600,  name: "Penguin Resort" },
-  { at: 1200, name: "Penguin Kingdom" },
-  { at: 2500, name: "Penguin World" },
-  { at: 5000, name: "THE PENGUIN EMPIRE" },
-  { at: 12000, name: "Penguin Continent" },
-  { at: 25000, name: "Lunar Penguin Base" },
-  { at: 50000, name: "GALACTIC PENGUIN FEDERATION" }
+  { at: 750,  name: "Penguin Resort" },
+  { at: 1500, name: "Penguin Kingdom" },
+  { at: 3000, name: "Penguin World" },
+  { at: 6000, name: "THE PENGUIN EMPIRE" },
+  { at: 15000, name: "Penguin Continent" },
+  { at: 32000, name: "Lunar Penguin Base" },
+  { at: 65000, name: "GALACTIC PENGUIN FEDERATION" }
 ];
 
 var TYCOON_QUIPS = [
@@ -163,8 +163,8 @@ function startPenguinTycoon() {
         '<div class="pty-bubbles" id="ptyBubbles" hidden><div class="pty-card" id="ptyCard"></div></div>' +
       '</div>' +
       '<div class="pty-actions">' +
-        '<button class="pty-btn build" id="ptyBuildBtn" type="button"><span aria-hidden="true">➕</span> BUILD</button>' +
-        '<button class="pty-btn peng" id="ptyPengBtn" type="button"><span aria-hidden="true">🐧</span> PENGUINS</button>' +
+        '<button class="pty-btn build" id="ptyBuildBtn" type="button"><span aria-hidden="true">➕</span> BUILD<span class="pty-dot" id="ptyDotBuild" hidden></span></button>' +
+        '<button class="pty-btn peng" id="ptyPengBtn" type="button"><span aria-hidden="true">🐧</span> PENGUINS<span class="pty-dot" id="ptyDotPeng" hidden></span></button>' +
         '<button class="pty-btn up" id="ptyUpBtn" type="button"><span aria-hidden="true">⬆️</span> UPGRADES<span class="pty-dot" id="ptyDot" hidden></span></button>' +
       '</div>' +
       '<div class="game-actions pty-sub">' +
@@ -192,6 +192,10 @@ function startPenguinTycoon() {
   var card = document.querySelector("#ptyCard");
   var fxEl = document.querySelector("#ptyFx");
   var dotEl = document.querySelector("#ptyDot");
+  var dotPengEl = document.querySelector("#ptyDotPeng");
+  var dotBuildEl = document.querySelector("#ptyDotBuild");
+  var sheetRows = [];
+  var lastSheetLive = -99;
 
   var data = tycoonLoad();
   var penguins = []; // {type,x,y,t,step,opts,pet,swim,si}
@@ -306,32 +310,87 @@ function startPenguinTycoon() {
     function poly(pts, f, s, w) { T.poly(pts, f, s === undefined ? "#2a3f66" : s, w === undefined ? 1.8 : w); }
     return { pt: pt, ell: ell, poly: poly };
   }
+  // Every penguin type gets its own silhouette and details.
+  var PENG_SPRITES = {
+    normal:  { body: "#27406b", belly: "#ffffff", beak: "#ffb02e", feet: "#ff9f43", ws: 1,    hs: 1 },
+    baby:    { body: "#2b3a52", belly: "#fff3d6", beak: "#ffb02e", feet: "#ff9f43", ws: 0.8,  hs: 0.74, tuft: true, bigEyes: true },
+    emperor: { body: "#1f314f", belly: "#fff0a0", beak: "#f6c445", feet: "#f6c445", ws: 1.06, hs: 1.18, crown: true },
+    golden:  { body: "#e8a100", belly: "#fff3bf", beak: "#c07f00", feet: "#c07f00", ws: 1.02, hs: 1.05, glints: true },
+    mystery: { body: "rainbow", belly: "#e5dbff", beak: "#ff9f2e", feet: "#ff9f43", ws: 1.02, hs: 1.05, dots: true },
+    robot:   { body: "#c0c8d4", belly: "#e8f0ff", beak: "#ff9f2e", feet: "#4a5a6b", ws: 1.02, hs: 1.02, robot: true },
+    diamond: { body: "#bfe6f7", belly: "#ffffff", beak: "#4f8fcf", feet: "#4f8fcf", ws: 1,    hs: 1.05, facets: true },
+    cosmic:  { body: "#3a2a6e", belly: "#241a4d", beak: "#ffd166", feet: "#ffd166", ws: 1.04, hs: 1.08, stars: true }
+  };
   function drawGlidePenguin(T, o, e) {
     var H = spHelper(T, e.fx - e.x, e.fy - e.y, T.bob());
     var Sh = spHelper(T, e.fx - e.x, e.fy - e.y, 0);
     var flip = o.flip ? -1 : 1;
-    Sh.poly(Sh.ell(2, 1, 12, 4), "rgba(47,84,134,.25)", null);
-    H.poly(H.ell(-4.5 * flip, -1, 4.5, 2.2), "#ff9f43");
-    H.poly(H.ell(5 * flip, -1, 4.5, 2.2), "#ff9f43");
-    H.poly(H.ell(-11 * flip, -14, 3, 8, 0.25 * flip), "#16263f");
-    H.poly(H.ell(11 * flip, -14, 3, 8, -0.25 * flip), "#16263f");
-    // body + dark back rim + belly
-    H.poly(H.ell(0, -15, 11, 15), "#27406b");
-    H.poly(H.ell(-6 * flip, -15, 5, 13, -0.06 * flip), "#16263f", null);
-    H.poly(H.ell(2 * flip, -12, 7, 11), "#ffffff", null);
-    // sparkle so it reads round, not flat
-    H.poly(H.ell(-7 * flip, -26, 2.5, 3.5, -0.35 * flip), "rgba(255,255,255,.8)", null);
-    // face
-    H.poly(H.ell(0, -22, 2.5, 2.5), "#ffffff", null);
-    H.poly(H.ell(7 * flip, -22, 2.5, 2.5), "#ffffff", null);
-    H.poly(H.ell(0.8 * flip, -22, 1.2, 1.2), "#2a3f66", null);
-    H.poly(H.ell(7.8 * flip, -22, 1.2, 1.2), "#2a3f66", null);
-    H.poly(H.ell(-2 * flip, -18, 1.8, 1.8), "rgba(255,154,168,.85)", null);
-    H.poly(H.ell(10 * flip, -18, 1.8, 1.8), "rgba(255,154,168,.85)", null);
-    H.poly([H.pt(3 * flip, -19.5), H.pt(11.5 * flip, -18), H.pt(3 * flip, -15.5)], "#ffb02e");
+    var P = PENG_SPRITES[e.type] || PENG_SPRITES.normal;
+    var ws = P.ws, hs = P.hs;
+    var body = P.body === "rainbow" ? "hsl(" + Math.floor(time * 120 % 360) + ",70%,55%)" : P.body;
+    var rim = P.body === "rainbow" ? "#4a3aa0" : shade(P.body, 0.55);
+    var eyeR = P.bigEyes ? 3.4 : 2.5, pupR = P.bigEyes ? 1.7 : 1.2;
+    Sh.poly(Sh.ell(2, 1, 12 * ws, 4), "rgba(47,84,134,.25)", null);
+    // feet + flippers in type colours
+    H.poly(H.ell(-4.5 * flip * ws, -1 * hs, 4.5 * ws, 2.2 * hs), P.feet);
+    H.poly(H.ell(5 * flip * ws, -1 * hs, 4.5 * ws, 2.2 * hs), P.feet);
+    H.poly(H.ell(-11 * flip * ws, -14 * hs, 3 * ws, 8 * hs, 0.25 * flip), rim);
+    H.poly(H.ell(11 * flip * ws, -14 * hs, 3 * ws, 8 * hs, -0.25 * flip), rim);
+    // body + back rim + belly
+    H.poly(H.ell(0, -15 * hs, 11 * ws, 15 * hs), body);
+    H.poly(H.ell(-6 * flip * ws, -15 * hs, 5 * ws, 13 * hs, -0.06 * flip), rim, null);
+    H.poly(H.ell(2 * flip * ws, -12 * hs, 7 * ws, 11 * hs), P.belly, null);
+    H.poly(H.ell(-7 * flip * ws, -26 * hs, 2.5 * ws, 3.5 * hs, -0.35 * flip), "rgba(255,255,255,.8)", null);
+    if (P.robot) {
+      // antenna + glowing visor instead of a face
+      var lit = Math.floor(time * 2) % 2 === 0;
+      H.poly([H.pt(-1, -40 * hs), H.pt(1, -40 * hs), H.pt(1, -33 * hs), H.pt(-1, -33 * hs)], "#4a5a6b");
+      H.poly(H.ell(0, -42 * hs, 2, 2), lit ? "#ff5b5b" : "#7a1010", null);
+      H.poly([H.pt(-7.5 * ws, -25.5 * hs), H.pt(7.5 * ws, -25.5 * hs), H.pt(7.5 * ws, -19 * hs), H.pt(-7.5 * ws, -19 * hs)], "#1a2330");
+      H.poly(H.ell(-3.5 * ws, -22.5 * hs, 1.6, 1.6), "#00ffaa", null);
+      H.poly(H.ell(3.5 * ws, -22.5 * hs, 1.6, 1.6), "#00ffaa", null);
+      H.poly([H.pt(-5 * ws, -8 * hs), H.pt(5 * ws, -8 * hs), H.pt(5 * ws, -6.5 * hs), H.pt(-5 * ws, -6.5 * hs)], shade(P.body, 0.8));
+    } else {
+      // face
+      H.poly(H.ell(0, -22 * hs, eyeR * ws, eyeR * hs), "#ffffff", null);
+      H.poly(H.ell(7 * flip * ws, -22 * hs, eyeR * ws, eyeR * hs), "#ffffff", null);
+      H.poly(H.ell(0.8 * flip * ws, -22 * hs, pupR, pupR), P.stars ? "#ffe066" : "#2a3f66", null);
+      H.poly(H.ell(7.8 * flip * ws, -22 * hs, pupR, pupR), P.stars ? "#ffe066" : "#2a3f66", null);
+      H.poly(H.ell(-2 * flip * ws, -18 * hs, 1.8 * ws, 1.8 * hs), "rgba(255,154,168,.85)", null);
+      H.poly(H.ell(10 * flip * ws, -18 * hs, 1.8 * ws, 1.8 * hs), "rgba(255,154,168,.85)", null);
+      H.poly([H.pt(3 * flip * ws, -19.5 * hs), H.pt(11.5 * flip * ws, -18 * hs), H.pt(3 * flip * ws, -15.5 * hs)], P.beak);
+    }
+    if (P.tuft) {
+      H.poly([H.pt(-2.5 * flip * ws, -35 * hs), H.pt(2.5 * flip * ws, -35 * hs), H.pt(0, -43 * hs)], rim);
+    }
+    if (P.crown) {
+      H.poly([H.pt(-7 * ws, -27 * hs), H.pt(7 * ws, -27 * hs), H.pt(7 * ws, -31 * hs), H.pt(-7 * ws, -31 * hs)], "#f6c445", "#8a5f14", 1.5);
+      H.poly([H.pt(-7 * ws, -31 * hs), H.pt(-3.5 * ws, -36 * hs), H.pt(0, -31 * hs)], "#f6c445", "#8a5f14", 1.5);
+      H.poly([H.pt(0, -31 * hs), H.pt(3.5 * ws, -36 * hs), H.pt(7 * ws, -31 * hs)], "#f6c445", "#8a5f14", 1.5);
+      H.poly(H.ell(0, -29 * hs, 1.5, 1.5), "#ff5b5b", null);
+    }
+    if (P.glints) {
+      H.poly([H.pt(-6 * ws, -24 * hs), H.pt(-3 * ws, -20 * hs), H.pt(-6 * ws, -16 * hs), H.pt(-9 * ws, -20 * hs)], "#ffffff", null);
+      H.poly([H.pt(4 * ws, -28 * hs), H.pt(6 * ws, -25 * hs), H.pt(4 * ws, -22 * hs), H.pt(2 * ws, -25 * hs)], "#ffffff", null);
+    }
+    if (P.dots) {
+      H.poly(H.ell(-2 * ws, -14 * hs, 1.4, 1.4), "#ffffff", null);
+      H.poly(H.ell(3 * flip * ws, -11 * hs, 1.4, 1.4), "#ffffff", null);
+      H.poly(H.ell(-1 * ws, -8 * hs, 1.2, 1.2), "#ffffff", null);
+    }
+    if (P.facets) {
+      H.poly([H.pt(-8 * ws, -20 * hs), H.pt(-2 * ws, -14 * hs), H.pt(-3 * ws, -12 * hs), H.pt(-9 * ws, -18 * hs)], "#ffffff", null);
+      H.poly([H.pt(2 * ws, -24 * hs), H.pt(8 * ws, -16 * hs), H.pt(7 * ws, -14 * hs), H.pt(1 * ws, -22 * hs)], "#ffffff", null);
+      H.poly([H.pt(-4 * ws, -30 * hs), H.pt(-1 * ws, -26 * hs), H.pt(-4 * ws, -22 * hs), H.pt(-7 * ws, -26 * hs)], "#ffffff", null);
+    }
+    if (P.stars) {
+      H.poly(H.ell(-2 * ws, -14 * hs, 1.2, 1.2), "#ffffff", null);
+      H.poly(H.ell(3 * flip * ws, -10 * hs, 1.4, 1.4), "#ffffff", null);
+      H.poly(H.ell(0, -6 * hs, 1, 1), "#ffffff", null);
+    }
     if (o.scarf) {
-      H.poly([H.pt(-9 * flip, -16), H.pt(11 * flip, -16), H.pt(11 * flip, -11), H.pt(-9 * flip, -11)], o.scarf);
-      H.poly([H.pt(5 * flip, -11), H.pt(9.5 * flip, -11), H.pt(9.5 * flip, -2), H.pt(5 * flip, -2)], o.scarf);
+      H.poly([H.pt(-9 * flip * ws, -16 * hs), H.pt(11 * flip * ws, -16 * hs), H.pt(11 * flip * ws, -11 * hs), H.pt(-9 * flip * ws, -11 * hs)], o.scarf);
+      H.poly([H.pt(5 * flip * ws, -11 * hs), H.pt(9.5 * flip * ws, -11 * hs), H.pt(9.5 * flip * ws, -2 * hs), H.pt(5 * flip * ws, -2 * hs)], o.scarf);
     }
   }
   function drawGlideVisitor(T, o, e) {
@@ -829,17 +888,30 @@ function startPenguinTycoon() {
     lvlEl.childNodes[0].textContent = "⭐ " + TYCOON_LEVELS[lvl].name + " " + (lvl + 1);
     fillEl.style.width = Math.round(levelProgress() * 100) + "%";
     sheetCoins.textContent = Math.floor(data.coins);
-    var afford = false;
-    for (var i = 0; i < TYCOON_UPGRADES.length; i++) {
-      if (!data.up[TYCOON_UPGRADES[i].id] && data.coins >= TYCOON_UPGRADES[i].cost) afford = true;
+    // affordable dots on every menu button, recomputed live as coins tick up
+    var affordUp = false, affordPeng = false, affordBuild = false;
+    var ai, aj, ab;
+    for (ai = 0; ai < TYCOON_UPGRADES.length; ai++) {
+      if (!data.up[TYCOON_UPGRADES[ai].id] && data.coins >= TYCOON_UPGRADES[ai].cost) affordUp = true;
     }
-    for (var j = 0; j < TYCOON_TYPES.length; j++) {
-      var t = TYCOON_TYPES[j];
-      var owned = data.counts[t.id] || 0;
-      var cost = Math.round(t.cost * Math.pow(1.15, owned));
-      if (data.coins >= cost) afford = true;
+    for (aj = 0; aj < TYCOON_TYPES.length; aj++) {
+      var pto = data.counts[TYCOON_TYPES[aj].id] || 0;
+      if (data.coins >= Math.round(TYCOON_TYPES[aj].cost * Math.pow(1.18, pto))) affordPeng = true;
     }
-    dotEl.hidden = !afford;
+    for (ab = 0; ab < TYCOON_BUILD.length; ab++) {
+      var bb = TYCOON_BUILD[ab];
+      if (bb.id === "enclosure") {
+        if ((data.enclosure || 0) < bb.max && data.coins >= tycoonBuildCost(bb, data)) affordBuild = true;
+      } else if (!data.build[bb.id] && data.coins >= bb.cost) affordBuild = true;
+    }
+    dotEl.hidden = !affordUp;
+    dotPengEl.hidden = !affordPeng;
+    dotBuildEl.hidden = !affordBuild;
+    // live shop refresh: prices enable the moment coins cover them
+    if (!sheet.hidden && sheetTab && time - lastSheetLive > 0.4) {
+      lastSheetLive = time;
+      refreshSheetLive();
+    }
     if (fx && fx.t > 0) {
       fxEl.hidden = false;
       fxEl.textContent = fx.label + " " + Math.ceil(fx.t) + "s";
@@ -865,9 +937,38 @@ function startPenguinTycoon() {
     try { if (window.fitGameShell) window.fitGameShell(); } catch (e) {}
   }
 
+  function refreshSheetLive() {
+    // price buttons enable the moment coins cover them — no reopen needed
+    sheetCoins.textContent = Math.floor(data.coins);
+    for (var i = 0; i < sheetRows.length; i++) {
+      var r = sheetRows[i];
+      if (r.kind === "build") {
+        var maxed = r.ref.max && (data.enclosure || 0) >= r.ref.max;
+        var built = r.ref.id !== "enclosure" && data.build[r.ref.id];
+        if (maxed) { r.btn.textContent = "MAX"; r.btn.disabled = true; }
+        else if (built) { r.btn.textContent = "OWNED"; r.btn.disabled = true; }
+        else {
+          var bc = tycoonBuildCost(r.ref, data);
+          r.btn.textContent = fmt(bc);
+          r.btn.disabled = data.coins < bc;
+        }
+        if (r.title && r.ref.id === "enclosure") r.title.textContent = r.ref.name + " Lv." + (data.enclosure || 0);
+      } else if (r.kind === "peng") {
+        var ow = data.counts[r.ref.id] || 0;
+        var pc = Math.round(r.ref.cost * Math.pow(1.18, ow));
+        r.btn.textContent = fmt(pc);
+        r.btn.disabled = data.coins < pc;
+      } else {
+        if (data.up[r.ref.id]) { r.btn.textContent = "OWNED"; r.btn.disabled = true; }
+        else { r.btn.textContent = fmt(r.ref.cost); r.btn.disabled = data.coins < r.ref.cost; }
+      }
+    }
+  }
+
   function renderSheet() {
     if (!sheetTab) return;
     itemsEl.innerHTML = "";
+    sheetRows = [];
     if (sheetTab === "build") {
       sheetTitle.textContent = "Build — park stuff";
       sheetSub.textContent = " — the tile map rebuilds as you buy";
@@ -884,18 +985,20 @@ function startPenguinTycoon() {
         var btn = document.createElement("button");
         btn.type = "button";
         btn.className = "pty-buy";
-        btn.textContent = maxed ? "MAX" : fmt(cost);
-        btn.disabled = maxed || data.coins < cost;
+        var built = b.id !== "enclosure" && data.build[b.id];
+        btn.textContent = maxed ? "MAX" : built ? "OWNED" : fmt(cost);
+        btn.disabled = maxed || built || data.coins < cost;
         btn.addEventListener("click", function () { buyBuild(b); });
         row.appendChild(btn);
         itemsEl.appendChild(row);
+        sheetRows.push({ kind: "build", ref: b, btn: btn, title: row.querySelector("strong") });
       });
     } else if (sheetTab === "peng") {
       sheetTitle.textContent = "Penguins";
       sheetSub.textContent = " — every penguin pays you every second";
       TYCOON_TYPES.forEach(function (t) {
         var owned = data.counts[t.id] || 0;
-        var cost = Math.round(t.cost * Math.pow(1.15, owned));
+        var cost = Math.round(t.cost * Math.pow(1.18, owned));
         var row = document.createElement("div");
         row.className = "pty-item";
         row.innerHTML =
@@ -910,6 +1013,7 @@ function startPenguinTycoon() {
         btn.addEventListener("click", function () { buyPenguin(t); });
         row.appendChild(btn);
         itemsEl.appendChild(row);
+        sheetRows.push({ kind: "peng", ref: t, btn: btn });
       });
     } else {
       sheetTitle.textContent = "Upgrades — visitor stuff";
@@ -930,6 +1034,7 @@ function startPenguinTycoon() {
         btn.addEventListener("click", function () { buyUpgrade(u); });
         row.appendChild(btn);
         itemsEl.appendChild(row);
+        sheetRows.push({ kind: "up", ref: u, btn: btn });
       });
     }
     refreshHUD();
@@ -937,7 +1042,7 @@ function startPenguinTycoon() {
 
   function buyPenguin(t) {
     var owned = data.counts[t.id] || 0;
-    var cost = Math.round(t.cost * Math.pow(1.15, owned));
+    var cost = Math.round(t.cost * Math.pow(1.18, owned));
     if (data.coins < cost) { msgEl.textContent = "Not enough coins for " + t.name + " yet. The penguins wait."; return; }
     data.coins -= cost;
     data.spent += cost;
