@@ -9,7 +9,10 @@ var TYCOON_TYPES = [
   { id: "baby",    name: "Baby Penguin",    emoji: "🐤", cost: 150,   income: 5,   scarf: "#ff8fb1", desc: "+$5/sec · tiny & loud" },
   { id: "emperor", name: "Emperor Penguin", emoji: "👑", cost: 500,   income: 15,  scarf: "#ffffff", desc: "+$15/sec · royal glide" },
   { id: "golden",  name: "Golden Penguin",  emoji: "✨", cost: 2500,  income: 75,  scarf: "#ffd93d", desc: "+$75/sec · extremely shiny" },
-  { id: "mystery", name: "??? Penguin",     emoji: "🌀", cost: 10000, income: 300, scarf: "#8a7dff", desc: "+$300/sec · do not ask" }
+  { id: "mystery", name: "??? Penguin",     emoji: "🌀", cost: 10000,  income: 300,  scarf: "#8a7dff", desc: "+$300/sec · do not ask" },
+  { id: "robot",   name: "Robot Penguin",   emoji: "🤖", cost: 25000,  income: 700,  scarf: "#6c8cff", desc: "+$700/sec · beep boop waddle" },
+  { id: "diamond", name: "Diamond Penguin", emoji: "💎", cost: 60000,  income: 1600, scarf: "#9fdcf3", desc: "+$1,600/sec · dangerously shiny" },
+  { id: "cosmic",  name: "Cosmic Penguin",  emoji: "🛸", cost: 150000, income: 4000, scarf: "#ff8fb1", desc: "+$4,000/sec · from beyond the ice" }
 ];
 
 var TYCOON_BUILD = [
@@ -19,7 +22,8 @@ var TYCOON_BUILD = [
   { id: "slide",     name: "Penguin Slide",    emoji: "🛝", cost: 300,  cap: 10, bonus: 0.20, desc: "wheee +20% income" },
   { id: "cave",      name: "Ice Cave",         emoji: "🧊", cost: 450,  cap: 12, bonus: 0.25, desc: "mysterious & cold" },
   { id: "climb",     name: "Climbing Area",    emoji: "🧗", cost: 700,  cap: 15, bonus: 0.30, desc: "tiny harnesses included" },
-  { id: "iceberg",   name: "Giant Iceberg",    emoji: "🏔️", cost: 1200, cap: 20, bonus: 0.50, desc: "the centrepiece · +50%" }
+  { id: "iceberg",   name: "Giant Iceberg",    emoji: "🏔️", cost: 1200, cap: 20, bonus: 0.50, desc: "the centrepiece · +50%" },
+  { id: "stage",     name: "Penguin Stage",    emoji: "🎤", cost: 3000,  cap: 10, bonus: 0.25, desc: "live waddle shows nightly" }
 ];
 
 var TYCOON_UPGRADES = [
@@ -28,7 +32,11 @@ var TYCOON_UPGRADES = [
   { id: "food",    name: "Food Stand",        emoji: "🍿", cost: 100, cap: 6,  bonus: 0.10, desc: "ice cream sells itself" },
   { id: "gift",    name: "Gift Shop",         emoji: "🎁", cost: 300, cap: 8,  bonus: 0.15, desc: "plushies?? plushies." },
   { id: "info",    name: "Information Centre",emoji: "ℹ️", cost: 350, cap: 6,  bonus: 0.12, desc: "penguin facts, loudly" },
-  { id: "plush",   name: "Penguin Plushies",  emoji: "🧸", cost: 450, cap: 10, bonus: 0.18, desc: "take the park home" }
+  { id: "plush",   name: "Penguin Plushies",  emoji: "🧸", cost: 450,   cap: 10, bonus: 0.18, desc: "take the park home" },
+  { id: "cocoa",   name: "Hot Cocoa Stand",   emoji: "🍫", cost: 1200,  cap: 6,  bonus: 0.12, desc: "warm beaks, warm hearts" },
+  { id: "parade",  name: "Penguin Parade",     emoji: "🎺", cost: 2000,  cap: 8,  bonus: 0.20, desc: "marching band, waddling" },
+  { id: "lights",  name: "Night Lights",      emoji: "💡", cost: 6000,  cap: 10, bonus: 0.30, desc: "the park glows after dark" },
+  { id: "festival", name: "Snow Festival",     emoji: "🎆", cost: 15000, cap: 15, bonus: 0.50, desc: "the biggest night of the year" }
 ];
 
 var TYCOON_LEVELS = [
@@ -38,7 +46,10 @@ var TYCOON_LEVELS = [
   { at: 600,  name: "Penguin Resort" },
   { at: 1200, name: "Penguin Kingdom" },
   { at: 2500, name: "Penguin World" },
-  { at: 5000, name: "THE PENGUIN EMPIRE" }
+  { at: 5000, name: "THE PENGUIN EMPIRE" },
+  { at: 12000, name: "Penguin Continent" },
+  { at: 25000, name: "Lunar Penguin Base" },
+  { at: 50000, name: "GALACTIC PENGUIN FEDERATION" }
 ];
 
 var TYCOON_QUIPS = [
@@ -265,6 +276,15 @@ function startPenguinTycoon() {
      swimmer painters with versions drawn at a fractional tile offset. Each
      entity keeps a float position (fx, fy); its grid tile only flips when it
      crosses a boundary, so painter-order depth stays exactly correct. */
+  // darken/lighten a #rrggbb colour for fake depth shading
+  function shade(hex, f) {
+    var n = parseInt(String(hex).slice(1), 16);
+    if (isNaN(n)) return hex;
+    var r = Math.min(255, Math.max(0, Math.round(((n >> 16) & 255) * f)));
+    var g = Math.min(255, Math.max(0, Math.round(((n >> 8) & 255) * f)));
+    var b = Math.min(255, Math.max(0, Math.round((n & 255) * f)));
+    return "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
+  }
   function spHelper(T, dx, dy, bobFrac) {
     var k = T.k;
     var ox = (dx - dy) * 32 * k, oy = (dx + dy) * 16 * k - (bobFrac || 0) * k;
@@ -286,12 +306,15 @@ function startPenguinTycoon() {
     var H = spHelper(T, e.fx - e.x, e.fy - e.y, T.bob());
     var Sh = spHelper(T, e.fx - e.x, e.fy - e.y, 0);
     var flip = o.flip ? -1 : 1;
-    Sh.poly(Sh.ell(0.02, 0.03, 0.19, 0.07), "rgba(47,84,134,.2)", null);
+    Sh.poly(Sh.ell(0.02, 0.03, 0.22, 0.08), "rgba(47,84,134,.25)", null);
     H.poly(H.ell(-0.07 * flip, 0.0, 0.07, 0.035), "#ff9f43");
     H.poly(H.ell(0.08 * flip, 0.0, 0.07, 0.035), "#ff9f43");
-    H.poly(H.ell(-0.18 * flip, -0.2, 0.05, 0.12, 0.3 * flip), "#1f3358");
-    H.poly(H.ell(0.18 * flip, -0.2, 0.05, 0.12, -0.3 * flip), "#1f3358");
+    H.poly(H.ell(-0.18 * flip, -0.2, 0.05, 0.12, 0.3 * flip), "#16263f");
+    H.poly(H.ell(0.18 * flip, -0.2, 0.05, 0.12, -0.3 * flip), "#16263f");
     H.poly(H.ell(0, -0.22, 0.17, 0.23), "#27406b");
+    // dark back rim on the left edge + white sparkle = round, not flat
+    H.poly(H.ell(-0.1 * flip, -0.22, 0.075, 0.2, 0.12 * flip), "#16263f", null);
+    H.poly(H.ell(-0.06 * flip, -0.36, 0.035, 0.05, -0.3 * flip), "rgba(255,255,255,.75)", null);
     H.poly(H.ell(0.02 * flip, -0.18, 0.11, 0.17), "#ffffff", null);
     H.poly(H.ell(-0.055 * flip, -0.33, 0.04, 0.04), "#ffffff", null);
     H.poly(H.ell(0.06 * flip, -0.33, 0.04, 0.04), "#ffffff", null);
@@ -309,19 +332,41 @@ function startPenguinTycoon() {
     var H = spHelper(T, e.fx - e.x, e.fy - e.y, T.bob());
     var Sh = spHelper(T, e.fx - e.x, e.fy - e.y, 0);
     var coat = o.coat || "#6c8cff", hat = o.hat || "#ffffff";
-    Sh.poly(Sh.ell(0, 0.05, 0.16, 0.06), "rgba(47,84,134,.2)", null);
-    H.poly([H.pt(-0.09, -0.03), H.pt(-0.03, -0.03), H.pt(-0.03, 0.05), H.pt(-0.09, 0.05)], "#2e3f66");
-    H.poly([H.pt(0.03, -0.03), H.pt(0.09, -0.03), H.pt(0.09, 0.05), H.pt(0.03, 0.05)], "#2e3f66");
-    H.poly(H.ell(-0.13, -0.2, 0.04, 0.09, 0.15), coat);
-    H.poly(H.ell(0.13, -0.2, 0.04, 0.09, -0.15), coat);
+    var dark = shade(coat, 0.72), darker = shade(coat, 0.55);
+    var hatDark = shade(hat, 0.78);
+    Sh.poly(Sh.ell(0, 0.05, 0.19, 0.07), "rgba(47,84,134,.25)", null);
+    // boots: dark legs with foot nubs
+    H.poly([H.pt(-0.095, -0.03), H.pt(-0.025, -0.03), H.pt(-0.025, 0.05), H.pt(-0.095, 0.05)], "#232f4d");
+    H.poly([H.pt(0.025, -0.03), H.pt(0.095, -0.03), H.pt(0.095, 0.05), H.pt(0.025, 0.05)], "#232f4d");
+    H.poly(H.ell(-0.06, 0.05, 0.045, 0.025), "#161d31", null);
+    H.poly(H.ell(0.06, 0.05, 0.045, 0.025), "#161d31", null);
+    // arms behind the coat: sleeves + skin mittens
+    H.poly(H.ell(-0.14, -0.2, 0.042, 0.095, 0.15), dark);
+    H.poly(H.ell(0.14, -0.2, 0.042, 0.095, -0.15), dark);
+    H.poly(H.ell(-0.15, -0.1, 0.032, 0.032), "#ffd3b0", null);
+    H.poly(H.ell(0.15, -0.1, 0.032, 0.032), "#ffd3b0", null);
+    // coat: main + dark right side + light left rim + belt
     H.poly([H.pt(-0.12, -0.38), H.pt(0.12, -0.38), H.pt(0.12, -0.1), H.pt(-0.12, -0.1)], coat);
+    H.poly([H.pt(0.04, -0.38), H.pt(0.12, -0.38), H.pt(0.12, -0.1), H.pt(0.04, -0.1)], dark);
+    H.poly([H.pt(-0.12, -0.38), H.pt(-0.08, -0.38), H.pt(-0.08, -0.1), H.pt(-0.12, -0.1)], "rgba(255,255,255,.55)", null);
+    H.poly([H.pt(-0.12, -0.18), H.pt(0.12, -0.18), H.pt(0.12, -0.14), H.pt(-0.12, -0.14)], darker);
+    // buttons
+    H.poly(H.ell(-0.02, -0.28, 0.014, 0.014), darker, null);
+    H.poly(H.ell(-0.02, -0.22, 0.014, 0.014), darker, null);
+    // head with cheek blush + shaded chin
     H.poly(H.ell(0, -0.46, 0.1, 0.1), "#ffd3b0");
-    H.poly(H.ell(-0.035, -0.46, 0.015, 0.015), "#2a3f66", null);
-    H.poly(H.ell(0.035, -0.46, 0.015, 0.015), "#2a3f66", null);
+    H.poly(H.ell(0.03, -0.42, 0.07, 0.06), "rgba(230,160,120,.6)", null);
+    H.poly(H.ell(-0.06, -0.44, 0.022, 0.022), "rgba(255,140,140,.7)", null);
+    H.poly(H.ell(-0.035, -0.47, 0.015, 0.015), "#2a3f66", null);
+    H.poly(H.ell(0.035, -0.47, 0.015, 0.015), "#2a3f66", null);
+    // hat: dome + dark brim + pompom
     var hatPts = [], i, a;
-    for (i = 0; i <= 8; i++) { a = Math.PI + i / 8 * Math.PI; hatPts.push(H.pt(Math.cos(a) * 0.105, -0.47 + Math.sin(a) * 0.105)); }
+    for (i = 0; i <= 8; i++) { a = Math.PI + i / 8 * Math.PI; hatPts.push(H.pt(Math.cos(a) * 0.105, -0.485 + Math.sin(a) * 0.105)); }
     H.poly(hatPts, hat);
+    H.poly([H.pt(-0.115, -0.5), H.pt(0.115, -0.5), H.pt(0.115, -0.46), H.pt(-0.115, -0.46)], hatDark);
+    H.poly([H.pt(-0.115, -0.5), H.pt(-0.06, -0.5), H.pt(-0.06, -0.46), H.pt(-0.115, -0.46)], "rgba(255,255,255,.5)", null);
     H.poly(H.ell(0, -0.6, 0.042, 0.042), "#ffffff", null);
+    H.poly(H.ell(-0.015, -0.61, 0.015, 0.015), "rgba(180,200,220,.9)", null);
   }
   function drawGlideSwimmer(T, o, e) {
     var H = spHelper(T, e.fx - e.x, e.fy - e.y, T.bob() * 0.5);
@@ -382,12 +427,12 @@ function startPenguinTycoon() {
   function parkTemplate() {
     var lvl = tycoonLevel(data);
     var seed = data.seed || 0;
-    var tier = lvl >= 4 ? 2 : lvl >= 2 ? 1 : 0;
+    var tier = lvl >= 6 ? 3 : lvl >= 4 ? 2 : lvl >= 2 ? 1 : 0;
     return {
       tier: tier,
-      mirror: tier === 1 ? true : tier === 2 ? (seed % 2 === 1) : false,
+      mirror: tier === 1 ? true : tier >= 2 ? (seed % 2 === (tier === 3 ? 0 : 1)) : false,
       pondEast: ((seed >> 1) % 2) === 1,
-      lush: tier === 2
+      lush: tier >= 2
     };
   }
 
@@ -507,6 +552,7 @@ function startPenguinTycoon() {
       }
     }
     if (data.build.climb) { t = placePair(MX(hi), hi - 1, "platform"); if (t) attractionTiles.climb = t[0]; }
+    if (data.build.stage) { t = placeNear(MX(hi - 1), hi, "platform"); if (t) attractionTiles.stage = t; }
     // arch entrance: PARK sign + pennants flanking the gate path
     function freeOutside(sx, sy) {
       var best = null, bd = 1e9;
@@ -534,6 +580,17 @@ function startPenguinTycoon() {
       stallTiles.bench = { x: MX(5), y: 10 };
     }
     if (data.up.info) { stallTiles.info = { x: MX(5), y: 11 }; staticAt(MX(5), 11, "sign", { text: "INFO" }); }
+    // late-game plaza acts: each finds its own free tile by the crowds
+    function placePlaza(ax, ay, type, opts) {
+      var ft = freeOutside(MX(ax), ay);
+      if (!ft) return null;
+      staticAt(ft.x, ft.y, type, opts);
+      return ft;
+    }
+    if (data.up.cocoa) { t = placePlaza(2, 11, "icecream"); if (t) stallTiles.cocoa = t; }
+    if (data.up.parade) { t = placePlaza(10, 11, "flag", { color: "#ff6b6b" }); if (t) stallTiles.parade = t; }
+    if (data.up.lights) { t = placePlaza(0, 9, "crystal"); if (t) stallTiles.lights = t; }
+    if (data.up.festival) { t = placePlaza(6, 8, "iceberg"); if (t) stallTiles.festival = t; }
     // scenery: tall stuff stays on back rows (low x+y) so it never occludes.
     var pines = [[0, 3], [11, 2], [1, 5], [10, 8], [4, 1], [8, 1]];
     var rocks = [[4, 0], [11, 5], [0, 8]];
@@ -787,7 +844,7 @@ function startPenguinTycoon() {
     for (var j = 0; j < TYCOON_TYPES.length; j++) {
       var t = TYCOON_TYPES[j];
       var owned = data.counts[t.id] || 0;
-      var cost = Math.round(t.cost * Math.pow(1.12, owned));
+      var cost = Math.round(t.cost * Math.pow(1.15, owned));
       if (data.coins >= cost) afford = true;
     }
     dotEl.hidden = !afford;
@@ -846,7 +903,7 @@ function startPenguinTycoon() {
       sheetSub.textContent = " — every penguin pays you every second";
       TYCOON_TYPES.forEach(function (t) {
         var owned = data.counts[t.id] || 0;
-        var cost = Math.round(t.cost * Math.pow(1.12, owned));
+        var cost = Math.round(t.cost * Math.pow(1.15, owned));
         var row = document.createElement("div");
         row.className = "pty-item";
         row.innerHTML =
@@ -888,7 +945,7 @@ function startPenguinTycoon() {
 
   function buyPenguin(t) {
     var owned = data.counts[t.id] || 0;
-    var cost = Math.round(t.cost * Math.pow(1.12, owned));
+    var cost = Math.round(t.cost * Math.pow(1.15, owned));
     if (data.coins < cost) { msgEl.textContent = "Not enough coins for " + t.name + " yet. The penguins wait."; return; }
     data.coins -= cost;
     data.spent += cost;
@@ -944,14 +1001,14 @@ function startPenguinTycoon() {
 
   function checkEmpire() {
     var lvl = tycoonLevel(data);
-    if (lvl >= TYCOON_LEVELS.length - 1 && data.best < 7) {
-      data.best = 7;
+    if (lvl >= TYCOON_LEVELS.length - 1 && data.best < TYCOON_LEVELS.length) {
+      data.best = TYCOON_LEVELS.length;
       showBubble({
-        emoji: "🌎", title: "THE PENGUIN EMPIRE!",
-        sub: "Tiny ice patch → global empire.",
-        body: "You did it. The penguins rule everything now.",
+        emoji: "🌌", title: "GALACTIC PENGUIN FEDERATION!",
+        sub: "Tiny ice patch → ruler of the stars.",
+        body: "You did it. The penguins rule everything, everywhere, now.",
         btn: "👑 RULE",
-        fn: function () { msgEl.textContent = "🌎 THE PENGUIN EMPIRE pays tribute: +$500!"; data.coins += 500; }
+        fn: function () { msgEl.textContent = "🌌 The Federation pays tribute: +$2,000!"; data.coins += 2000; }
       });
       try { recordScore("tycoon", Math.floor(data.earned), "high"); } catch (e) {}
     } else {
