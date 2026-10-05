@@ -40,14 +40,14 @@ jobs:
           SHA=$(git rev-parse --short HEAD)
           BUILD="build ${COUNT} (${SHA})"
           echo "Stamping: $BUILD"
-          for f in index.html embed.html feedback.html; do
+          for f in index.html embed.html feedback.html news.html; do
             sed -i 's|\(<meta name="trinkets-build" content="\)[^"]*|\1'"$BUILD"'|' "$f"
             sed -i -E 's/\?v=[0-9]+/?v='"$SHA"'/g' "$f"
           done
           echo "--- stamped footer ---"
           grep -o '<meta name="trinkets-build" content="[^"]*"' index.html
           echo "--- distinct ?v= values (want exactly one) ---"
-          vals=$(grep -rhoE '\?v=[^"&]+' index.html embed.html feedback.html | sort -u)
+          vals=$(grep -rhoE '\?v=[^"&]+' index.html embed.html feedback.html news.html | sort -u)
           echo "$vals"
           if [ "$vals" != "?v=$SHA" ]; then
             echo "::error::asset versions were not uniformly restamped to $SHA"

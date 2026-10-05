@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>News · Trinkets Arcade</title>
+    <meta name="theme-color" content="#fff8ea" />
+    <meta name="description" content="Release notes and news from Trinkets Arcade — newest first." />
+    <link rel="icon" type="image/svg+xml" href="assets/favicon.svg" />
+    <link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png" />
+    <link rel="apple-touch-icon" sizes="152x152" href="assets/apple-touch-icon-152x152.png" />
+    <link rel="apple-touch-icon" sizes="120x120" href="assets/apple-touch-icon-120x120.png" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="Trinkets Arcade" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="trinkets-build" content="dev" />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" />
+    <link rel="stylesheet" href="styles.css?v=29" />
+  </head>
+  <body>
+    <div class="small-screen-warning" role="alert"><span class="material-symbols-outlined" aria-hidden="true">warning</span> Trinkets Arcade is not supported on very small screens — please enlarge your window or rotate your device.</div>
+    <header class="topbar">
+      <a class="brand" href="./" aria-label="Trinkets Arcade home">
+        <span class="brand-mark" aria-hidden="true"></span>
+        <span>Trinkets Arcade</span>
+      </a>
+      <nav aria-label="Primary navigation">
+        <a href="./#games">Games</a>
+        <a href="news.html" aria-current="page">News</a>
+        <a href="feedback.html">Feedback</a>
+        <a href="./">← Back to arcade</a>
+      </nav>
+    </header>
+
+    <main>
+      <section class="news-hero" aria-labelledby="news-title">
+        <div>
+          <p class="eyebrow">Releases</p>
+          <h1 id="news-title">Fresh out of the arcade</h1>
+          <p class="news-sub">Every release note, newest first. Published on GitHub Releases — this page just reads them out loud.</p>
+        </div>
+        <div class="news-hero-actions">
+          <a class="primary-button" id="newsGitHubLink" href="https://github.com/cosmiccat9784/trinkets/releases">View on GitHub</a>
+          <button class="secondary-button" id="newsRefresh" type="button">Refresh</button>
+        </div>
+      </section>
+
+      <section class="news-wrap" aria-label="Release notes">
+        <p class="game-message" id="newsStatus" role="status">Loading releases…</p>
+        <div class="news-list" id="newsList"></div>
+      </section>
+    </main>
+
+    <footer>
+      <p>Trinkets Arcade keeps the shelf stocked with small, silly, satisfying playthings. <span class="build-tag" id="buildTag"></span></p>
+      <p class="footer-links"><a href="./">Back to arcade</a> · <a href="feedback.html">Send feedback</a> · <a href="https://github.com/cosmiccat9784/trinkets/releases">GitHub Releases</a></p>
+    </footer>
+
+    <script src="news.js?v=29"></script>
+  </body>
+</html>
