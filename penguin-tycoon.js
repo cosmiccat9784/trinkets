@@ -6,50 +6,50 @@ var TYCOON_KEY = "trinkets-tycoon-v1";
 
 var TYCOON_TYPES = [
   { id: "normal",  name: "Normal Penguin",  emoji: "🐧", cost: 50,    income: 2,   scarf: null,      desc: "+$2/sec · reliable" },
-  { id: "baby",    name: "Baby Penguin",    emoji: "🐤", cost: 150,   income: 5,   scarf: "#ff8fb1", desc: "+$5/sec · tiny & loud" },
-  { id: "emperor", name: "Emperor Penguin", emoji: "👑", cost: 500,   income: 15,  scarf: "#ffffff", desc: "+$15/sec · royal glide" },
-  { id: "golden",  name: "Golden Penguin",  emoji: "✨", cost: 2500,  income: 75,  scarf: "#ffd93d", desc: "+$75/sec · extremely shiny" },
-  { id: "mystery", name: "??? Penguin",     emoji: "🌀", cost: 10000,  income: 300,  scarf: "#8a7dff", desc: "+$300/sec · do not ask" },
-  { id: "robot",   name: "Robot Penguin",   emoji: "🤖", cost: 25000,  income: 700,  scarf: "#6c8cff", desc: "+$700/sec · beep boop waddle" },
-  { id: "diamond", name: "Diamond Penguin", emoji: "💎", cost: 60000,  income: 1600, scarf: "#9fdcf3", desc: "+$1,600/sec · dangerously shiny" },
-  { id: "cosmic",  name: "Cosmic Penguin",  emoji: "🛸", cost: 150000, income: 4000, scarf: "#ff8fb1", desc: "+$4,000/sec · from beyond the ice" }
+  { id: "baby",    name: "Baby Penguin",    emoji: "🐤", cost: 175,   income: 5,   scarf: "#ff8fb1", desc: "+$5/sec · tiny & loud" },
+  { id: "emperor", name: "Emperor Penguin", emoji: "👑", cost: 600,   income: 15,  scarf: "#ffffff", desc: "+$15/sec · royal glide" },
+  { id: "golden",  name: "Golden Penguin",  emoji: "✨", cost: 3000,   income: 75,  scarf: "#ffd93d", desc: "+$75/sec · extremely shiny" },
+  { id: "mystery", name: "??? Penguin",     emoji: "🌀", cost: 12000,  income: 300,  scarf: "#8a7dff", desc: "+$300/sec · do not ask" },
+  { id: "robot",   name: "Robot Penguin",   emoji: "🤖", cost: 30000,  income: 700,  scarf: "#6c8cff", desc: "+$700/sec · beep boop waddle" },
+  { id: "diamond", name: "Diamond Penguin", emoji: "💎", cost: 75000,  income: 1600, scarf: "#9fdcf3", desc: "+$1,600/sec · dangerously shiny" },
+  { id: "cosmic",  name: "Cosmic Penguin",  emoji: "🛸", cost: 200000, income: 4000, scarf: "#ff8fb1", desc: "+$4,000/sec · from beyond the ice" }
 ];
 
 var TYCOON_BUILD = [
-  { id: "enclosure", name: "Bigger Enclosure", emoji: "🏔️", base: 70,   scale: 1.7, max: 5, cap: 6,  bonus: 0.05, desc: "+6 visitors · enclosure grows" },
-  { id: "snow",      name: "Snow Machine",     emoji: "❄️", cost: 150,  cap: 2,  bonus: 0.25, desc: "+25% income · happy flakes" },
-  { id: "pool",      name: "Swimming Pool",    emoji: "🏊", cost: 250,  cap: 8,  bonus: 0.15, desc: "penguins swim in circles" },
-  { id: "slide",     name: "Penguin Slide",    emoji: "🛝", cost: 300,  cap: 10, bonus: 0.20, desc: "wheee +20% income" },
-  { id: "cave",      name: "Ice Cave",         emoji: "🧊", cost: 450,  cap: 12, bonus: 0.25, desc: "mysterious & cold" },
-  { id: "climb",     name: "Climbing Area",    emoji: "🧗", cost: 700,  cap: 15, bonus: 0.30, desc: "tiny harnesses included" },
-  { id: "iceberg",   name: "Giant Iceberg",    emoji: "🏔️", cost: 1200, cap: 20, bonus: 0.50, desc: "the centrepiece · +50%" },
-  { id: "stage",     name: "Penguin Stage",    emoji: "🎤", cost: 3000,  cap: 10, bonus: 0.25, desc: "live waddle shows nightly" }
+  { id: "enclosure", name: "Bigger Enclosure", emoji: "🏔️", base: 80,   scale: 1.7, max: 5, cap: 6,  bonus: 0.05, desc: "+6 visitors · enclosure grows" },
+  { id: "snow",      name: "Snow Machine",     emoji: "❄️", cost: 200,  cap: 2,  bonus: 0.25, desc: "+25% income · happy flakes" },
+  { id: "pool",      name: "Swimming Pool",    emoji: "🏊", cost: 350,  cap: 8,  bonus: 0.15, desc: "penguins swim in circles" },
+  { id: "slide",     name: "Penguin Slide",    emoji: "🛝", cost: 450,  cap: 10, bonus: 0.20, desc: "wheee +20% income" },
+  { id: "cave",      name: "Ice Cave",         emoji: "🧊", cost: 650,  cap: 12, bonus: 0.25, desc: "mysterious & cold" },
+  { id: "climb",     name: "Climbing Area",    emoji: "🧗", cost: 1000, cap: 15, bonus: 0.30, desc: "tiny harnesses included" },
+  { id: "iceberg",   name: "Giant Iceberg",    emoji: "🏔️", cost: 1800, cap: 20, bonus: 0.50, desc: "the centrepiece · +50%" },
+  { id: "stage",     name: "Penguin Stage",    emoji: "🎤", cost: 4500,  cap: 10, bonus: 0.25, desc: "live waddle shows nightly" }
 ];
 
 var TYCOON_UPGRADES = [
-  { id: "bench",   name: "Benches",           emoji: "🪑", cost: 40,  cap: 3,  bonus: 0.02, desc: "sit & stare at penguins" },
-  { id: "toilets", name: "Toilets 💀",        emoji: "🚻", cost: 75,  cap: 4,  bonus: 0.05, desc: "nobody asks why it helps" },
-  { id: "food",    name: "Food Stand",        emoji: "🍿", cost: 100, cap: 6,  bonus: 0.10, desc: "ice cream sells itself" },
-  { id: "gift",    name: "Gift Shop",         emoji: "🎁", cost: 300, cap: 8,  bonus: 0.15, desc: "plushies?? plushies." },
-  { id: "info",    name: "Information Centre",emoji: "ℹ️", cost: 350, cap: 6,  bonus: 0.12, desc: "penguin facts, loudly" },
-  { id: "plush",   name: "Penguin Plushies",  emoji: "🧸", cost: 450,   cap: 10, bonus: 0.18, desc: "take the park home" },
-  { id: "cocoa",   name: "Hot Cocoa Stand",   emoji: "🍫", cost: 1200,  cap: 6,  bonus: 0.12, desc: "warm beaks, warm hearts" },
-  { id: "parade",  name: "Penguin Parade",     emoji: "🎺", cost: 2000,  cap: 8,  bonus: 0.20, desc: "marching band, waddling" },
-  { id: "lights",  name: "Night Lights",      emoji: "💡", cost: 6000,  cap: 10, bonus: 0.30, desc: "the park glows after dark" },
-  { id: "festival", name: "Snow Festival",     emoji: "🎆", cost: 15000, cap: 15, bonus: 0.50, desc: "the biggest night of the year" }
+  { id: "bench",   name: "Benches",           emoji: "🪑", cost: 50,   cap: 3,  bonus: 0.02, desc: "sit & stare at penguins" },
+  { id: "toilets", name: "Toilets 💀",        emoji: "🚻", cost: 100,  cap: 4,  bonus: 0.05, desc: "nobody asks why it helps" },
+  { id: "food",    name: "Food Stand",        emoji: "🍿", cost: 150,  cap: 6,  bonus: 0.10, desc: "ice cream sells itself" },
+  { id: "gift",    name: "Gift Shop",         emoji: "🎁", cost: 450,  cap: 8,  bonus: 0.15, desc: "plushies?? plushies." },
+  { id: "info",    name: "Information Centre",emoji: "ℹ️", cost: 500,  cap: 6,  bonus: 0.12, desc: "penguin facts, loudly" },
+  { id: "plush",   name: "Penguin Plushies",  emoji: "🧸", cost: 650,  cap: 10, bonus: 0.18, desc: "take the park home" },
+  { id: "cocoa",   name: "Hot Cocoa Stand",   emoji: "🍫", cost: 1800,  cap: 6,  bonus: 0.12, desc: "warm beaks, warm hearts" },
+  { id: "parade",  name: "Penguin Parade",     emoji: "🎺", cost: 3000,  cap: 8,  bonus: 0.20, desc: "marching band, waddling" },
+  { id: "lights",  name: "Night Lights",      emoji: "💡", cost: 9000,  cap: 10, bonus: 0.30, desc: "the park glows after dark" },
+  { id: "festival", name: "Snow Festival",     emoji: "🎆", cost: 22000, cap: 15, bonus: 0.50, desc: "the biggest night of the year" }
 ];
 
 var TYCOON_LEVELS = [
   { at: 0,    name: "Tiny Ice" },
   { at: 100,  name: "Penguin Park" },
-  { at: 300,  name: "Penguin Village" },
-  { at: 750,  name: "Penguin Resort" },
-  { at: 1500, name: "Penguin Kingdom" },
-  { at: 3000, name: "Penguin World" },
-  { at: 6000, name: "THE PENGUIN EMPIRE" },
-  { at: 15000, name: "Penguin Continent" },
-  { at: 32000, name: "Lunar Penguin Base" },
-  { at: 65000, name: "GALACTIC PENGUIN FEDERATION" }
+  { at: 350,  name: "Penguin Village" },
+  { at: 900,  name: "Penguin Resort" },
+  { at: 1800, name: "Penguin Kingdom" },
+  { at: 3500, name: "Penguin World" },
+  { at: 7000, name: "THE PENGUIN EMPIRE" },
+  { at: 18000, name: "Penguin Continent" },
+  { at: 40000, name: "Lunar Penguin Base" },
+  { at: 80000, name: "GALACTIC PENGUIN FEDERATION" }
 ];
 
 var TYCOON_QUIPS = [
@@ -998,7 +998,7 @@ function startPenguinTycoon() {
       sheetSub.textContent = " — every penguin pays you every second";
       TYCOON_TYPES.forEach(function (t) {
         var owned = data.counts[t.id] || 0;
-        var cost = Math.round(t.cost * Math.pow(1.18, owned));
+        var cost = Math.round(t.cost * Math.pow(1.22, owned));
         var row = document.createElement("div");
         row.className = "pty-item";
         row.innerHTML =
@@ -1042,7 +1042,7 @@ function startPenguinTycoon() {
 
   function buyPenguin(t) {
     var owned = data.counts[t.id] || 0;
-    var cost = Math.round(t.cost * Math.pow(1.18, owned));
+    var cost = Math.round(t.cost * Math.pow(1.22, owned));
     if (data.coins < cost) { msgEl.textContent = "Not enough coins for " + t.name + " yet. The penguins wait."; return; }
     data.coins -= cost;
     data.spent += cost;
