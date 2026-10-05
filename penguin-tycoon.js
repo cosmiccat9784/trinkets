@@ -13,7 +13,7 @@ var TYCOON_TYPES = [
 ];
 
 var TYCOON_BUILD = [
-  { id: "enclosure", name: "Bigger Enclosure", emoji: "🏔️", base: 80,   scale: 1.7, max: 5, cap: 6,  bonus: 0.05, desc: "+6 visitors · enclosure grows" },
+  { id: "enclosure", name: "Bigger Enclosure", emoji: "🏔️", base: 70,   scale: 1.7, max: 5, cap: 6,  bonus: 0.05, desc: "+6 visitors · enclosure grows" },
   { id: "snow",      name: "Snow Machine",     emoji: "❄️", cost: 150,  cap: 2,  bonus: 0.25, desc: "+25% income · happy flakes" },
   { id: "pool",      name: "Swimming Pool",    emoji: "🏊", cost: 250,  cap: 8,  bonus: 0.15, desc: "penguins swim in circles" },
   { id: "slide",     name: "Penguin Slide",    emoji: "🛝", cost: 300,  cap: 10, bonus: 0.20, desc: "wheee +20% income" },
@@ -24,8 +24,8 @@ var TYCOON_BUILD = [
 
 var TYCOON_UPGRADES = [
   { id: "bench",   name: "Benches",           emoji: "🪑", cost: 40,  cap: 3,  bonus: 0.02, desc: "sit & stare at penguins" },
-  { id: "toilets", name: "Toilets 💀",        emoji: "🚻", cost: 90,  cap: 4,  bonus: 0.05, desc: "nobody asks why it helps" },
-  { id: "food",    name: "Food Stand",        emoji: "🍿", cost: 120, cap: 6,  bonus: 0.10, desc: "ice cream sells itself" },
+  { id: "toilets", name: "Toilets 💀",        emoji: "🚻", cost: 75,  cap: 4,  bonus: 0.05, desc: "nobody asks why it helps" },
+  { id: "food",    name: "Food Stand",        emoji: "🍿", cost: 100, cap: 6,  bonus: 0.10, desc: "ice cream sells itself" },
   { id: "gift",    name: "Gift Shop",         emoji: "🎁", cost: 300, cap: 8,  bonus: 0.15, desc: "plushies?? plushies." },
   { id: "info",    name: "Information Centre",emoji: "ℹ️", cost: 350, cap: 6,  bonus: 0.12, desc: "penguin facts, loudly" },
   { id: "plush",   name: "Penguin Plushies",  emoji: "🧸", cost: 450, cap: 10, bonus: 0.18, desc: "take the park home" }
@@ -33,12 +33,12 @@ var TYCOON_UPGRADES = [
 
 var TYCOON_LEVELS = [
   { at: 0,    name: "Tiny Ice" },
-  { at: 150,  name: "Penguin Park" },
-  { at: 400,  name: "Penguin Village" },
-  { at: 800,  name: "Penguin Resort" },
-  { at: 1500, name: "Penguin Kingdom" },
-  { at: 3000, name: "Penguin World" },
-  { at: 6000, name: "THE PENGUIN EMPIRE" }
+  { at: 100,  name: "Penguin Park" },
+  { at: 300,  name: "Penguin Village" },
+  { at: 600,  name: "Penguin Resort" },
+  { at: 1200, name: "Penguin Kingdom" },
+  { at: 2500, name: "Penguin World" },
+  { at: 5000, name: "THE PENGUIN EMPIRE" }
 ];
 
 var TYCOON_QUIPS = [
@@ -66,7 +66,7 @@ function tycoonLoad() {
   var d = null;
   try { d = JSON.parse(localStorage.getItem(TYCOON_KEY)); } catch (e) {}
   if (d && typeof d === "object") {
-    if (typeof d.coins !== "number") d.coins = 75;
+    if (typeof d.coins !== "number") d.coins = 100;
     if (!d.counts) d.counts = { normal: 1 };
     if (!d.build) d.build = {};
     if (!d.up) d.up = {};
@@ -78,7 +78,7 @@ function tycoonLoad() {
     if (!d.counts.normal && totalTycoonPenguins(d) === 0) d.counts.normal = 1;
     return d;
   }
-  return { coins: 75, counts: { normal: 1 }, build: {}, up: {}, enclosure: 0, spent: 0, earned: 0, best: 0, seed: Math.floor(Math.random() * 1e9) };
+  return { coins: 100, counts: { normal: 1 }, build: {}, up: {}, enclosure: 0, spent: 0, earned: 0, best: 0, seed: Math.floor(Math.random() * 1e9) };
 }
 function tycoonSave(d) { try { localStorage.setItem(TYCOON_KEY, JSON.stringify(d)); } catch (e) {} }
 function tycoonType(id) {
@@ -133,7 +133,7 @@ function startPenguinTycoon() {
     "Tycoon",
     '<div class="game-layout pty-layout">' +
       '<div class="pty-hud">' +
-        '<span class="pty-pill" id="ptyCoins">🪙 $75</span>' +
+        '<span class="pty-pill" id="ptyCoins">🪙 $100</span>' +
         '<span class="pty-pill" id="ptyVis">👥 0 Visitors</span>' +
         '<span class="pty-pill pty-level" id="ptyLvl">⭐ Park Level 1' +
           '<span class="pty-bar"><span class="pty-fill" id="ptyFill"></span></span>' +
@@ -354,9 +354,16 @@ function startPenguinTycoon() {
 
   /* ——— map: enclosure rect grows with Bigger Enclosure ——— */
   function encInset() { return 4 - Math.min(2, Math.floor((data.enclosure || 0) / 2)); }
-  function insideRect(x, y) {
+  // The pen: a fixed hand-composed 3x3 for the tier-0 starter park,
+  // otherwise a rect that grows with Bigger Enclosure.
+  function penRect() {
+    if (parkTemplate().tier === 0) return { x0: 6, y0: 0, x1: 8, y1: 2 };
     var m = encInset();
-    return x >= m && x <= N - 1 - m && y >= m && y <= N - 1 - m;
+    return { x0: m, y0: m, x1: N - 1 - m, y1: N - 1 - m };
+  }
+  function insideRect(x, y) {
+    var R = penRect();
+    return x >= R.x0 && x <= R.x1 && y >= R.y0 && y <= R.y1;
   }
   function inBounds(x, y) { return x >= 0 && y >= 0 && x < N && y < N; }
 
@@ -394,6 +401,45 @@ function startPenguinTycoon() {
     var tmpl = parkTemplate();
     function MX(x) { return tmpl.mirror ? N - 1 - x : x; }
     var m = encInset(), hi = N - 1 - m;
+    var R = penRect();
+    // Tier 0: the hand-composed starter park. Dynamic critters come from the sim.
+    if (tmpl.tier === 0) {
+      fill_tiles(1, 1, 3, 2, "pond"); set_tile(2, 3, "pond");
+      pondRect = { x0: 1, y0: 1, x1: 3, y1: 3 };
+      pondTiles = [];
+      [[1, 1], [2, 1], [3, 1], [1, 2], [2, 2], [3, 2], [2, 3]].forEach(function (pt) {
+        pondTiles.push({ x: pt[0], y: pt[1] });
+        occTiles[pt[0] + "," + pt[1]] = "pond";
+      });
+      fill_tiles(6, 0, 8, 2, "enclosure");
+      gateTile = { x: 7, y: 2 };
+      set_tile(7, 2, "gate");
+      fill_tiles(4, 2, 4, 9, "path"); fill_tiles(4, 3, 8, 3, "path");
+      fill_tiles(1, 5, 4, 5, "path"); fill_tiles(5, 6, 8, 6, "path");
+      enterTile = { x: 4, y: 9 };
+      var a;
+      if (data.build.slide) { a = placeNear(8, 0, "slide"); if (a) attractionTiles.slide = a; }
+      if (data.build.iceberg) { a = placeNear(6, 0, "iceberg"); if (a) attractionTiles.iceberg = a; }
+      if (data.build.snow) { a = placeNear(8, 2, "snowmaker"); if (a) attractionTiles.snow = a; }
+      if (data.build.cave) {
+        a = placeNear(6, 1, "crystal");
+        if (a) { attractionTiles.cave = a; placeNear(a.x, a.y, "crystal"); }
+      }
+      if (data.build.climb) { a = placePair(7, 0, "platform"); if (a) attractionTiles.climb = a[0]; }
+      staticAt(7, 7, "icecream"); stallTiles.food = { x: 7, y: 7 };
+      staticAt(2, 4, "bench"); staticAt(3, 6, "bench"); staticAt(6, 7, "bench", { flip: 1 });
+      stallTiles.bench = { x: 2, y: 4 };
+      if (data.up.gift) { staticAt(8, 7, "icecream"); stallTiles.gift = { x: 8, y: 7 }; }
+      if (data.up.plush) { staticAt(5, 8, "icecream"); stallTiles.plush = { x: 5, y: 8 }; }
+      if (data.up.toilets) { staticAt(2, 7, "sign", { text: "WC" }); stallTiles.toilets = { x: 2, y: 7 }; }
+      if (data.up.info) { staticAt(6, 8, "sign", { text: "INFO" }); stallTiles.info = { x: 6, y: 8 }; }
+      staticAt(2, 8, "sign", { text: "PARK" });
+      [[0, 0], [0, 7], [9, 5]].forEach(function (p) { staticAt(p[0], p[1], "rock"); });
+      [[4, 0], [0, 4]].forEach(function (p) { staticAt(p[0], p[1], "crystal"); });
+      [[0, 2], [5, 0], [9, 3], [9, 8]].forEach(function (p) { staticAt(p[0], p[1], "pine"); });
+      staticAt(3, 9, "flag"); staticAt(5, 9, "flag");
+      return;
+    }
     // enclosure block with auto ice walls on its outer sides
     fill_tiles(m, m, hi, hi, "enclosure");
     gateTile = { x: MX(6), y: hi };
@@ -404,23 +450,22 @@ function startPenguinTycoon() {
     fill_tiles(3, N - 1, 9, N - 1, "path");
     enterTile = { x: pc, y: N - 1 };
     // pond: a wide sheet at the back of the pen, west or seed-east side.
-    // appears only once the Swimming Pool is bought.
-    if (data.build.pool) {
-      var px = tmpl.pondEast ? hi - 3 : m + 1;
-      if (tmpl.mirror) px = N - 1 - (px + 2);
-      var py = m;
-      fill_tiles(px, py, px + 2, py + 1, "pond");
-      pondRect = { x0: px, y0: py, x1: px + 2, y1: py + 1 };
-      pondTiles = [];
-      for (var pyy = py; pyy <= py + 1; pyy++) for (var pxx = px; pxx <= px + 2; pxx++) {
-        pondTiles.push({ x: pxx, y: pyy });
-        occTiles[pxx + "," + pyy] = "pond";
-      }
+    // the pond is the park's centrepiece from the start; the Pool
+    // purchase adds its income bonus and visitor cap instead.
+    var px = tmpl.pondEast ? hi - 3 : m + 1;
+    if (tmpl.mirror) px = N - 1 - (px + 2);
+    var py = m;
+    fill_tiles(px, py, px + 2, py + 1, "pond");
+    pondRect = { x0: px, y0: py, x1: px + 2, y1: py + 1 };
+    pondTiles = [];
+    for (var pyy = py; pyy <= py + 1; pyy++) for (var pxx = px; pxx <= px + 2; pxx++) {
+      pondTiles.push({ x: pxx, y: pyy });
+      occTiles[pxx + "," + pyy] = "pond";
     }
     // attractions settle on the nearest free interior tile to their anchor
     function freeTile(sx, sy) {
       var best = null, bd = 1e9;
-      for (var yy = m; yy <= hi; yy++) for (var xx = m; xx <= hi; xx++) {
+      for (var yy = R.y0; yy <= R.y1; yy++) for (var xx = R.x0; xx <= R.x1; xx++) {
         if (xx === gateTile.x && yy === gateTile.y) continue;
         if (occTiles[xx + "," + yy]) continue;
         var d = Math.abs(xx - sx) + Math.abs(yy - sy);
@@ -440,7 +485,7 @@ function startPenguinTycoon() {
       var dirs = [[1, 0], [-1, 0], [0, 1], [0, -1]];
       for (var i = 0; i < 4; i++) {
         var bx = a.x + dirs[i][0], by = a.y + dirs[i][1];
-        if (bx < m || bx > hi || by < m || by > hi) continue;
+        if (bx < R.x0 || bx > R.x1 || by < R.y0 || by > R.y1) continue;
         if (bx === gateTile.x && by === gateTile.y) continue;
         if (occTiles[bx + "," + by]) continue;
         staticAt(a.x, a.y, type, opts);
@@ -551,10 +596,10 @@ function startPenguinTycoon() {
     return e.fx === e.tx && e.fy === e.ty;
   }
   function freePenguinTile() {
-    var m = encInset(), hi = N - 1 - m;
+    var R = penRect();
     for (var tries = 0; tries < 60; tries++) {
-      var x = m + Math.floor(Math.random() * (hi - m + 1));
-      var y = m + Math.floor(Math.random() * (hi - m + 1));
+      var x = R.x0 + Math.floor(Math.random() * (R.x1 - R.x0 + 1));
+      var y = R.y0 + Math.floor(Math.random() * (R.y1 - R.y0 + 1));
       if (x === gateTile.x && y === gateTile.y) continue;
       if (occTiles[x + "," + y]) continue;
       if (entityAt(x, y)) continue;
@@ -591,10 +636,11 @@ function startPenguinTycoon() {
     assignSwimmers();
   }
   function assignSwimmers() {
+    // swimmers whenever the pond exists — but always keep a waddler ashore
     var n = 0;
     for (var i = 0; i < penguins.length; i++) {
       var p = penguins[i];
-      if (data.build.pool && n < 2 && pondTiles.length) {
+      if (pondTiles.length && n < 2 && (penguins.length - n) > 1) {
         p.swim = true;
         p.tile = "swimmer";
         var pt = pondTiles[n % pondTiles.length];
@@ -618,7 +664,7 @@ function startPenguinTycoon() {
     var i, t;
     for (i = penguins.length - 1; i >= 0; i--) {
       var p = penguins[i];
-      if (data.build.pool && i < 2 && pondTiles.length) {
+      if (pondTiles.length && i < Math.min(2, penguins.length - 1)) {
         p.swim = true; p.tile = "swimmer";
         var pt = pondTiles[i % pondTiles.length];
         p.si = i % pondTiles.length; p.sa = p.si * 1.6; p.st = 0;
@@ -661,10 +707,10 @@ function startPenguinTycoon() {
   }
   function tycoonSpots() {
     var spots = [];
-    var m = encInset(), hi = N - 1 - m;
+    var R = penRect();
     var y, x, id, f;
-    for (y = m; y <= hi; y++) spots.push({ x: hi + 1, y: y });
-    for (x = m; x <= hi; x++) spots.push({ x: x, y: hi + 1 });
+    for (y = R.y0; y <= R.y1; y++) spots.push({ x: R.x1 + 1, y: y });
+    for (x = R.x0; x <= R.x1; x++) spots.push({ x: x, y: R.y1 + 1 });
     for (id in stallTiles) {
       if (!stallTiles.hasOwnProperty(id)) continue;
       f = spotInFront(stallTiles[id].x, stallTiles[id].y);
