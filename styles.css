@@ -769,9 +769,9 @@ body.modal-open {
   inset: 0;
   z-index: 20;
   display: none;
-  align-items: center;
-  justify-content: center;
-  padding: 18px;
+  align-items: stretch;
+  justify-content: stretch;
+  padding: 0;
   background: rgba(25, 33, 43, 0.72);
 }
 
@@ -780,14 +780,18 @@ body.modal-open {
 }
 
 .modal-panel {
-  width: min(980px, 100%);
-  max-height: calc(100vh - 36px);
+  width: 100%;
+  max-width: 100%;
+  height: 100vh;
+  height: 100dvh;
+  max-height: 100vh;
+  max-height: 100dvh;
   overflow: auto;
   overscroll-behavior: contain;
   background: var(--paper);
-  border: 3px solid var(--line);
-  border-radius: 8px;
-  box-shadow: 12px 12px 0 rgba(0, 0, 0, 0.35);
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
 }
 
 .modal-header {
@@ -855,14 +859,20 @@ body.embed {
 .embed .game-modal {
   position: static;
   display: block;
-  padding: 12px;
+  padding: 0;
   background: transparent;
 }
 
 .embed .modal-panel {
-  max-height: calc(100dvh - 24px);
-  margin: 0 auto;
-  box-shadow: 8px 8px 0 rgba(25, 33, 43, 0.16);
+  width: 100%;
+  max-width: 100%;
+  height: auto;
+  min-height: 100dvh;
+  max-height: none;
+  margin: 0;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
 }
 
 .embed .close-button {
@@ -5055,12 +5065,19 @@ footer p {
   }
 
   .game-modal {
-    padding: 10px;
+    padding: 0;
   }
 
   .modal-panel {
-    max-height: calc(100vh - 20px);
-    max-height: calc(100dvh - 20px);
+    width: 100%;
+    max-width: 100%;
+    height: 100vh;
+    height: 100dvh;
+    max-height: 100vh;
+    max-height: 100dvh;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
   }
 
   .modal-header {
@@ -5248,7 +5265,8 @@ footer p {
   }
 
   .embed .modal-panel {
-    max-height: calc(100vh - 24px);
+    max-height: none;
+    min-height: 100vh;
   }
 }
 
