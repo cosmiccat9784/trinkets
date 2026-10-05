@@ -6555,30 +6555,54 @@ footer p {
   100% { transform: scale(0.4); opacity: 0; }
 }
 
-/* ── Full-screen game boxes: modal + play area fill viewport ── */
+/* ── Full-screen game boxes: fill viewport, no page scroll ── */
 .modal-panel {
   display: flex;
   flex-direction: column;
+  overflow: hidden !important;
+}
+
+body.embed .modal-panel {
+  overflow: visible !important;
+  height: auto !important;
+  max-height: none !important;
+}
+
+body.embed .game-shell,
+body.embed .game-layout {
+  overflow: visible !important;
 }
 
 .modal-header {
   flex: 0 0 auto;
+  padding: 10px 14px !important;
+}
+
+.modal-header h2 {
+  font-size: clamp(1.3rem, 3vw, 2rem) !important;
+}
+
+.modal-header .eyebrow {
+  margin-bottom: 2px !important;
 }
 
 .game-shell {
-  flex: 1 1 auto;
+  flex: 1 1 0;
   min-height: 0;
+  min-width: 0;
   display: flex;
   flex-direction: column;
   padding: 0 !important;
+  overflow: hidden !important;
 }
 
 .game-layout,
 .powder-layout,
 .pty-layout,
 .ludo-layout {
-  flex: 1 1 auto;
+  flex: 1 1 0;
   min-height: 0;
+  min-width: 0;
   display: flex !important;
   flex-direction: column !important;
   gap: 0 !important;
@@ -6586,6 +6610,7 @@ footer p {
   margin: 0 !important;
   width: 100% !important;
   max-width: none !important;
+  overflow: hidden !important;
 }
 
 .game-topline,
@@ -6599,35 +6624,77 @@ footer p {
 .pty-actions,
 .pty-sub,
 .ludo-setup,
-.ludo-main,
 .ludo-top,
-.ludo-mid,
 .ludo-side,
 .tag-setup,
 .defence-info,
-.nm-panel,
-.word-panel,
-.clue-panel {
+.nm-panel {
   flex: 0 0 auto;
-  margin-left: 12px;
-  margin-right: 12px;
+  margin-left: 8px;
+  margin-right: 8px;
+}
+
+.game-layout > .word-panel,
+.game-layout > .clue-panel {
+  flex: 1 1 0;
+  min-height: 0;
+  overflow: auto;
+  width: 100% !important;
+  max-width: none !important;
+  margin: 8px 0 0 0 !important;
+  border-radius: 0 !important;
+  border-left: 0 !important;
+  border-right: 0 !important;
+  box-shadow: none !important;
+}
+
+.game-topline {
+  padding-top: 8px !important;
+  gap: 8px !important;
 }
 
 .game-topline:first-child {
-  margin-top: 12px;
+  margin-top: 0;
+  padding-top: 8px;
+}
+
+.game-topline .game-stat {
+  min-height: 32px !important;
+  font-size: 0.82rem !important;
+  padding: 0 10px !important;
+}
+
+.game-message {
+  flex: 0 0 auto;
+  min-height: 0 !important;
+  padding: 4px 12px !important;
+  font-size: 0.85rem !important;
+  line-height: 1.3 !important;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.game-actions,
+.pty-actions,
+.pty-sub,
+.spiro-sliders,
+.zen-actions {
+  padding: 8px 12px !important;
 }
 
 .game-actions:last-child,
 .pty-actions:last-child,
 .powder-toolbar:last-child {
-  margin-bottom: 12px;
+  margin-bottom: 0;
+  padding-bottom: 10px !important;
 }
 
-.game-message {
-  padding: 8px 12px;
+.game-action {
+  min-height: 36px !important;
 }
 
-/* Canvas / stage play areas stretch to fill remaining space */
+/* Canvas / stage play areas: take all remaining space, never scroll */
 .game-layout canvas,
 .powder-layout canvas,
 .powder-layout > .powder-canvas-wrap,
@@ -6658,19 +6725,22 @@ footer p {
 .game-layout .ludo-main,
 .game-layout .ludo-mid,
 .powder-canvas-wrap > .powder-canvas {
-  flex: 1 1 auto !important;
+  flex: 1 1 0 !important;
+  min-height: 0 !important;
+  min-width: 0 !important;
   width: 100% !important;
   max-width: none !important;
-  min-width: 0 !important;
-  height: auto !important;
-  min-height: 40vh !important;
-  max-height: none !important;
-  margin: 12px 0 0 0 !important;
+  height: 100% !important;
+  max-height: 100% !important;
+  margin: 0 !important;
   border-radius: 0 !important;
   border-left: 0 !important;
   border-right: 0 !important;
+  border-top: 3px solid var(--line);
+  border-bottom: 3px solid var(--line);
   box-shadow: none !important;
   aspect-ratio: auto !important;
+  object-fit: contain;
 }
 
 .game-layout .pty-stage,
@@ -6679,37 +6749,24 @@ footer p {
 .game-layout .ludo-mid {
   margin-left: 0 !important;
   margin-right: 0 !important;
+  overflow: hidden !important;
+  min-height: 0 !important;
 }
 
-/* Grid / board puzzlers grow larger while keeping square cells */
+/* Grid / board puzzlers: fit height, keep square cells, centered */
 .game-layout .pipe-grid,
 .game-layout .maze-grid,
 .game-layout .bash-grid,
 .game-layout .ice-grid,
 .game-layout .orch-grid,
 .game-layout .ludo-board {
-  flex: 1 1 auto !important;
-  width: min(100%, calc(100dvh - 220px)) !important;
-  max-width: none !important;
-  margin: 12px auto 0 auto !important;
-  min-height: 40vh;
-  aspect-ratio: auto !important;
-}
-
-.game-layout .ludo-board {
+  flex: 1 1 0 !important;
+  min-height: 0 !important;
+  height: 100% !important;
+  max-height: 100% !important;
+  width: auto !important;
+  max-width: 100% !important;
   aspect-ratio: 1 !important;
-}
-
-/* Text panels use full width */
-.game-layout > .word-panel,
-.game-layout > .clue-panel,
-.game-layout > .nm-panel {
-  flex: 1 1 auto !important;
-  width: 100% !important;
-  max-width: none !important;
-  margin: 12px 0 0 0 !important;
-  border-radius: 0 !important;
-  border-left: 0 !important;
-  border-right: 0 !important;
-  box-shadow: none !important;
+  margin: auto !important;
+  overflow: hidden !important;
 }
