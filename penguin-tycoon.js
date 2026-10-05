@@ -338,40 +338,26 @@ function startPenguinTycoon() {
     var H = spHelper(T, e.fx - e.x, e.fy - e.y, T.bob());
     var Sh = spHelper(T, e.fx - e.x, e.fy - e.y, 0);
     var coat = o.coat || "#6c8cff", hat = o.hat || "#ffffff";
-    var dark = shade(coat, 0.72), darker = shade(coat, 0.55);
-    var hatDark = shade(hat, 0.78);
+    var dark = shade(coat, 0.72);
     Sh.poly(Sh.ell(0, 1, 11, 3.5), "rgba(47,84,134,.25)", null);
-    // legs + boots
-    H.poly([H.pt(-5.5, -10), H.pt(-1, -10), H.pt(-1, -1), H.pt(-5.5, -1)], "#2e3f66");
-    H.poly([H.pt(1, -10), H.pt(5.5, -10), H.pt(5.5, -1), H.pt(1, -1)], "#2e3f66");
-    H.poly(H.ell(-3.25, -0.5, 2.8, 1.6), "#161d31", null);
-    H.poly(H.ell(3.25, -0.5, 2.8, 1.6), "#161d31", null);
-    // arms: sleeves + skin mittens
+    // chunky legs
+    H.poly([H.pt(-5.5, -10), H.pt(-1, -10), H.pt(-1, 0), H.pt(-5.5, 0)], "#2e3f66");
+    H.poly([H.pt(1, -10), H.pt(5.5, -10), H.pt(5.5, 0), H.pt(1, 0)], "#2e3f66");
+    // stubby sleeves
     H.poly(H.ell(-9, -16, 2.6, 6, 0.17), dark);
     H.poly(H.ell(9, -16, 2.6, 6, -0.17), dark);
-    H.poly(H.ell(-10, -9.5, 2, 2), "#ffd3b0", null);
-    H.poly(H.ell(10, -9.5, 2, 2), "#ffd3b0", null);
-    // coat: main + dark side + light rim + belt + buttons
+    // coat: one body, one shaded side, done
     H.poly([H.pt(-7.5, -25), H.pt(7.5, -25), H.pt(7.5, -8), H.pt(-7.5, -8)], coat);
     H.poly([H.pt(2.5, -25), H.pt(7.5, -25), H.pt(7.5, -8), H.pt(2.5, -8)], dark);
-    H.poly([H.pt(-7.5, -25), H.pt(-4.5, -25), H.pt(-4.5, -8), H.pt(-7.5, -8)], "rgba(255,255,255,.5)", null);
-    H.poly([H.pt(-7.5, -17), H.pt(7.5, -17), H.pt(7.5, -14), H.pt(-7.5, -14)], darker);
-    H.poly(H.ell(-1, -21, 1, 1), darker, null);
-    H.poly(H.ell(-1, -17.5, 1, 1), darker, null);
-    // head: skin + chin shade + blush + eyes
+    // head: skin + dot eyes, nothing else
     H.poly(H.ell(0, -31, 6.5, 6.5), "#ffd3b0");
-    H.poly(H.ell(2, -28.5, 4.5, 3.5), "rgba(230,160,120,.6)", null);
-    H.poly(H.ell(-3.5, -29, 1.6, 1.6), "rgba(255,140,140,.7)", null);
     H.poly(H.ell(-2.3, -30.5, 1, 1), "#2a3f66", null);
     H.poly(H.ell(2.7, -30.5, 1, 1), "#2a3f66", null);
-    // hat: dome + dark brim + highlight + pompom
+    // hat dome + pompom
     var hatPts = [], i, a;
     for (i = 0; i <= 8; i++) { a = Math.PI + i / 8 * Math.PI; hatPts.push(H.pt(Math.cos(a) * 6.8, -32 + Math.sin(a) * 6.8)); }
     H.poly(hatPts, hat);
-    H.poly([H.pt(-8, -33.5), H.pt(8, -33.5), H.pt(8, -30.5), H.pt(-8, -30.5)], hatDark);
-    H.poly([H.pt(-8, -33.5), H.pt(-3.5, -33.5), H.pt(-3.5, -30.5), H.pt(-8, -30.5)], "rgba(255,255,255,.5)", null);
     H.poly(H.ell(0, -40, 2.8, 2.8), "#ffffff", null);
-    H.poly(H.ell(-1, -41, 1, 1), "rgba(180,200,220,.9)", null);
   }
   function drawGlideSwimmer(T, o, e) {
     var H = spHelper(T, e.fx - e.x, e.fy - e.y, T.bob() * 0.5);
