@@ -66,6 +66,16 @@
   touch-action: manipulation;
 }
 
+/* transparent overlay stacked above the tile canvas: snow + popups.
+   pointer-events none so tile clicks reach the engine canvas. */
+.pty-ghost {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
 .pty-fx {
   position: absolute;
   top: 8px;
