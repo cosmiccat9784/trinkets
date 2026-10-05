@@ -6554,3 +6554,162 @@ footer p {
   75% { transform: scale(2.2); opacity: 1; }
   100% { transform: scale(0.4); opacity: 0; }
 }
+
+/* ── Full-screen game boxes: modal + play area fill viewport ── */
+.modal-panel {
+  display: flex;
+  flex-direction: column;
+}
+
+.modal-header {
+  flex: 0 0 auto;
+}
+
+.game-shell {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  padding: 0 !important;
+}
+
+.game-layout,
+.powder-layout,
+.pty-layout,
+.ludo-layout {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 0 !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  width: 100% !important;
+  max-width: none !important;
+}
+
+.game-topline,
+.game-message,
+.game-actions,
+.spiro-sliders,
+.zen-actions,
+.coin-stats,
+.powder-toolbar,
+.pty-hud,
+.pty-actions,
+.pty-sub,
+.ludo-setup,
+.ludo-main,
+.ludo-top,
+.ludo-mid,
+.ludo-side,
+.tag-setup,
+.defence-info,
+.nm-panel,
+.word-panel,
+.clue-panel {
+  flex: 0 0 auto;
+  margin-left: 12px;
+  margin-right: 12px;
+}
+
+.game-topline:first-child {
+  margin-top: 12px;
+}
+
+.game-actions:last-child,
+.pty-actions:last-child,
+.powder-toolbar:last-child {
+  margin-bottom: 12px;
+}
+
+.game-message {
+  padding: 8px 12px;
+}
+
+/* Canvas / stage play areas stretch to fill remaining space */
+.game-layout canvas,
+.powder-layout canvas,
+.powder-layout > .powder-canvas-wrap,
+.game-layout .zen-stage,
+.game-layout .grav-canvas,
+.game-layout .spiro-canvas,
+.game-layout .mag-canvas,
+.game-layout .cheese-canvas,
+.game-layout .coin-canvas,
+.game-layout .one-canvas,
+.game-layout .spider-canvas,
+.game-layout .flappy-canvas,
+.game-layout .zigzag-canvas,
+.game-layout .gravball-canvas,
+.game-layout .arcade-canvas,
+.game-layout .tetris-canvas,
+.game-layout .tag-canvas,
+.game-layout .mayhem-canvas,
+.game-layout .pty-canvas,
+.game-layout .pty-stage,
+.game-layout .penguin-canvas,
+.game-layout .penguin-stage,
+.game-layout .defence-canvas,
+.game-layout .defence-stage,
+.game-layout .toybox-grid,
+.game-layout .bw-sheet,
+.game-layout .t-board-wrap,
+.game-layout .ludo-main,
+.game-layout .ludo-mid,
+.powder-canvas-wrap > .powder-canvas {
+  flex: 1 1 auto !important;
+  width: 100% !important;
+  max-width: none !important;
+  min-width: 0 !important;
+  height: auto !important;
+  min-height: 40vh !important;
+  max-height: none !important;
+  margin: 12px 0 0 0 !important;
+  border-radius: 0 !important;
+  border-left: 0 !important;
+  border-right: 0 !important;
+  box-shadow: none !important;
+  aspect-ratio: auto !important;
+}
+
+.game-layout .pty-stage,
+.game-layout .pty-canvas,
+.game-layout .ludo-main,
+.game-layout .ludo-mid {
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+}
+
+/* Grid / board puzzlers grow larger while keeping square cells */
+.game-layout .pipe-grid,
+.game-layout .maze-grid,
+.game-layout .bash-grid,
+.game-layout .ice-grid,
+.game-layout .orch-grid,
+.game-layout .ludo-board {
+  flex: 1 1 auto !important;
+  width: min(100%, calc(100dvh - 220px)) !important;
+  max-width: none !important;
+  margin: 12px auto 0 auto !important;
+  min-height: 40vh;
+  aspect-ratio: auto !important;
+}
+
+.game-layout .ludo-board {
+  aspect-ratio: 1 !important;
+}
+
+/* Text panels use full width */
+.game-layout > .word-panel,
+.game-layout > .clue-panel,
+.game-layout > .nm-panel {
+  flex: 1 1 auto !important;
+  width: 100% !important;
+  max-width: none !important;
+  margin: 12px 0 0 0 !important;
+  border-radius: 0 !important;
+  border-left: 0 !important;
+  border-right: 0 !important;
+  box-shadow: none !important;
+}

@@ -496,27 +496,13 @@ function closeCurrentGameOnly() {
 }
 
 function fitGameShell() {
-  if (!gameModal.classList.contains("open")) return;
-  const panel = document.querySelector(".modal-panel");
-  const header = panel ? panel.querySelector(".modal-header") : null;
-  const layout = gameShell.querySelector(".game-layout");
-  if (!panel || !header || !layout) return;
-  layout.style.transform = "";
-  layout.style.marginBottom = "";
-  const embedReserve = document.body.classList.contains("embed") ? 52 : 0;
-  const availH = panel.clientHeight - header.offsetHeight - 44 - embedReserve;
-  const availW = panel.clientWidth - 50;
-  if (availH <= 0 || availW <= 0) return;
-  const needH = layout.scrollHeight;
-  const needW = layout.scrollWidth;
-  let z = 1;
-  if (needH > availH) z = Math.min(z, availH / needH);
-  if (needW > availW) z = Math.min(z, availW / needW);
-  z = Math.max(0.35, z);
-  if (z < 1) {
-    layout.style.transformOrigin = "top center";
-    layout.style.transform = `scale(${z.toFixed(3)})`;
-    layout.style.marginBottom = `${-Math.round(needH * (1 - z))}px`;
+  // Full-screen mode: game boxes flex to fill the panel, so never
+  // shrink the layout with a transform scale. Just clear any legacy
+  // scaling so content stays full-size and scrolls naturally if needed.
+  const layout = gameShell ? gameShell.querySelector(".game-layout") : null;
+  if (layout) {
+    layout.style.transform = "";
+    layout.style.marginBottom = "";
   }
 }
 
