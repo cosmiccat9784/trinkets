@@ -360,6 +360,137 @@ if (embedButton) {
   });
 }
 
+/* In-game feedback popup: preset to the open game, anonymous send. */
+const FEEDBACK_SHEET_URL = "https://script.google.com/macros/s/AKfycbx5mjh-z38RvN9M7o_mAyfVq70TOsZoUwIQjylAvdXlIX5hGpPSHCm-K-qRVEvgRAclOg/exec";
+const FEEDBACK_LOG_KEY = "trinkets-feedback-log";
+
+function ensureFbPopup() {
+  let popup = document.querySelector("#fbPopup");
+  if (popup) return popup;
+  const panel = document.querySelector(".modal-panel");
+  if (!panel) return null;
+  popup = document.createElement("div");
+  popup.className = "fb-popup";
+  popup.id = "fbPopup";
+  popup.hidden = true;
+  popup.innerHTML = `
+    <div class="fb-popup-card" role="dialog" aria-modal="true" aria-labelledby="fbPopupTitle">
+      <div class="fb-popup-head">
+        <div>
+          <p class="eyebrow">Feedback</p>
+          <h3 id="fbPopupTitle">Send feedback</h3>
+        </div>
+        <button class="fb-popup-x" id="fbPopupClose" type="button" aria-label="Close feedback">x</button>
+      </div>
+      <label class="fb-popup-label">Game
+        <input class="game-input" id="fbPopupGame" readonly disabled />
+      </label>
+      <label class="fb-popup-label">Type
+        <select class="game-input" id="fbPopupType">
+          <option>Bug</option>
+          <option>Idea</option>
+          <option>Praise</option>
+          <option>Other</option>
+        </select>
+      </label>
+      <label class="fb-popup-label">Subject
+        <input class="game-input" id="fbPopupSubject" maxlength="80" autocomplete="off" placeholder="Short summary" />
+      </label>
+      <label class="fb-popup-label">Details
+        <textarea class="game-textarea" id="fbPopupDetails" rows="4" placeholder="What happened? What did you expect?"></textarea>
+      </label>
+      <p class="fb-popup-msg" id="fbPopupMsg"></p>
+      <div class="game-actions">
+        <button class="primary-button" id="fbPopupSend" type="button">Send anonymously</button>
+      </div>
+    </div>
+  `;
+  panel.append(popup);
+  popup.addEventListener("click", (event) => {
+    if (event.target === popup) closeFbPopup();
+  });
+  popup.querySelector("#fbPopupClose").addEventListener("click", closeFbPopup);
+  popup.querySelector("#fbPopupSend").addEventListener("click", sendFbPopup);
+  return popup;
+}
+
+function openFbPopup() {
+  const popup = ensureFbPopup();
+  if (!popup) return;
+  const title = (modalTitle && modalTitle.textContent) || "this game";
+  popup.querySelector("#fbPopupTitle").textContent = title;
+  popup.querySelector("#fbPopupGame").value = title + (activeGameId ? ` (${activeGameId})` : "");
+  const msg = popup.querySelector("#fbPopupMsg");
+  if (msg) msg.textContent = "";
+  popup.hidden = false;
+  const subject = popup.querySelector("#fbPopupSubject");
+  if (subject) subject.focus();
+}
+
+function closeFbPopup() {
+  const popup = document.querySelector("#fbPopup");
+  if (popup) popup.hidden = true;
+}
+
+function fbPopupOpen() {
+  const popup = document.querySelector("#fbPopup");
+  return !!(popup && !popup.hidden);
+}
+
+async function sendFbPopup() {
+  const popup = document.querySelector("#fbPopup");
+  if (!popup) return;
+  const type = popup.querySelector("#fbPopupType").value;
+  const subject = popup.querySelector("#fbPopupSubject").value.trim();
+  const details = popup.querySelector("#fbPopupDetails").value.trim();
+  const msg = popup.querySelector("#fbPopupMsg");
+  if (!subject || !details) {
+    msg.textContent = "Give it a subject and a few details first.";
+    return;
+  }
+  const gameLabel = (modalTitle && modalTitle.textContent) || activeGameId || "";
+  if (!FEEDBACK_SHEET_URL) {
+    msg.textContent = "Anonymous inbox isn't set up yet.";
+    return;
+  }
+  msg.textContent = "Sending…";
+  try {
+    await fetch(FEEDBACK_SHEET_URL, {
+      method: "POST",
+      mode: "no-cors",
+      headers: { "Content-Type": "text/plain" },
+      body: JSON.stringify({
+        game: gameLabel,
+        type,
+        subject,
+        details,
+        page: location.href
+      })
+    });
+    try {
+      const raw = localStorage.getItem(FEEDBACK_LOG_KEY);
+      const entries = raw ? JSON.parse(raw) : [];
+      const list = Array.isArray(entries) ? entries : [];
+      list.unshift({ game: activeGameId || "", type, subject, details, at: Date.now() });
+      localStorage.setItem(FEEDBACK_LOG_KEY, JSON.stringify(list.slice(0, 50)));
+    } catch (err) {}
+    popup.querySelector("#fbPopupSubject").value = "";
+    popup.querySelector("#fbPopupDetails").value = "";
+    msg.textContent = "Sent anonymously. Thank you!";
+    setTimeout(closeFbPopup, 900);
+  } catch (err) {
+    msg.textContent = "Couldn't reach the inbox. Try again?";
+  }
+}
+
+const feedbackButton = document.querySelector("#feedbackButton");
+if (feedbackButton) {
+  feedbackButton.addEventListener("click", (event) => {
+    event.stopPropagation();
+    openFbPopup();
+  });
+}
+
 function embedStatText(snap) {
   if (!snap || typeof snap !== "object") return "";
   const parts = [];
@@ -451,6 +582,10 @@ gameModal.addEventListener("click", (event) => {
 
 document.addEventListener("keydown", (event) => {
   if (event.key === "Escape" && gameModal.classList.contains("open")) {
+    if (fbPopupOpen()) {
+      closeFbPopup();
+      return;
+    }
     closeActiveGame();
   }
 });
@@ -472,6 +607,7 @@ function openGame(title, kicker, html) {
 
 function closeActiveGame() {
   closeCurrentGameOnly();
+  closeFbPopup();
   if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
   gameModal.classList.remove("open");
   gameModal.setAttribute("aria-hidden", "true");

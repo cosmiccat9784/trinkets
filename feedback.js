@@ -29,7 +29,15 @@ const GAME_NAMES = {
   penguin: "Penguin Parkour",
   defence: "Penguin Defence",
   spider: "Spider",
-  ikea: "Guess the IKEA Product"
+  ikea: "Guess the IKEA Product",
+  flappy: "Flappy Bird",
+  zigzag: "Zigzag",
+  gravityball: "Gravity Ball",
+  tinyblocks: "Tiny Blocks",
+  tag: "Trinkets Tag",
+  ludo: "Ludo",
+  mayhem: "Magnet Mayhem",
+  tycoon: "Penguin Park Tycoon"
 };
 
 const fbGame = document.querySelector("#fbGame");

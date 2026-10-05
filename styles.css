@@ -851,6 +851,109 @@ body.modal-open {
   font-size: 22px;
 }
 
+.feedback-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  width: 44px;
+  height: 44px;
+  background: var(--sky);
+  border: 3px solid var(--line);
+  border-radius: 8px;
+  box-shadow: 4px 4px 0 var(--line);
+  color: #fff;
+  font-weight: 900;
+  cursor: pointer;
+  transition: transform 160ms ease, box-shadow 160ms ease;
+}
+
+.feedback-button:hover {
+  transform: translate(-2px, -2px);
+}
+
+.feedback-button .material-symbols-outlined {
+  font-size: 22px;
+}
+
+/* In-game feedback popup (attached to .modal-panel, not .game-layout) */
+.fb-popup {
+  position: absolute;
+  inset: 0;
+  z-index: 6;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  background: rgba(25, 33, 43, 0.6);
+}
+
+.fb-popup[hidden] {
+  display: none !important;
+}
+
+.fb-popup-card {
+  width: min(480px, 100%);
+  max-height: 100%;
+  overflow: auto;
+  display: grid;
+  gap: 12px;
+  padding: 20px;
+  background: var(--paper);
+  border: 3px solid var(--line);
+  border-radius: 12px;
+  box-shadow: 8px 8px 0 rgba(0, 0, 0, 0.35);
+}
+
+.fb-popup-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.fb-popup-head h3 {
+  margin: 4px 0 0;
+  font-size: 1.4rem;
+  line-height: 1.2;
+}
+
+.fb-popup-head .eyebrow {
+  margin: 0;
+}
+
+.fb-popup-x {
+  flex: 0 0 auto;
+  width: 36px;
+  height: 36px;
+  background: var(--gold);
+  border: 3px solid var(--line);
+  border-radius: 8px;
+  box-shadow: 3px 3px 0 var(--line);
+  font-weight: 900;
+  cursor: pointer;
+  font-size: 1rem;
+  line-height: 1;
+}
+
+.fb-popup-x:hover {
+  transform: translate(-1px, -1px);
+}
+
+.fb-popup-label {
+  display: grid;
+  gap: 6px;
+  font-size: 0.9rem;
+  font-weight: 900;
+}
+
+.fb-popup-msg {
+  min-height: 1.2em;
+  margin: 0;
+  font-size: 0.85rem;
+  font-weight: 800;
+  color: #394354;
+}
+
 body.embed {
   min-width: 0;
   background: var(--paper);
@@ -6557,6 +6660,7 @@ footer p {
 
 /* ── Full-screen game boxes: fill viewport, no page scroll ── */
 .modal-panel {
+  position: relative;
   display: flex;
   flex-direction: column;
   overflow: hidden !important;
