@@ -74,10 +74,11 @@ function tycoonLoad() {
     if (typeof d.spent !== "number") d.spent = 0;
     if (typeof d.earned !== "number") d.earned = 0;
     if (typeof d.best !== "number") d.best = 0;
+    if (typeof d.seed !== "number") d.seed = Math.floor(Math.random() * 1e9);
     if (!d.counts.normal && totalTycoonPenguins(d) === 0) d.counts.normal = 1;
     return d;
   }
-  return { coins: 75, counts: { normal: 1 }, build: {}, up: {}, enclosure: 0, spent: 0, earned: 0, best: 0 };
+  return { coins: 75, counts: { normal: 1 }, build: {}, up: {}, enclosure: 0, spent: 0, earned: 0, best: 0, seed: Math.floor(Math.random() * 1e9) };
 }
 function tycoonSave(d) { try { localStorage.setItem(TYCOON_KEY, JSON.stringify(d)); } catch (e) {} }
 function tycoonType(id) {
@@ -229,16 +230,26 @@ function startPenguinTycoon() {
   function registerCustomTiles() {
     try {
       TileEngine.register("slide", { layer: "object", draw: function (T) {
+        // tall slide tower: ladder frame ~40px high, red chute with white stripe
         T.shadow(0.9, 0.5);
-        T.box(-0.34, -0.3, -0.22, 0.3, 26, ["#8a93a1", "#6b7280", "#565d68"]);
-        T.box(0.1, -0.3, 0.22, 0.3, 26, ["#8a93a1", "#6b7280", "#565d68"]);
-        T.poly([T.P(-0.28, -0.3, 26), T.P(0.16, -0.3, 26), T.P(0.44, 0.34, 4), T.P(0.0, 0.34, 4)], "#ff7f6e");
-        T.poly([T.P(-0.28, -0.3, 26), T.P(-0.06, -0.3, 26), T.P(0.22, 0.34, 4), T.P(0.0, 0.34, 4)], "#ffffff");
+        T.box(-0.4, -0.34, -0.28, 0.3, 40, ["#8a93a1", "#6b7280", "#565d68"]);
+        T.box(0.08, -0.34, 0.2, 0.3, 40, ["#8a93a1", "#6b7280", "#565d68"]);
+        T.box(-0.4, -0.34, 0.2, -0.24, 2, ["#8a93a1", "#6b7280", "#565d68"], 40);
+        for (var r = 0; r < 4; r++) {
+          T.poly([T.P(-0.4, -0.3 + r * 0.16, 6 + r * 8), T.P(0.2, -0.3 + r * 0.16, 6 + r * 8),
+                  T.P(0.2, -0.24 + r * 0.16, 6 + r * 8), T.P(-0.4, -0.24 + r * 0.16, 6 + r * 8)], "#565d68");
+        }
+        T.poly([T.P(-0.34, -0.34, 40), T.P(0.14, -0.34, 40), T.P(0.46, 0.36, 4), T.P(-0.02, 0.36, 4)], "#ff7f6e");
+        T.poly([T.P(-0.34, -0.34, 40), T.P(-0.1, -0.34, 40), T.P(0.2, 0.36, 4), T.P(-0.02, 0.36, 4)], "#ffffff");
       }});
       TileEngine.register("iceberg", { layer: "object", draw: function (T) {
-        T.shadow(0.9, 0.5);
-        T.poly([T.P(-0.36, 0.2), T.P(-0.1, -0.38), T.P(0.08, -0.1), T.P(0.34, -0.3), T.P(0.38, 0.2)], "#dff2ff");
-        T.poly([T.P(-0.1, -0.38), T.P(-0.02, -0.22), T.P(-0.16, -0.2)], "#ffffff");
+        // big berg: wide base, z-lifted twin peaks, snow glints
+        T.shadow(1.0, 0.55);
+        T.poly([T.P(-0.46, 0.24), T.P(-0.14, -0.44), T.P(0.06, -0.14), T.P(0.3, -0.4), T.P(0.48, 0.24)], "#dff2ff");
+        T.poly([T.P(-0.14, -0.44), T.P(-0.14, -0.44, 16), T.P(0.3, -0.4, 16), T.P(0.3, -0.4)], "#bfe6f7");
+        T.poly([T.P(-0.14, -0.44), T.P(-0.04, -0.26), T.P(-0.2, -0.24)], "#ffffff");
+        T.poly([T.P(0.3, -0.4), T.P(0.34, -0.28), T.P(0.24, -0.28)], "#ffffff");
+        T.poly([T.P(-0.3, -0.05), T.P(-0.2, -0.12), T.P(-0.32, -0.16)], "#ffffff", null);
       }});
       TileEngine.register("snowmaker", { layer: "object", draw: function (T) {
         T.shadow(0.6, 0.4);
@@ -359,30 +370,52 @@ function startPenguinTycoon() {
     occTiles[x + "," + y] = type;
   }
 
+  // Layout templates: higher park tiers mirror/shift the composition and add
+  // decor, so levelling visibly re-lays the park instead of piling objects on.
+  function parkTemplate() {
+    var lvl = tycoonLevel(data);
+    var seed = data.seed || 0;
+    var tier = lvl >= 4 ? 2 : lvl >= 2 ? 1 : 0;
+    return {
+      tier: tier,
+      mirror: tier === 1 ? true : tier === 2 ? (seed % 2 === 1) : false,
+      pondEast: ((seed >> 1) % 2) === 1,
+      lush: tier === 2
+    };
+  }
+
   function buildParkStatics() {
     clear_all();
     occTiles = {};
     pondTiles = [];
+    pondRect = null;
     attractionTiles = {};
     stallTiles = {};
+    var tmpl = parkTemplate();
+    function MX(x) { return tmpl.mirror ? N - 1 - x : x; }
     var m = encInset(), hi = N - 1 - m;
     // enclosure block with auto ice walls on its outer sides
     fill_tiles(m, m, hi, hi, "enclosure");
-    gateTile = { x: 6, y: hi };
-    set_tile(6, hi, "gate");
+    gateTile = { x: MX(6), y: hi };
+    set_tile(gateTile.x, hi, "gate");
     // entrance path: gate down to the bottom + plaza row
-    fill_tiles(6, hi + 1, 6, N - 1, "path");
+    var pc = MX(6);
+    fill_tiles(pc, hi + 1, pc, N - 1, "path");
     fill_tiles(3, N - 1, 9, N - 1, "path");
-    enterTile = { x: 6, y: N - 1 };
-    // pond: a wide sheet tucked at the back of the pen (snowy rim is automatic)
-    var px = m + 1, py = m;
-    if (px + 2 > hi) px = hi - 2;
-    fill_tiles(px, py, px + 2, py + 1, "pond");
-    pondRect = { x0: px, y0: py, x1: px + 2, y1: py + 1 };
-    pondTiles = [];
-    for (var pyy = py; pyy <= py + 1; pyy++) for (var pxx = px; pxx <= px + 2; pxx++) {
-      pondTiles.push({ x: pxx, y: pyy });
-      occTiles[pxx + "," + pyy] = "pond";
+    enterTile = { x: pc, y: N - 1 };
+    // pond: a wide sheet at the back of the pen, west or seed-east side.
+    // appears only once the Swimming Pool is bought.
+    if (data.build.pool) {
+      var px = tmpl.pondEast ? hi - 3 : m + 1;
+      if (tmpl.mirror) px = N - 1 - (px + 2);
+      var py = m;
+      fill_tiles(px, py, px + 2, py + 1, "pond");
+      pondRect = { x0: px, y0: py, x1: px + 2, y1: py + 1 };
+      pondTiles = [];
+      for (var pyy = py; pyy <= py + 1; pyy++) for (var pxx = px; pxx <= px + 2; pxx++) {
+        pondTiles.push({ x: pxx, y: pyy });
+        occTiles[pxx + "," + pyy] = "pond";
+      }
     }
     // attractions settle on the nearest free interior tile to their anchor
     function freeTile(sx, sy) {
@@ -418,37 +451,55 @@ function startPenguinTycoon() {
       return [{ x: a.x, y: a.y }];
     }
     var t;
-    if (data.build.slide) { t = placeNear(m, hi - 1, "slide"); if (t) attractionTiles.slide = t; }
-    if (data.build.iceberg) { t = placeNear(hi, m, "iceberg"); if (t) attractionTiles.iceberg = t; }
-    if (data.build.snow) { t = placeNear(m, m, "snowmaker"); if (t) attractionTiles.snow = t; }
+    if (data.build.slide) { t = placeNear(MX(m), hi - 1, "slide"); if (t) attractionTiles.slide = t; }
+    if (data.build.iceberg) { t = placeNear(MX(hi), m, "iceberg"); if (t) attractionTiles.iceberg = t; }
+    if (data.build.snow) { t = placeNear(MX(m), m, "snowmaker"); if (t) attractionTiles.snow = t; }
     if (data.build.cave) {
-      t = placeNear(hi - 2, m, "crystal");
+      t = placeNear(MX(hi - 2), m, "crystal");
       if (t) {
         attractionTiles.cave = t;
         placeNear(t.x, t.y, "crystal"); // cluster of two, like the reference
       }
     }
-    if (data.build.climb) { t = placePair(hi, hi - 1, "platform"); if (t) attractionTiles.climb = t[0]; }
-    // plaza stalls (outside the walls, facing the path)
-    if (data.up.food) { staticAt(4, 10, "icecream"); stallTiles.food = { x: 4, y: 10 }; }
-    if (data.up.gift) { staticAt(8, 10, "icecream"); stallTiles.gift = { x: 8, y: 10 }; }
-    if (data.up.plush) { staticAt(3, 11, "icecream"); stallTiles.plush = { x: 3, y: 11 }; }
-    if (data.up.toilets) { staticAt(9, 11, "sign", { text: "WC" }); stallTiles.toilets = { x: 9, y: 11 }; }
-    if (data.up.bench) {
-      staticAt(5, 10, "bench"); staticAt(7, 10, "bench", { flip: 1 });
-      stallTiles.bench = { x: 5, y: 10 };
+    if (data.build.climb) { t = placePair(MX(hi), hi - 1, "platform"); if (t) attractionTiles.climb = t[0]; }
+    // arch entrance: PARK sign + pennants flanking the gate path
+    function freeOutside(sx, sy) {
+      var best = null, bd = 1e9;
+      for (var yy = 0; yy < N; yy++) for (var xx = 0; xx < N; xx++) {
+        if (insideRect(xx, yy)) continue;
+        if (xx === enterTile.x && yy === enterTile.y) continue;
+        if (occTiles[xx + "," + yy]) continue;
+        var d = Math.abs(xx - sx) + Math.abs(yy - sy);
+        if (d < bd) { bd = d; best = { x: xx, y: yy }; }
+      }
+      return best;
     }
-    if (data.up.info) { staticAt(5, 11, "sign", { text: "INFO" }); stallTiles.info = { x: 5, y: 11 }; }
-    // scenery: PARK sign + pennants up front, snowy pines / rocks / crystals
-    staticAt(1, 10, "sign", { text: "PENGUIN PARK" });
-    staticAt(0, 10, "flag", { color: "#8a7dff" });
-    staticAt(10, 0, "flag", { color: "#ff6b6b" });
-    staticAt(0, 3, "pine"); staticAt(11, 2, "pine");
-    staticAt(1, 5, "pine"); staticAt(10, 8, "pine");
-    staticAt(4, 1, "pine"); staticAt(8, 1, "pine");
-    staticAt(4, 0, "rock"); staticAt(11, 5, "rock"); staticAt(0, 8, "rock");
-    staticAt(9, 1, "crystal");
-    staticAt(11, 11, "flag", { color: "#ffd93d" });
+    var s1 = freeOutside(MX(4), hi + 1);
+    if (s1) staticAt(s1.x, s1.y, "sign", { text: "PENGUIN PARK" });
+    var f1 = freeOutside(MX(5), hi + 1), f2 = freeOutside(MX(7), hi + 1);
+    if (f1) staticAt(f1.x, f1.y, "flag", { color: "#ff6b6b" });
+    if (f2) staticAt(f2.x, f2.y, "flag", { color: "#8a7dff" });
+    // plaza stalls (outside the walls, facing the path)
+    if (data.up.food) { stallTiles.food = { x: MX(4), y: 10 }; staticAt(MX(4), 10, "icecream"); }
+    if (data.up.gift) { stallTiles.gift = { x: MX(8), y: 10 }; staticAt(MX(8), 10, "icecream"); }
+    if (data.up.plush) { stallTiles.plush = { x: MX(3), y: 11 }; staticAt(MX(3), 11, "icecream"); }
+    if (data.up.toilets) { stallTiles.toilets = { x: MX(9), y: 11 }; staticAt(MX(9), 11, "sign", { text: "WC" }); }
+    if (data.up.bench) {
+      staticAt(MX(5), 10, "bench"); staticAt(MX(7), 10, "bench", { flip: 1 });
+      stallTiles.bench = { x: MX(5), y: 10 };
+    }
+    if (data.up.info) { stallTiles.info = { x: MX(5), y: 11 }; staticAt(MX(5), 11, "sign", { text: "INFO" }); }
+    // scenery: tall stuff stays on back rows (low x+y) so it never occludes.
+    var pines = [[0, 3], [11, 2], [1, 5], [10, 8], [4, 1], [8, 1]];
+    var rocks = [[4, 0], [11, 5], [0, 8]];
+    if (tmpl.lush) { pines.push([6, 0], [10, 3]); rocks.push([0, 1]); }
+    var di;
+    for (di = 0; di < pines.length; di++) staticAt(MX(pines[di][0]), pines[di][1], "pine");
+    for (di = 0; di < rocks.length; di++) staticAt(MX(rocks[di][0]), rocks[di][1], "rock");
+    staticAt(MX(9), 1, "crystal");
+    staticAt(MX(0), 10, "flag", { color: "#8a7dff" });
+    staticAt(MX(10), 0, "flag", { color: "#ff6b6b" });
+    staticAt(MX(11), 11, "flag", { color: "#ffd93d" });
   }
 
   /* ——— entities live as tile objects on top of the ground ——— */
@@ -517,7 +568,8 @@ function startPenguinTycoon() {
     var p = {
       type: typeId, x: t.x, y: t.y, fx: t.x, fy: t.y, tx: t.x, ty: t.y,
       speed: 1.7, pause: Math.random() * 0.6, tile: "penguin",
-      opts: penguinOpts(typeId), pet: 0, swim: false, si: 0, st: 0, sa: 0
+      opts: penguinOpts(typeId), pet: 0, swim: false, si: 0, st: 0, sa: 0,
+      home: { x: t.x, y: t.y }
     };
     set_tile(t.x, t.y, "penguin", p.opts);
     return p;
@@ -525,9 +577,9 @@ function startPenguinTycoon() {
   function rebuildPenguins() {
     penguins = [];
     var keys = Object.keys(data.counts);
-    for (var i = 0; i < keys.length && penguins.length < 10; i++) {
+    for (var i = 0; i < keys.length && penguins.length < 7; i++) {
       var n = Math.min(data.counts[keys[i]] || 0, 8);
-      for (var j = 0; j < n && penguins.length < 10; j++) {
+      for (var j = 0; j < n && penguins.length < 7; j++) {
         var p = spawnPenguinVisual(keys[i]);
         if (p) penguins.push(p);
       }
@@ -578,6 +630,7 @@ function startPenguinTycoon() {
         t = freePenguinTile();
         if (!t) { penguins.splice(i, 1); continue; }
         p.x = t.x; p.y = t.y; p.fx = t.x; p.fy = t.y; p.tx = t.x; p.ty = t.y;
+        p.home = { x: t.x, y: t.y };
         p.pause = Math.random() * 0.5;
         set_tile(t.x, t.y, "penguin", p.opts);
       }
@@ -594,20 +647,35 @@ function startPenguinTycoon() {
   }
 
   /* ——— visitor waypoints: fence viewpoints + stall fronts + plaza ——— */
+  // front of a stall = neighbouring tile with the biggest x+y (lowest on screen)
+  function spotInFront(x, y) {
+    var best = null, bs = -99;
+    var dirs = [[1, 0], [-1, 0], [0, 1], [0, -1]];
+    for (var i = 0; i < 4; i++) {
+      var nx = x + dirs[i][0], ny = y + dirs[i][1];
+      if (!inBounds(nx, ny) || insideRect(nx, ny)) continue;
+      if (occTiles[nx + "," + ny]) continue;
+      if (nx + ny > bs) { bs = nx + ny; best = { x: nx, y: ny }; }
+    }
+    return best;
+  }
   function tycoonSpots() {
     var spots = [];
     var m = encInset(), hi = N - 1 - m;
-    var y, x;
+    var y, x, id, f;
     for (y = m; y <= hi; y++) spots.push({ x: hi + 1, y: y });
     for (x = m; x <= hi; x++) spots.push({ x: x, y: hi + 1 });
-    if (data.up.food) spots.push({ x: 4, y: 11 });
-    if (data.up.gift) spots.push({ x: 8, y: 11 });
-    if (data.up.plush) spots.push({ x: 3, y: 10 });
-    if (data.up.toilets) spots.push({ x: 9, y: 10 });
-    if (data.up.bench) { spots.push({ x: 5, y: 11 }); spots.push({ x: 7, y: 11 }); }
-    if (data.up.info) spots.push({ x: 5, y: 10 });
-    if (data.build.pool) { spots.push({ x: hi + 1, y: m }); spots.push({ x: hi + 1, y: m + 1 }); }
-    spots.push({ x: 6, y: 11 });
+    for (id in stallTiles) {
+      if (!stallTiles.hasOwnProperty(id)) continue;
+      f = spotInFront(stallTiles[id].x, stallTiles[id].y);
+      if (f) spots.push(f);
+    }
+    if (data.build.pool && pondRect) {
+      spots.push({ x: pondRect.x1 + 1, y: pondRect.y0 });
+      spots.push({ x: pondRect.x1 + 1, y: pondRect.y1 });
+      spots.push({ x: pondRect.x0 - 1, y: pondRect.y0 });
+    }
+    spots.push({ x: enterTile.x, y: enterTile.y });
     return spots.filter(function (p) { return inBounds(p.x, p.y) && !insideRect(p.x, p.y) && !occTiles[p.x + "," + p.y]; });
   }
   function spawnVisitor() {
@@ -780,7 +848,7 @@ function startPenguinTycoon() {
     data.spent += cost;
     data.counts[t.id] = owned + 1;
     var vis = penguins.length;
-    var p = vis < 10 ? spawnPenguinVisual(t.id) : null;
+    var p = vis < 7 ? spawnPenguinVisual(t.id) : null;
     if (p) {
       penguins.push(p);
       assignSwimmers();
@@ -846,6 +914,12 @@ function startPenguinTycoon() {
         checkEmpire.last = nl;
         addPopup(gateTile.x, gateTile.y, "⭐ " + TYCOON_LEVELS[nl].name + "!", "#8a5f14", 2);
         blip(880, 0.25, "sine");
+        showBubble({
+          emoji: "🛠️", title: "GRAND REOPENING!",
+          sub: TYCOON_LEVELS[nl].name.toUpperCase(),
+          body: "The park has been rebuilt bigger and better. Same penguins, brand-new look!",
+          btn: "🎉 WOW"
+        });
       }
     }
     checkEmpire.last = tycoonLevel(data);
@@ -994,6 +1068,17 @@ function startPenguinTycoon() {
   }
 
   /* ——— simulation ——— */
+  // separation: how far is the nearest other waddler from (x, y)?
+  function penguinSeparation(x, y, self) {
+    var bd = 99;
+    for (var i = 0; i < penguins.length; i++) {
+      var q = penguins[i];
+      if (q === self || q.swim) continue;
+      var d = Math.abs(q.x - x) + Math.abs(q.y - y);
+      if (d < bd) bd = d;
+    }
+    return bd;
+  }
   function pickPenguinTarget(p) {
     var dirs = [[1, 0], [-1, 0], [0, 1], [0, -1]];
     var opts = [];
@@ -1006,12 +1091,20 @@ function startPenguinTycoon() {
       opts.push({ x: nx, y: ny });
     }
     if (!opts.length) {
-      p.pause = 0.4 + Math.random() * 0.5;
+      p.pause = 0.5 + Math.random() * 0.6;
       return;
     }
-    var pick = opts[Math.floor(Math.random() * opts.length)];
-    p.tx = pick.x; p.ty = pick.y;
-    if (pick.x !== p.x) p.opts.flip = pick.x > p.x ? 1 : 0;
+    // stay near home, and away from the crowd
+    var home = p.home || { x: p.x, y: p.y };
+    var near = opts.filter(function (o) { return Math.abs(o.x - home.x) + Math.abs(o.y - home.y) <= 3; });
+    var pool = near.length ? near : opts;
+    var best = null, bs = -1;
+    for (var j = 0; j < pool.length; j++) {
+      var s = penguinSeparation(pool[j].x, pool[j].y, p) + Math.random() * 1.5;
+      if (s > bs) { bs = s; best = pool[j]; }
+    }
+    p.tx = best.x; p.ty = best.y;
+    if (best.x !== p.x) p.opts.flip = best.x > p.x ? 1 : 0;
   }
   function stepPenguin(p, dt) {
     if (p.pet > 0) p.pet -= dt;
@@ -1033,10 +1126,11 @@ function startPenguinTycoon() {
     p.speed = 1.7;
     if (p.pause > 0) { p.pause -= dt; return; }
     if (glideToward(p, dt)) {
-      // arrived: idle a beat, maybe turn, otherwise waddle on
+      // arrived: idle a beat, maybe turn or preen, otherwise waddle on
       if (Math.random() < 0.45) {
-        p.pause = 0.25 + Math.random() * 0.7;
+        p.pause = 0.5 + Math.random() * 0.9;
         if (Math.random() < 0.5) { p.opts.flip = p.opts.flip ? 0 : 1; set_tile(p.x, p.y, "penguin", p.opts); }
+        else if (Math.random() < 0.12) addPopup(p.x, p.y, "♪", "#4f8fcf", 0.9);
       } else {
         pickPenguinTarget(p);
       }
