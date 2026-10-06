@@ -233,7 +233,10 @@
     for (let y = 0; y < n; y++) for (let x = 0; x < n; x++) Ts[y * n + x] = mkT(x, y);
     slab();
     for (let i = 0; i < n * n; i++) { const T = Ts[i], q = S.cells[i];
-      T.dia((T.x + T.y) % 2 ? '#f9fcff' : '#f2f8fd', S.showGrid ? '#e1edf7' : null, 1);
+      T.dia((T.x + T.y) % 2 ? '#f9fcff' : '#f2f8fd', null);
+      // one outline per edge, and only where the neighbour is different
+      // ground — same-type tiles melt together with no border between them
+      if (S.showGrid) for (let e = 0; e < 4; e++) { const nb = T.nb(e); if (!nb || nb.g !== q.g) T.edge(e, '#e1edf7', 1); }
       if (T.r > .55) { const p = T.P(T.r - .75, hash(T.y + 9, T.x) - .5); c.strokeStyle = '#d9e9f6'; c.lineWidth = 2 * S.k; c.lineCap = 'round';
         c.beginPath(); c.moveTo(p[0], p[1]); c.quadraticCurveTo(p[0] + 4 * S.k, p[1] - 3 * S.k, p[0] + 9 * S.k, p[1]); c.stroke(); }
       const d = TYPES[q.g]; if (d && d.ground) d.ground(T, q.go); }
