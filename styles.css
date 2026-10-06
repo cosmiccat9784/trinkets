@@ -6916,9 +6916,7 @@ body.embed .game-layout {
 }
 
 .news-wrap {
-  max-width: 860px;
-  margin: 0 auto;
-  padding: clamp(24px, 5vw, 48px) clamp(18px, 6vw, 40px) clamp(48px, 7vw, 84px);
+  padding: clamp(24px, 5vw, 48px) clamp(18px, 6vw, 88px) clamp(48px, 7vw, 84px);
 }
 
 .news-wrap .game-message {
