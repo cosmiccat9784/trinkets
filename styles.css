@@ -387,6 +387,57 @@ footer {
   margin-left: 6px;
 }
 
+/* ── Tester panel (beta only, carries data-beta itself) ── */
+.tester {
+  padding: clamp(28px, 5vw, 48px) clamp(18px, 6vw, 88px);
+  background: #efe7fb;
+  border-bottom: 3px solid var(--line);
+}
+
+.tester h2 {
+  margin-bottom: 8px;
+}
+
+.tester-sub {
+  margin: 4px 0 0;
+  color: #354052;
+  font-weight: 700;
+}
+
+.tester-list {
+  display: grid;
+  gap: 8px;
+  max-width: 720px;
+  margin: 16px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.tester-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 8px 12px;
+  background: #fff;
+  border: 3px solid var(--line);
+  border-radius: 8px;
+  box-shadow: 3px 3px 0 var(--line);
+  font-weight: 900;
+}
+
+.tester-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.tester-play {
+  min-height: 36px;
+  font-size: 0.85rem;
+}
+
 /* ── Beta mode: unreleased stuff (data-beta) is stripped for visitors ── */
 .beta-banner {
   display: flex;

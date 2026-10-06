@@ -114,6 +114,66 @@
     if (main && main.parentNode) main.parentNode.insertBefore(banner, main);
   }
 
+  // Tester panel (beta only): list everything under test with Play
+  // buttons, plus a one-click beta link to share with other testers.
+  if (on) {
+    var names = [];
+    try {
+      document.querySelectorAll(".game-card[data-beta]").forEach(function (card) {
+        var title = "";
+        try {
+          var h = card.querySelector("h3");
+          if (h && h.textContent) title = h.textContent;
+        } catch (e) {}
+        if (card.dataset && card.dataset.game) names.push({ id: card.dataset.game, title: title || card.dataset.game });
+      });
+    } catch (e) {}
+    var list = document.querySelector("#testerList");
+    if (list) {
+      list.innerHTML = "";
+      if (!names.length) {
+        var empty = document.createElement("li");
+        empty.textContent = "Nothing in beta right now — ship something!";
+        list.appendChild(empty);
+      } else {
+        names.forEach(function (n) {
+          var li = document.createElement("li");
+          li.className = "tester-row";
+          var nm = document.createElement("span");
+          nm.textContent = n.title;
+          var play = document.createElement("button");
+          play.type = "button";
+          play.className = "game-action tester-play";
+          play.textContent = "Play";
+          play.addEventListener("click", function () {
+            if (typeof showGame === "function") showGame(n.id);
+          });
+          li.appendChild(nm);
+          li.appendChild(play);
+          list.appendChild(li);
+        });
+      }
+    }
+    var panelCount = document.querySelector("#testerCount");
+    if (panelCount) panelCount.textContent = String(names.length);
+    var copyBeta = document.querySelector("#testerCopy");
+    if (copyBeta) {
+      copyBeta.addEventListener("click", function () {
+        var url = location.origin + location.pathname + "?beta=1";
+        var prev = copyBeta.textContent;
+        function flash(text) {
+          copyBeta.textContent = text;
+          setTimeout(function () { copyBeta.textContent = prev; }, 1200);
+        }
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(url).then(function () { flash("Copied!"); }, function () { flash("Copy failed"); });
+        } else {
+          flash("Copy failed");
+        }
+      });
+    }
+  }
+
   // Footer toggle (both modes).
   var links = document.querySelector(".footer-links");
   if (links) {
