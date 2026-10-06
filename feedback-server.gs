@@ -10,6 +10,11 @@
  *    (Trial games post here: comet, bash, thousand, flappy, tinyblocks.
  *    All trial games are high-wins, so the client sorts biggest-first.
  *    If low-wins games join later, sort ascending for those game ids.)
+ * 3b. Add a third tab named "Visits" with these headers in row 1:
+ *    Timestamp | Game | Visitor | Device | Browser | Page
+ *    (Anonymous arcade stats: one row per page view / game opened.
+ *    Visitor is a random per-browser id, Device/Browser are coarse
+ *    buckets like Mobile/Desktop and Chrome/Safari — no raw user agents.)
  * 4. In the spreadsheet: Extensions -> Apps Script.
  * 5. Delete any placeholder code, paste this whole file, press Save.
  * 6. Deploy -> New deployment -> gear icon -> Web app.
@@ -46,7 +51,23 @@ function doPost(e) {
     data = {};
   }
   var ss = SpreadsheetApp.getActiveSpreadsheet();
-  // Leaderboard score submission: { action: "score", game, name, score, page }
+  // Anonymous visit beacon: { action: "visit", game, visitor, device, browser, page }
+  if (data.action === "visit") {
+    var vgame = String(data.game || "").toLowerCase().slice(0, 32);
+    if (!vgame) {
+      return jsonOut({ ok: false, error: "bad visit" });
+    }
+    var log = ss.getSheetByName("Visits") || ss.insertSheet("Visits");
+    log.appendRow([
+      new Date(),
+      vgame,
+      String(data.visitor || "").slice(0, 16),
+      String(data.device || "").slice(0, 16),
+      String(data.browser || "").slice(0, 16),
+      data.page || ""
+    ]);
+    return jsonOut({ ok: true });
+  }
   if (data.action === "score") {
     var game = String(data.game || "").toLowerCase().slice(0, 32);
     var name = String(data.name || "You").slice(0, 12);
@@ -72,16 +93,19 @@ function doPost(e) {
 
 function doGet(e) {
   // Global top-10 for one game: <exec-url>?action=scores&game=comet
+  // Arcade stats: <exec-url>?action=stats
+  var action = "";
   var game = "";
   try {
     if (e && e.parameter) {
-      if (String(e.parameter.action || "") !== "scores") return jsonOut({ scores: [] });
+      action = String(e.parameter.action || "");
       game = String(e.parameter.game || "").toLowerCase();
     }
   } catch (err) {
-    return jsonOut({ scores: [] });
+    return jsonOut({ scores: [], stats: null });
   }
-  if (!game) return jsonOut({ scores: [] });
+  if (action === "stats") return statsOut();
+  if (action !== "scores" || !game) return jsonOut({ scores: [] });
   var sheet = null;
   try {
     sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Scores");
@@ -108,4 +132,56 @@ function doGet(e) {
   // Trial set is all high-wins (biggest first). Low-wins games need a < b here.
   out.sort(function (a, b) { return b.s - a.s; });
   return jsonOut({ scores: out.slice(0, 10) });
+}
+
+function statsOut() {
+  var sheet = null;
+  try {
+    sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Visits");
+  } catch (err) {}
+  if (!sheet) return jsonOut({ stats: null });
+  var rows = [];
+  try {
+    rows = sheet.getDataRange().getValues();
+  } catch (err) {
+    return jsonOut({ stats: null });
+  }
+  var games = {};
+  var devices = {};
+  var browsers = {};
+  var seen = {};
+  var visitors = 0;
+  var total = 0;
+  var since = 0;
+  var start = Math.max(1, rows.length - 20000);
+  for (var i = start; i < rows.length; i++) {
+    var g = String(rows[i][1] || "");
+    if (!g) continue;
+    total++;
+    games[g] = (games[g] || 0) + 1;
+    var v = String(rows[i][2] || "");
+    if (v && !seen[v]) {
+      seen[v] = 1;
+      visitors++;
+    }
+    var d = String(rows[i][3] || "");
+    if (d) devices[d] = (devices[d] || 0) + 1;
+    var b = String(rows[i][4] || "");
+    if (b) browsers[b] = (browsers[b] || 0) + 1;
+    if (!since) {
+      try {
+        since = rows[i][0] ? new Date(rows[i][0]).getTime() : 0;
+      } catch (err2) {}
+    }
+  }
+  return jsonOut({
+    stats: {
+      visits: total,
+      visitors: visitors,
+      games: games,
+      devices: devices,
+      browsers: browsers,
+      since: since
+    }
+  });
 }

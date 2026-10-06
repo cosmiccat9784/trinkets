@@ -307,6 +307,189 @@
     return c && c.rows ? c.rows : null;
   }
 
+  /* ── Anonymous arcade stats (one beacon per page view / game opened) ── */
+  var VISITOR_KEY = "trinkets-visitor-id";
+  var STATS_TTL = 5 * 60 * 1000;
+  var statsCache = null;
+  var statsPending = false;
+
+  function visitorId() {
+    try {
+      var v = localStorage.getItem(VISITOR_KEY);
+      if (!v) {
+        v = "v" + Date.now().toString(36) + Math.random().toString(36).slice(2, 10);
+        localStorage.setItem(VISITOR_KEY, v);
+      }
+      return v;
+    } catch (err) {
+      return "";
+    }
+  }
+
+  // Coarse buckets only — no raw user-agent strings ever leave the device.
+  function clientInfo() {
+    var ua = "";
+    try {
+      ua = navigator.userAgent || "";
+    } catch (err) {}
+    var device = "Desktop";
+    if (/iPad|Tablet/i.test(ua)) device = "Tablet";
+    else if (/Android|iPhone|iPod|Mobile/i.test(ua)) device = "Mobile";
+    var browser = "Other";
+    if (/Edg\//.test(ua)) browser = "Edge";
+    else if (/OPR\//.test(ua)) browser = "Opera";
+    else if (/Chrome\//.test(ua)) browser = "Chrome";
+    else if (/Firefox\//.test(ua)) browser = "Firefox";
+    else if (/Safari\//.test(ua)) browser = "Safari";
+    return { device: device, browser: browser };
+  }
+
+  function isEmbedView() {
+    try {
+      return !!(document.body && document.body.classList.contains("embed"));
+    } catch (err) {
+      return false;
+    }
+  }
+
+  function logVisit(game) {
+    var url = sheetURL();
+    if (!url || isEmbedView()) return;
+    var id = String(game || "_shelf").toLowerCase().slice(0, 32);
+    var info = clientInfo();
+    try {
+      fetch(url, {
+        method: "POST",
+        mode: "no-cors",
+        headers: { "Content-Type": "text/plain" },
+        body: JSON.stringify({
+          action: "visit",
+          game: id,
+          visitor: visitorId(),
+          device: info.device,
+          browser: info.browser,
+          page: location.href
+        })
+      });
+    } catch (err) {}
+  }
+
+  function wrapShowGame() {
+    if (typeof window.showGame !== "function" || window.showGame.__lbStats) return;
+    try {
+      var orig = window.showGame;
+      var wrapped = function (id) {
+        var r = orig(id);
+        try {
+          if (r !== false && id) logVisit(id);
+        } catch (err) {}
+        return r;
+      };
+      wrapped.__lbStats = true;
+      window.showGame = wrapped;
+      try {
+        showGame = wrapped;
+      } catch (err2) {}
+    } catch (err3) {}
+  }
+
+  function fetchStats(force) {
+    var now = Date.now();
+    if (!force && statsCache && now - statsCache.at < STATS_TTL) return;
+    if (statsPending) return;
+    var url = sheetURL();
+    if (!url) return;
+    statsPending = true;
+    fetch(url + "?action=stats")
+      .then(function (resp) { return resp.json(); })
+      .then(function (data) {
+        statsCache = { data: data && data.stats ? data.stats : null, at: Date.now() };
+        statsPending = false;
+        renderAll();
+      })
+      .catch(function () {
+        statsCache = null;
+        statsPending = false;
+        renderAll();
+      });
+  }
+
+  // "_shelf" page views count toward totals, never toward most-played.
+  function gameTitle(id) {
+    if (id === "_shelf") return "Front page";
+    if (GAME_META[id]) return GAME_META[id].title;
+    try {
+      var card = document.querySelector('.game-card[data-game="' + id + '"] h3');
+      if (card && card.textContent) return card.textContent.trim();
+    } catch (err) {}
+    return String(id || "?").replace(/_/g, " ");
+  }
+
+  function topEntry(counts) {
+    var key = "";
+    var n = 0;
+    Object.keys(counts || {}).forEach(function (k) {
+      if (counts[k] > n) {
+        n = counts[k];
+        key = k;
+      }
+    });
+    return { key: key, n: n };
+  }
+
+  function renderStats() {
+    var box = document.querySelector("#lbStats");
+    if (!box) return;
+    if (!sheetURL()) {
+      box.innerHTML = "";
+      return;
+    }
+    fetchStats();
+    if (!statsCache || !statsCache.data) {
+      box.innerHTML = "";
+      var loading = document.createElement("p");
+      loading.className = "lb-stats-line";
+      loading.textContent = statsPending
+        ? "📊 Loading arcade stats…"
+        : "📊 Arcade stats need a connection — check back online.";
+      box.append(loading);
+      return;
+    }
+    var s = statsCache.data;
+    var total = Number(s.visits) || 0;
+    var visitors = Number(s.visitors) || 0;
+    var plays = {};
+    Object.keys(s.games || {}).forEach(function (g) {
+      if (g.charAt(0) !== "_") plays[g] = s.games[g];
+    });
+    var champ = topEntry(plays);
+    var dev = topEntry(s.devices);
+    var bro = topEntry(s.browsers);
+    function pct(n) {
+      return total > 0 ? Math.round((n / total) * 100) + "%" : "—";
+    }
+    box.innerHTML = "";
+    function line(icon, label, value) {
+      var p = document.createElement("p");
+      p.className = "lb-stats-line";
+      var b = document.createElement("strong");
+      b.textContent = icon + " " + label + " ";
+      var span = document.createElement("span");
+      span.textContent = value;
+      p.append(b);
+      p.append(span);
+      box.append(p);
+    }
+    line("🎮", "Most played:", champ.key ? gameTitle(champ.key) + " · " + champ.n + " plays" : "no plays yet");
+    line("👥", "Visitors (approx):", total ? String(visitors) + " across " + total + " visits" : "—");
+    line("📱", "Top device:", dev.key ? dev.key + " · " + pct(dev.n) : "—");
+    line("🌐", "Top browser:", bro.key ? bro.key + " · " + pct(bro.n) : "—");
+    var foot = document.createElement("p");
+    foot.className = "lb-stats-foot";
+    foot.textContent = "Anonymous, coarse stats only." + (s.since ? " Counting since " + fmtDate(s.since) + "." : "");
+    box.append(foot);
+  }
+
   /* ── Leaderboard popup ── */
   var lbOpener = null;
 
@@ -348,6 +531,8 @@
     open: openLbPopup,
     close: closeLbPopup,
     flushPending: flushPending,
+    fetchStats: fetchStats,
+    logVisit: logVisit,
     pendingCount: function () { return pendingScores().length; },
     getBoard: getBoard,
     getBest: getBest,
@@ -642,6 +827,7 @@
     renderBoard();
     renderHall();
     renderBadges();
+    renderStats();
     updateNameHint();
   }
 
@@ -768,14 +954,19 @@
 
   migrateOldScores();
   wrapScorers();
+  // Visit tracking runs for everyone (not just beta): one beacon per load.
+  wrapShowGame();
+  logVisit("_shelf");
 
   if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", function () {
       wrapScorers();
+      wrapShowGame();
       initUI();
       initModalButton();
     });
   } else {
+    wrapShowGame();
     initUI();
     initModalButton();
   }

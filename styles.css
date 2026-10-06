@@ -5383,6 +5383,10 @@ footer p {
     width: min(100%, 560px, calc(100vh - 560px));
   }
 
+  .game-layout .t-board-wrap {
+    width: min(calc(100% - 16px), 560px, calc(100vh - 560px)) !important;
+  }
+
   .pipe-grid {
     width: min(100%, 412px, calc(100vh - 420px));
   }
@@ -6891,7 +6895,6 @@ body.embed .game-layout {
 .game-layout .defence-stage,
 .game-layout .toybox-grid,
 .game-layout .bw-sheet,
-.game-layout .t-board-wrap,
 .game-layout .ludo-main,
 .game-layout .ludo-mid,
 .powder-canvas-wrap > .powder-canvas {
@@ -6938,6 +6941,17 @@ body.embed .game-layout {
   max-width: 100% !important;
   aspect-ratio: 1 !important;
   margin: auto !important;
+  overflow: hidden !important;
+}
+
+/* 2048: always stay square, viewport-capped (RULES law: no scroll, d-pad visible) */
+.game-layout .t-board-wrap {
+  flex: 0 0 auto !important;
+  width: min(calc(100% - 16px), 560px, calc(100dvh - 560px)) !important;
+  height: auto !important;
+  max-height: 100% !important;
+  aspect-ratio: 1 !important;
+  margin: 8px auto !important;
   overflow: hidden !important;
 }
 
@@ -7327,6 +7341,33 @@ body.embed .game-layout {
   color: #8a3b43;
   font-size: 0.88rem;
   font-weight: 900;
+}
+
+.lb-stats {
+  display: grid;
+  gap: 4px;
+  margin-top: 12px;
+  padding: 12px 14px;
+  background: white;
+  border: 3px solid var(--line);
+  border-radius: 10px;
+  box-shadow: 4px 4px 0 var(--line);
+}
+
+.lb-stats:empty {
+  display: none;
+}
+
+.lb-stats-line {
+  margin: 0;
+  font-size: 0.92rem;
+}
+
+.lb-stats-foot {
+  margin: 4px 0 0;
+  color: var(--muted);
+  font-size: 0.8rem;
+  font-weight: 700;
 }
 
 .lb-layout {
