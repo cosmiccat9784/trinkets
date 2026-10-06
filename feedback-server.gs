@@ -150,6 +150,8 @@ function statsOut() {
   var devices = {};
   var browsers = {};
   var seen = {};
+  var firstDevice = {};
+  var firstBrowser = {};
   var visitors = 0;
   var total = 0;
   var since = 0;
@@ -164,16 +166,26 @@ function statsOut() {
       seen[v] = 1;
       visitors++;
     }
+    // One vote per visitor: first device/browser seen wins, so a single
+    // person hammering refresh can't stuff the device/browser charts.
     var d = String(rows[i][3] || "");
-    if (d) devices[d] = (devices[d] || 0) + 1;
+    if (v && d && !firstDevice[v]) firstDevice[v] = d;
     var b = String(rows[i][4] || "");
-    if (b) browsers[b] = (browsers[b] || 0) + 1;
+    if (v && !firstBrowser[v] && b) firstBrowser[v] = b;
     if (!since) {
       try {
         since = rows[i][0] ? new Date(rows[i][0]).getTime() : 0;
       } catch (err2) {}
     }
   }
+  Object.keys(firstDevice).forEach(function (v) {
+    var d = firstDevice[v];
+    devices[d] = (devices[d] || 0) + 1;
+  });
+  Object.keys(firstBrowser).forEach(function (v) {
+    var b = firstBrowser[v];
+    browsers[b] = (browsers[b] || 0) + 1;
+  });
   return jsonOut({
     stats: {
       visits: total,
