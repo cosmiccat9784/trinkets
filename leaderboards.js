@@ -940,10 +940,14 @@
   }
 
   function renderAll() {
-    renderTabs();
-    renderBoard();
-    renderHall();
-    renderBadges();
+    // Leaderboard popup is beta-gated (stripped for normal visitors);
+    // stats popup is public. Never render badges without the popup.
+    if (document.querySelector("#leaderboards")) {
+      renderTabs();
+      renderBoard();
+      renderHall();
+      renderBadges();
+    }
     renderStats();
     updateNameHint();
   }
@@ -970,40 +974,10 @@
   }
 
   function initUI() {
-    var section = document.querySelector("#leaderboards");
-    // Beta-gated: beta.js strips [data-beta] for normal visitors, so when
-    // the popup is gone we stay invisible (no badges, no buttons either)
-    // but keep recording scores underneath.
-    if (!section) {
-      return;
-    }
-    var closeBtn = document.querySelector("#lbClose");
-    if (closeBtn) {
-      closeBtn.addEventListener("click", function () { closeLbPopup(); });
-    }
-    section.addEventListener("click", function (e) {
-      if (e.target === section) closeLbPopup();
-    });
-    document.addEventListener("keydown", function (e) {
-      if (e.key === "Escape" && !document.querySelector("#gameModal.open")) {
-        if (isStatsOpen()) closeStatsPopup();
-        else if (isLbOpen()) closeLbPopup();
-      }
-    });
-    var heroBtn = document.querySelector("#lbOpenHero");
-    if (heroBtn) {
-      heroBtn.addEventListener("click", function () { openLbPopup(heroBtn); });
-    }
-    var statsHeroBtn = document.querySelector("#statsOpenHero");
-    if (statsHeroBtn) {
-      statsHeroBtn.addEventListener("click", function () { openStatsPopup(statsHeroBtn); });
-    }
-    document.querySelectorAll('a[href="#leaderboards"]').forEach(function (a) {
-      a.addEventListener("click", function (e) {
-        e.preventDefault();
-        openLbPopup(a);
-      });
-    });
+    // Stats popup is public: wire it whenever present. Leaderboard popup
+    // is beta-gated (beta.js strips [data-beta] for normal visitors), so
+    // everything leaderboard-specific below only runs when it survived.
+    var lbSection = document.querySelector("#leaderboards");
     var statsPop = document.querySelector("#arcadeStats");
     if (statsPop) {
       statsPop.addEventListener("click", function (e) {
@@ -1014,10 +988,44 @@
     if (statsCloseBtn) {
       statsCloseBtn.addEventListener("click", function () { closeStatsPopup(); });
     }
+    var statsHeroBtn = document.querySelector("#statsOpenHero");
+    if (statsHeroBtn) {
+      statsHeroBtn.addEventListener("click", function () { openStatsPopup(statsHeroBtn); });
+    }
     document.querySelectorAll('a[href="#arcadeStats"]').forEach(function (a) {
       a.addEventListener("click", function (e) {
         e.preventDefault();
         openStatsPopup(a);
+      });
+    });
+    document.addEventListener("keydown", function (e) {
+      if (e.key === "Escape" && !document.querySelector("#gameModal.open")) {
+        if (isStatsOpen()) closeStatsPopup();
+        else if (isLbOpen()) closeLbPopup();
+      }
+    });
+    if (!lbSection) {
+      renderStats();
+      window.addEventListener("storage", function (e) {
+        if (e.key === LB_KEY || e.key === OLD_KEY || e.key === NAME_KEY) renderAll();
+      });
+      return;
+    }
+    var closeBtn = document.querySelector("#lbClose");
+    if (closeBtn) {
+      closeBtn.addEventListener("click", function () { closeLbPopup(); });
+    }
+    lbSection.addEventListener("click", function (e) {
+      if (e.target === lbSection) closeLbPopup();
+    });
+    var heroBtn = document.querySelector("#lbOpenHero");
+    if (heroBtn) {
+      heroBtn.addEventListener("click", function () { openLbPopup(heroBtn); });
+    }
+    document.querySelectorAll('a[href="#leaderboards"]').forEach(function (a) {
+      a.addEventListener("click", function (e) {
+        e.preventDefault();
+        openLbPopup(a);
       });
     });
     var nameInput = document.querySelector("#lbName");
