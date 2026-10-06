@@ -23,7 +23,7 @@
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="trinkets-build" content="dev" />
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" />
-    <link rel="stylesheet" href="styles.css?v=29" />
+    <link rel="stylesheet" href="styles.css?v=30" />
     <link rel="stylesheet" href="penguin-tycoon.css?v=29" />
   </head>
   <body>
@@ -38,6 +38,7 @@
         <a href="#games" data-nav-filter="puzzle">Puzzles</a>
         <a href="#games" id="navFacts">Facts</a>
         <a href="#scores">Scores</a>
+        <a href="#leaderboards" data-beta>Leaderboards</a>
         <a href="news.html">News</a>
         <a href="feedback.html">Feedback</a>
       </nav>
@@ -83,18 +84,30 @@
         </div>
       </section>
 
-      <section class="tester" data-beta aria-labelledby="tester-title">
-        <div>
-          <p class="eyebrow">Beta</p>
-          <h2 id="tester-title">🧪 Tester panel</h2>
-          <p class="tester-sub">In beta right now: <strong id="testerCount">0</strong></p>
-          <p class="tester-sub">Play them, break them, then tell the dev.</p>
+      <section class="leaderboards" id="leaderboards" data-beta aria-labelledby="lb-title">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">Hall of fame</p>
+            <h2 id="lb-title">Leaderboards</h2>
+            <p class="lb-sub">Your best runs, kept on this device. No accounts, no servers — just bragging rights. <strong><span id="lbCount">0</span> runs</strong> logged.</p>
+          </div>
+          <div class="lb-controls">
+            <label class="lb-name">Name
+              <input class="game-input lb-name-input" id="lbName" maxlength="12" autocomplete="off" placeholder="You" />
+            </label>
+            <button class="secondary-button lb-clear" id="lbClear" type="button">Clear</button>
+          </div>
         </div>
-        <ul class="tester-list" id="testerList"></ul>
-        <div class="tester-actions">
-          <button class="secondary-button" id="testerCopy" type="button">Copy beta link</button>
-          <a class="primary-button" href="feedback.html">Send feedback</a>
+        <div class="lb-layout">
+          <div class="lb-games" id="lbGames" role="tablist" aria-label="Choose a game"></div>
+          <div class="lb-board-wrap">
+            <h3 id="lbBoardTitle">Pick a game</h3>
+            <p class="lb-meta" id="lbBoardMeta"></p>
+            <ol class="lb-board" id="lbBoard"></ol>
+            <p class="lb-empty" id="lbEmpty"></p>
+          </div>
         </div>
+        <div class="lb-all" id="lbAll" aria-label="Arcade champions"></div>
       </section>
 
       <section class="library" id="games" aria-labelledby="games-title">
@@ -873,5 +886,6 @@
     <script src="magnet-mayhem.js?v=1"></script>
     <script src="tile-engine.js?v=29"></script>
     <script src="penguin-tycoon.js?v=29"></script>
+    <script src="leaderboards.js?v=1"></script>
   </body>
 </html>

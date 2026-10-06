@@ -7259,3 +7259,218 @@ body.embed .game-layout {
 @media (max-width: 560px) {
   .news-hero { align-items: start; }
 }
+
+/* ── Leaderboards (local hall of fame) ── */
+.leaderboards {
+  padding: clamp(46px, 7vw, 84px) clamp(18px, 6vw, 88px);
+  background: linear-gradient(180deg, #fffdf4 0%, var(--paper) 100%);
+  border-bottom: 3px solid var(--line);
+}
+
+.lb-sub {
+  max-width: 560px;
+  margin: 10px 0 0;
+  color: var(--muted);
+  line-height: 1.55;
+}
+
+.lb-controls {
+  display: flex;
+  align-items: end;
+  gap: 10px;
+  flex: 0 0 auto;
+}
+
+.lb-name {
+  display: grid;
+  gap: 6px;
+  font-size: 0.8rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  color: #8a3b43;
+}
+
+.lb-name-input {
+  width: 140px;
+}
+
+.lb-clear {
+  min-height: 44px;
+}
+
+.lb-layout {
+  display: grid;
+  grid-template-columns: minmax(220px, 320px) minmax(0, 1fr);
+  gap: 18px;
+  align-items: start;
+  margin-top: 8px;
+}
+
+.lb-games {
+  display: grid;
+  gap: 8px;
+  max-height: 480px;
+  overflow: auto;
+  padding: 4px;
+  overscroll-behavior: contain;
+}
+
+.lb-tab {
+  display: grid;
+  gap: 2px;
+  padding: 10px 12px;
+  background: white;
+  border: 3px solid var(--line);
+  border-radius: 8px;
+  box-shadow: 3px 3px 0 var(--line);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.lb-tab.active {
+  background: var(--gold);
+}
+
+.lb-tab-title {
+  font-weight: 900;
+}
+
+.lb-tab-best {
+  color: var(--muted);
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.lb-tab.active .lb-tab-best {
+  color: var(--ink);
+}
+
+.lb-board-wrap {
+  padding: 18px;
+  background: white;
+  border: 3px solid var(--line);
+  border-radius: 12px;
+  box-shadow: var(--shadow);
+}
+
+.lb-board-wrap h3 {
+  margin: 0;
+}
+
+.lb-meta {
+  margin: 6px 0 12px;
+  color: var(--muted);
+  font-size: 0.88rem;
+  font-weight: 700;
+}
+
+.lb-board {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.lb-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  background: var(--cream);
+  border: 2px solid var(--line);
+  border-radius: 8px;
+  font-weight: 800;
+}
+
+.lb-row.champ {
+  background: #fff3c4;
+  border-width: 3px;
+}
+
+.lb-medal {
+  flex: 0 0 34px;
+  font-weight: 900;
+}
+
+.lb-name {
+  flex: 1 1 auto;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.lb-score {
+  flex: 0 0 auto;
+}
+
+.lb-date {
+  flex: 0 0 auto;
+  color: var(--muted);
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.lb-empty {
+  margin: 12px 0 0;
+  color: var(--muted);
+  font-weight: 700;
+}
+
+.lb-all {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 18px;
+}
+
+.lb-hall-card {
+  display: grid;
+  gap: 4px;
+  padding: 10px 14px;
+  background: white;
+  border: 3px solid var(--line);
+  border-radius: 10px;
+  box-shadow: 4px 4px 0 var(--line);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.lb-hall-eyebrow {
+  font-size: 0.75rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  color: #8a3b43;
+}
+
+.lb-hall-score {
+  font-size: 0.95rem;
+}
+
+.lb-hall-empty {
+  color: var(--muted);
+  font-weight: 700;
+}
+
+.best-badge {
+  margin: 10px 0 0;
+  font-size: 0.85rem;
+  font-weight: 900;
+  color: #6b5310;
+}
+
+@media (max-width: 860px) {
+  .lb-layout {
+    grid-template-columns: 1fr;
+  }
+  .lb-games {
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    max-height: none;
+  }
+  .leaderboards .section-heading {
+    flex-direction: column;
+    align-items: start;
+  }
+}
