@@ -72,6 +72,14 @@ chrome eats more viewport height than developers expect.
     older than 7 days. Never hard-remove someone else's fresh badge by hand
     — the timer does it.
 
+11. **Everything new ships as beta until it is released.** Any new card,
+    game, or visible feature lands with `data-beta` and keeps it until
+    you deliberately release it by deleting the attribute. Test it first
+    via `?beta=1` and localhost (`npx serve .` — never `file://`).
+    Never break the beta locks in `beta.js` (stripped DOM, wrapped
+    `showGame`, honest counter). The mechanism itself (`beta.js`, the
+    banner, the footer toggle) is infrastructure — it is never gated.
+
 ## Testing checklist (manual — no headless browser in this repo)
 
 - 360×640 phone portrait: every game opens with zero scrollbars.
@@ -79,6 +87,8 @@ chrome eats more viewport height than developers expect.
 - 1366×768 laptop.
 - 1920×1080 desktop.
 - Rotate a phone with a game open; no scrollbars may appear.
+- Open `?beta=1`: unreleased cards appear with the beta banner; exit beta
+  and confirm they are gone (shelf, Surprise-me, counter, deep links).
 - Never bump `?v=` asset versions by hand: the deploy workflow
   (`.github/workflows/deploy.yml`) restamps every `?v=` to the commit
   SHA and stamps the footer build number (`build <count> (<sha>)`) on

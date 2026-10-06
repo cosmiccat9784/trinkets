@@ -387,6 +387,21 @@ footer {
   margin-left: 6px;
 }
 
+/* ── Beta mode: unreleased stuff (data-beta) is stripped for visitors ── */
+.beta-banner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 10px 18px;
+  background: var(--plum);
+  border-bottom: 3px solid var(--line);
+  color: #fff;
+  font-weight: 900;
+  text-align: center;
+}
+
 /* ── Shelf list view ── */
 .game-grid.list-view {
   grid-template-columns: 1fr;
