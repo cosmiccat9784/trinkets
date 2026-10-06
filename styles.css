@@ -7079,11 +7079,30 @@ body.embed .game-layout {
 
 .news-body p { margin: 0 0 0.9em; }
 
+/* Every link in release notes renders as a chunky Trinkets button. */
 .news-body a {
-  color: var(--sky);
-  font-weight: 800;
-  text-decoration: underline;
+  display: inline-block;
+  margin: 2px;
+  padding: 3px 12px;
+  background: var(--gold);
+  border: 3px solid var(--line);
+  border-radius: 8px;
+  box-shadow: 3px 3px 0 var(--line);
+  color: var(--ink);
+  font-weight: 900;
+  font-size: 0.9em;
+  text-decoration: none;
   overflow-wrap: anywhere;
+  transition: transform 160ms ease, box-shadow 160ms ease;
+}
+
+.news-body a:hover {
+  transform: translate(-1px, -1px);
+}
+
+.news-body a:active {
+  transform: translate(2px, 2px);
+  box-shadow: 1px 1px 0 var(--line);
 }
 
 .news-body hr {
