@@ -1,8 +1,9 @@
-/* Trinkets Arcade — local leaderboards (v1).
- * Static-site friendly: all boards live in localStorage on this device.
- * Every game already reports via global recordScore()/bumpScore() in
- * script.js, so we wrap those two functions and build per-game Top-10
- * history + a shelf section + per-card best badges. No backend needed.
+/* Trinkets Arcade — leaderboards (v2).
+ * Trial games post to a shared online board (Google Sheets via the same
+ * Apps Script URL as the feedback inbox — see feedback-server.gs).
+ * Non-trial games keep local-only Top-10 boards in localStorage.
+ * Every game already reports via global recordScore() in script.js,
+ * so we wrap that one function. No backend needed on the static host.
  */
 (function () {
   "use strict";
@@ -11,6 +12,29 @@
   var NAME_KEY = "trinkets-player-name";
   var OLD_KEY = "trinkets-highscores";
   var MAX_ENTRIES = 10;
+
+  // Online trial set: high-traffic arcade games. All are high-wins, which
+  // keeps server sorting simple (biggest first). Add low-wins games later
+  // with matching ascending sort in feedback-server.gs doGet.
+  var ONLINE_GAMES = ["comet", "bash", "thousand", "flappy", "tinyblocks"];
+
+  function isOnline(game) {
+    return ONLINE_GAMES.indexOf(game) !== -1;
+  }
+
+  // Same Web-app URL as the anonymous feedback inbox (script.js).
+  function sheetURL() {
+    try {
+      if (typeof FEEDBACK_SHEET_URL === "string" && FEEDBACK_SHEET_URL) return FEEDBACK_SHEET_URL;
+    } catch (err) {}
+    return "";
+  }
+
+  // Online board cache: game -> { rows, at } | { error, at }. Refetch when stale.
+  var onlineCache = {};
+  var onlinePending = {};
+  var ONLINE_TTL = 60 * 1000;
+  var lastSubmitAt = {};
 
   // gameId (recordScore key) -> metadata. mode: "high" wins bigger, "low" wins smaller.
   var GAME_META = {
@@ -162,9 +186,81 @@
     return n;
   }
 
+  /* ── Online boards (Google Sheets trial) ── */
+
+  function submitOnline(game, value) {
+    var url = sheetURL();
+    if (!url || !isOnline(game)) return;
+    // Cheap spam throttle: one submit per game per 5s (2048 renders often).
+    var now = Date.now();
+    if (lastSubmitAt[game] && now - lastSubmitAt[game] < 5000) return;
+    lastSubmitAt[game] = now;
+    try {
+      fetch(url, {
+        method: "POST",
+        mode: "no-cors",
+        headers: { "Content-Type": "text/plain" },
+        body: JSON.stringify({
+          action: "score",
+          game: game,
+          name: getName() || "You",
+          score: value,
+          page: location.href
+        })
+      });
+    } catch (err) {}
+    // Fire-and-forget (no-cors is opaque): invalidate cache and refetch so
+    // the new row appears once Sheets has it.
+    delete onlineCache[game];
+    setTimeout(function () { fetchOnline(game); }, 2500);
+  }
+
+  function fetchOnline(game, force) {
+    if (!isOnline(game)) return;
+    var now = Date.now();
+    var cached = onlineCache[game];
+    if (!force && cached && cached.rows && now - cached.at < ONLINE_TTL) return;
+    if (!force && cached && cached.error && now - cached.at < 15000) return;
+    if (onlinePending[game]) return;
+    var url = sheetURL();
+    if (!url) {
+      onlineCache[game] = { error: "nourl", at: now };
+      scheduleRefresh();
+      return;
+    }
+    onlinePending[game] = true;
+    scheduleRefresh();
+    fetch(url + "?action=scores&game=" + encodeURIComponent(game))
+      .then(function (resp) { return resp.json(); })
+      .then(function (data) {
+        var rows = (data && Array.isArray(data.scores) ? data.scores : [])
+          .filter(function (e) { return e && typeof e.s === "number" && e.s > 0; })
+          .slice(0, MAX_ENTRIES)
+          .map(function (e) {
+            return { n: String(e.n || "You").slice(0, 12), s: e.s, d: Number(e.d) || 0 };
+          });
+        onlineCache[game] = { rows: rows, at: Date.now() };
+        onlinePending[game] = false;
+        renderAll();
+      })
+      .catch(function () {
+        onlineCache[game] = { error: "fetch", at: Date.now() };
+        onlinePending[game] = false;
+        renderAll();
+      });
+  }
+
+  function onlineTop(game) {
+    var c = onlineCache[game];
+    return c && c.rows ? c.rows : null;
+  }
+
   // Expose a tiny API for debugging / future games.
   window.TrinketsBoards = {
     meta: GAME_META,
+    onlineGames: ONLINE_GAMES,
+    isOnline: isOnline,
+    fetchOnline: fetchOnline,
     getBoard: getBoard,
     getBest: getBest,
     addScore: addScore,
@@ -175,7 +271,7 @@
     totalRuns: totalRuns
   };
 
-  /* ── Wrap the existing global scorers so every game feeds the boards ── */
+  /* ── Wrap the existing global scorer so every game feeds the boards ── */
   function wrapScorers() {
     if (typeof window.recordScore === "function" && !window.recordScore.__lbWrapped) {
       var orig = window.recordScore;
@@ -185,10 +281,16 @@
           if (GAME_META[game] && typeof value === "number" && value > 0) {
             // 2048 calls recordScore on every render: only log improvements.
             if (game === "thousand" && !result.isNew) return result;
-            var added = addScore(game, value);
-            if (added.rank >= 0) {
-              result.lbRank = added.rank;
-              result.lbBest = added.best;
+            if (isOnline(game)) {
+              // Online-only display for trial games: submit globally,
+              // skip the local board (legacy stats band still updates above).
+              submitOnline(game, value);
+            } else {
+              var added = addScore(game, value);
+              if (added.rank >= 0) {
+                result.lbRank = added.rank;
+                result.lbBest = added.best;
+              }
             }
             scheduleRefresh();
           }
@@ -250,22 +352,57 @@
       btn.className = "lb-tab" + (game === selectedGame ? " active" : "");
       btn.setAttribute("role", "tab");
       btn.setAttribute("aria-selected", game === selectedGame ? "true" : "false");
-      var best = getBest(game);
       btn.innerHTML = "";
       var t = document.createElement("span");
       t.className = "lb-tab-title";
-      t.textContent = meta.title;
+      t.textContent = (isOnline(game) ? "🌍 " : "") + meta.title;
       var b = document.createElement("span");
       b.className = "lb-tab-best";
-      b.textContent = best === null ? "no score yet" : "best " + formatScore(game, best);
+      if (isOnline(game)) {
+        var top = onlineTop(game);
+        b.textContent = top && top.length
+          ? "global best " + formatScore(game, top[0].s)
+          : (onlinePending[game] ? "loading global board…" : "global board");
+        fetchOnline(game);
+      } else {
+        var best = getBest(game);
+        b.textContent = best === null ? "no score yet" : "best " + formatScore(game, best);
+      }
       btn.append(t);
       btn.append(b);
       btn.addEventListener("click", function () {
         selectedGame = game;
+        if (isOnline(game)) fetchOnline(game, true);
         renderAll();
       });
       wrap.append(btn);
     });
+  }
+
+  function renderRows(list, game) {
+    var out = [];
+    list.forEach(function (entry, i) {
+      var li = document.createElement("li");
+      li.className = "lb-row" + (i === 0 ? " champ" : "");
+      var m = document.createElement("span");
+      m.className = "lb-medal";
+      m.textContent = medal(i);
+      var n = document.createElement("span");
+      n.className = "lb-name";
+      n.textContent = entry.n || "You";
+      var s = document.createElement("strong");
+      s.className = "lb-score";
+      s.textContent = formatScore(game, entry.s);
+      var d = document.createElement("span");
+      d.className = "lb-date";
+      d.textContent = entry.d ? fmtDate(entry.d) : "";
+      li.append(m);
+      li.append(n);
+      li.append(s);
+      li.append(d);
+      out.push(li);
+    });
+    return out;
   }
 
   function renderBoard() {
@@ -278,32 +415,32 @@
       selectedGame = playedGames()[0] || "comet";
     }
     var meta = GAME_META[selectedGame];
+    list.innerHTML = "";
+    if (isOnline(selectedGame)) {
+      title.textContent = "🌍 " + meta.title + " — Global Top " + MAX_ENTRIES;
+      if (metaEl) metaEl.textContent = "Most " + meta.unit + " wins · across all players";
+      fetchOnline(selectedGame);
+      var cached = onlineCache[selectedGame];
+      var rows = onlineTop(selectedGame);
+      if (rows && rows.length) {
+        renderRows(rows, selectedGame).forEach(function (li) { list.append(li); });
+        if (empty) empty.textContent = "";
+      } else if (cached && cached.error) {
+        if (empty) {
+          empty.textContent = cached.error === "nourl"
+            ? "Online board isn't wired up yet — the sheet URL is missing."
+            : "Couldn't reach the global board. Check your connection, then re-pick this game to retry.";
+        }
+      } else {
+        if (empty) empty.textContent = "Loading global scores…";
+      }
+      return;
+    }
     var board = getBoard(selectedGame);
     title.textContent = meta.title + " — Top " + MAX_ENTRIES;
     var direction = meta.mode === "low" ? "Fewest " + meta.unit + " wins" : "Most " + meta.unit + " wins";
     if (metaEl) metaEl.textContent = direction + " · on this device";
-    list.innerHTML = "";
-    board.forEach(function (entry, i) {
-      var li = document.createElement("li");
-      li.className = "lb-row" + (i === 0 ? " champ" : "");
-      var m = document.createElement("span");
-      m.className = "lb-medal";
-      m.textContent = medal(i);
-      var n = document.createElement("span");
-      n.className = "lb-name";
-      n.textContent = entry.n || "You";
-      var s = document.createElement("strong");
-      s.className = "lb-score";
-      s.textContent = formatScore(selectedGame, entry.s);
-      var d = document.createElement("span");
-      d.className = "lb-date";
-      d.textContent = entry.d ? fmtDate(entry.d) : "";
-      li.append(m);
-      li.append(n);
-      li.append(s);
-      li.append(d);
-      list.append(li);
-    });
+    renderRows(board, selectedGame).forEach(function (li) { list.append(li); });
     if (empty) {
       empty.textContent = board.length
         ? ""
@@ -316,9 +453,12 @@
     if (!hall) return;
     hall.innerHTML = "";
     var boards = loadBoards();
+    // Local champs plus online trial games with a loaded global top.
     var ranked = Object.keys(GAME_META).filter(function (g) {
+      if (isOnline(g)) return !!(onlineTop(g) && onlineTop(g).length);
       return boards[g] && boards[g].length;
     });
+    ONLINE_GAMES.forEach(function (g) { fetchOnline(g); });
     var count = document.querySelector("#lbCount");
     if (count) count.textContent = String(totalRuns());
     if (!ranked.length) {
@@ -329,17 +469,24 @@
       return;
     }
     ranked.sort(function (a, b) {
-      return (boards[b][0].d || 0) - (boards[a][0].d || 0);
+      var da = isOnline(a)
+        ? ((onlineTop(a) || [])[0] || {}).d || 0
+        : (boards[a][0] || {}).d || 0;
+      var db = isOnline(b)
+        ? ((onlineTop(b) || [])[0] || {}).d || 0
+        : (boards[b][0] || {}).d || 0;
+      return db - da;
     });
     ranked.slice(0, 12).forEach(function (game) {
       var meta = GAME_META[game];
-      var top = boards[game][0];
+      var top = isOnline(game) ? onlineTop(game)[0] : boards[game][0];
+      if (!top) return;
       var card = document.createElement("button");
       card.type = "button";
       card.className = "lb-hall-card";
       var e = document.createElement("span");
       e.className = "lb-hall-eyebrow";
-      e.textContent = "👑 " + meta.title;
+      e.textContent = (isOnline(game) ? "🌍 " : "👑 ") + meta.title;
       var v = document.createElement("strong");
       v.className = "lb-hall-score";
       v.textContent = "🥇 " + (top.n || "You") + " · " + formatScore(game, top.s);
@@ -365,8 +512,27 @@
         // Try reverse lookup via slug table for aliases like "defence".
         return;
       }
-      var best = getBest(lbId);
       var badge = card.querySelector(".best-badge");
+      if (isOnline(lbId)) {
+        // Online-only display: global #1 once loaded, else no badge yet.
+        var top = onlineTop(lbId);
+        if (!top || !top.length) {
+          if (badge) badge.hidden = true;
+          fetchOnline(lbId);
+          return;
+        }
+        if (!badge) {
+          badge = document.createElement("p");
+          badge.className = "best-badge";
+          var acts = card.querySelector(".card-actions");
+          if (acts) acts.before(badge);
+          else card.append(badge);
+        }
+        badge.hidden = false;
+        badge.textContent = "🌍 Global best: " + (top[0].n || "You") + " · " + formatScore(lbId, top[0].s);
+        return;
+      }
+      var best = getBest(lbId);
       if (best === null) {
         if (badge) badge.hidden = true;
         return;
@@ -409,7 +575,7 @@
     var clearBtn = document.querySelector("#lbClear");
     if (clearBtn) {
       clearBtn.addEventListener("click", function () {
-        if (!confirm("Clear all leaderboard scores on this device?")) return;
+        if (!confirm("Clear local leaderboard scores on this device? (Global scores stay.)")) return;
         clearBoards();
         renderAll();
       });
@@ -436,7 +602,8 @@
   // Modal shortcut: a 🏆 button that closes the game and jumps to the boards.
   // Beta-gated with the shelf section.
   function initModalButton() {
-    if (!document.querySelector("#leaderboards")) return;    var header = document.querySelector(".modal-buttons");
+    if (!document.querySelector("#leaderboards")) return;
+    var header = document.querySelector(".modal-buttons");
     var modal = document.querySelector("#gameModal");
     if (!header || !modal || document.querySelector("#lbJump")) return;
     var btn = document.createElement("button");
