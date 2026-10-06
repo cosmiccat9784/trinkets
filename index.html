@@ -39,6 +39,7 @@
         <a href="#games" id="navFacts">Facts</a>
         <a href="#scores">Scores</a>
         <a href="#leaderboards" data-beta>Leaderboards</a>
+        <a href="#arcadeStats" data-beta>Stats</a>
         <a href="news.html">News</a>
         <a href="feedback.html">Feedback</a>
       </nav>
@@ -57,6 +58,7 @@
             <a class="primary-button" href="#games">Browse games</a>
             <button class="secondary-button" id="surpriseBtn" type="button">Surprise me</button>
             <button class="secondary-button" id="lbOpenHero" data-beta type="button">🏆 View leaderboards</button>
+            <button class="secondary-button" id="statsOpenHero" data-beta type="button">📊 View stats</button>
           </div>
         </div>
         <img
@@ -102,7 +104,6 @@
             <button class="secondary-button lb-clear" id="lbClear" type="button">Clear</button>
           </div>
           <p class="lb-name-hint" id="lbNameHint" hidden></p>
-          <div class="lb-stats" id="lbStats" aria-label="Arcade stats"></div>
           <div class="lb-layout">
             <div class="lb-games" id="lbGames" role="tablist" aria-label="Choose a game"></div>
             <div class="lb-board-wrap">
@@ -113,6 +114,20 @@
             </div>
           </div>
           <div class="lb-all" id="lbAll" aria-label="Arcade champions"></div>
+        </div>
+      </div>
+
+      <div class="lb-popup" id="arcadeStats" data-beta hidden>
+        <div class="lb-popup-card" role="dialog" aria-modal="true" aria-labelledby="stats-title">
+          <div class="section-heading lb-popup-head">
+            <div>
+              <p class="eyebrow">Anonymous stats</p>
+              <h2 id="stats-title">Arcade stats</h2>
+            </div>
+            <button class="close-button" id="statsClose" type="button" aria-label="Close arcade stats">x</button>
+          </div>
+          <p class="lb-sub">Most played games, approximate visitors, top devices and browsers. Coarse buckets only — no accounts, no raw user-agents.</p>
+          <div class="lb-stats" id="lbStats" aria-label="Arcade stats"></div>
         </div>
       </div>
 
@@ -892,6 +907,6 @@
     <script src="magnet-mayhem.js?v=1"></script>
     <script src="tile-engine.js?v=29"></script>
     <script src="penguin-tycoon.js?v=29"></script>
-    <script src="leaderboards.js?v=5"></script>
+    <script src="leaderboards.js?v=6"></script>
   </body>
 </html>

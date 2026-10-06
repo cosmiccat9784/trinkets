@@ -513,13 +513,45 @@
     var pop = document.querySelector("#leaderboards");
     if (!pop || pop.hidden) return;
     pop.hidden = true;
-    if (!document.querySelector("#gameModal.open")) {
+    if (!document.querySelector("#gameModal.open") && !isStatsOpen()) {
       document.body.classList.remove("modal-open");
     }
     if (lbOpener && lbOpener.focus) {
       try { lbOpener.focus(); } catch (err) {}
     }
     lbOpener = null;
+  }
+
+  /* ── Stats popup (separate from the leaderboard popup) ── */
+  var statsOpener = null;
+
+  function isStatsOpen() {
+    var pop = document.querySelector("#arcadeStats");
+    return !!(pop && !pop.hidden);
+  }
+
+  function openStatsPopup(opener) {
+    var pop = document.querySelector("#arcadeStats");
+    if (!pop) return;
+    statsOpener = opener || null;
+    pop.hidden = false;
+    document.body.classList.add("modal-open");
+    renderStats();
+    var close = document.querySelector("#statsClose");
+    if (close) close.focus();
+  }
+
+  function closeStatsPopup() {
+    var pop = document.querySelector("#arcadeStats");
+    if (!pop || pop.hidden) return;
+    pop.hidden = true;
+    if (!document.querySelector("#gameModal.open") && !isLbOpen()) {
+      document.body.classList.remove("modal-open");
+    }
+    if (statsOpener && statsOpener.focus) {
+      try { statsOpener.focus(); } catch (err) {}
+    }
+    statsOpener = null;
   }
 
   // Expose a tiny API for debugging / future games.
@@ -530,6 +562,8 @@
     fetchOnline: fetchOnline,
     open: openLbPopup,
     close: closeLbPopup,
+    openStats: openStatsPopup,
+    closeStats: closeStatsPopup,
     flushPending: flushPending,
     fetchStats: fetchStats,
     logVisit: logVisit,
@@ -868,18 +902,39 @@
       if (e.target === section) closeLbPopup();
     });
     document.addEventListener("keydown", function (e) {
-      if (e.key === "Escape" && isLbOpen() && !document.querySelector("#gameModal.open")) {
-        closeLbPopup();
+      if (e.key === "Escape" && !document.querySelector("#gameModal.open")) {
+        if (isStatsOpen()) closeStatsPopup();
+        else if (isLbOpen()) closeLbPopup();
       }
     });
     var heroBtn = document.querySelector("#lbOpenHero");
     if (heroBtn) {
       heroBtn.addEventListener("click", function () { openLbPopup(heroBtn); });
     }
+    var statsHeroBtn = document.querySelector("#statsOpenHero");
+    if (statsHeroBtn) {
+      statsHeroBtn.addEventListener("click", function () { openStatsPopup(statsHeroBtn); });
+    }
     document.querySelectorAll('a[href="#leaderboards"]').forEach(function (a) {
       a.addEventListener("click", function (e) {
         e.preventDefault();
         openLbPopup(a);
+      });
+    });
+    var statsPop = document.querySelector("#arcadeStats");
+    if (statsPop) {
+      statsPop.addEventListener("click", function (e) {
+        if (e.target === statsPop) closeStatsPopup();
+      });
+    }
+    var statsCloseBtn = document.querySelector("#statsClose");
+    if (statsCloseBtn) {
+      statsCloseBtn.addEventListener("click", function () { closeStatsPopup(); });
+    }
+    document.querySelectorAll('a[href="#arcadeStats"]').forEach(function (a) {
+      a.addEventListener("click", function (e) {
+        e.preventDefault();
+        openStatsPopup(a);
       });
     });
     var nameInput = document.querySelector("#lbName");
