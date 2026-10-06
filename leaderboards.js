@@ -10,8 +10,10 @@
 
   var LB_KEY = "trinkets-leaderboards-v1";
   var NAME_KEY = "trinkets-player-name";
+  var PENDING_KEY = "trinkets-pending-scores";
   var OLD_KEY = "trinkets-highscores";
   var MAX_ENTRIES = 10;
+  var MAX_PENDING = 20;
 
   // Online trial set: high-traffic arcade games. All are high-wins, which
   // keeps server sorting simple (biggest first). Add low-wins games later
@@ -188,13 +190,9 @@
 
   /* ── Online boards (Google Sheets trial) ── */
 
-  function submitOnline(game, value) {
+  function postScore(game, name, value) {
     var url = sheetURL();
-    if (!url || !isOnline(game)) return;
-    // Cheap spam throttle: one submit per game per 5s (2048 renders often).
-    var now = Date.now();
-    if (lastSubmitAt[game] && now - lastSubmitAt[game] < 5000) return;
-    lastSubmitAt[game] = now;
+    if (!url) return;
     try {
       fetch(url, {
         method: "POST",
@@ -203,12 +201,66 @@
         body: JSON.stringify({
           action: "score",
           game: game,
-          name: getName() || "You",
+          name: name,
           score: value,
           page: location.href
         })
       });
     } catch (err) {}
+  }
+
+  function pendingScores() {
+    try {
+      var parsed = JSON.parse(localStorage.getItem(PENDING_KEY));
+      if (Array.isArray(parsed)) return parsed;
+    } catch (err) {}
+    return [];
+  }
+
+  function queuePending(game, value) {
+    var pend = pendingScores().filter(function (q) {
+      return q && isOnline(q.g) && typeof q.s === "number" && q.s > 0;
+    });
+    pend.push({ g: game, s: value, d: Date.now() });
+    while (pend.length > MAX_PENDING) pend.shift();
+    try {
+      localStorage.setItem(PENDING_KEY, JSON.stringify(pend));
+    } catch (err) {}
+  }
+
+  function flushPending() {
+    var name = getName();
+    var pend = pendingScores();
+    if (!name || !pend.length) return;
+    try {
+      localStorage.removeItem(PENDING_KEY);
+    } catch (err) {}
+    pend.forEach(function (q) {
+      if (!q || !isOnline(q.g) || !(q.s > 0)) return;
+      lastSubmitAt[q.g] = Date.now();
+      postScore(q.g, name, q.s);
+    });
+    ONLINE_GAMES.forEach(function (g) {
+      delete onlineCache[g];
+      fetchOnline(g, true);
+    });
+  }
+
+  function submitOnline(game, value) {
+    var url = sheetURL();
+    if (!url || !isOnline(game)) return;
+    var name = getName();
+    if (!name) {
+      // Name is required to post: queue it, flush when one is set.
+      queuePending(game, value);
+      scheduleRefresh();
+      return;
+    }
+    // Cheap spam throttle: one submit per game per 5s (2048 renders often).
+    var now = Date.now();
+    if (lastSubmitAt[game] && now - lastSubmitAt[game] < 5000) return;
+    lastSubmitAt[game] = now;
+    postScore(game, name, value);
     // Fire-and-forget (no-cors is opaque): invalidate cache and refetch so
     // the new row appears once Sheets has it.
     delete onlineCache[game];
@@ -255,12 +307,48 @@
     return c && c.rows ? c.rows : null;
   }
 
+  /* ── Leaderboard popup ── */
+  var lbOpener = null;
+
+  function isLbOpen() {
+    var pop = document.querySelector("#leaderboards");
+    return !!(pop && !pop.hidden);
+  }
+
+  function openLbPopup(opener) {
+    var pop = document.querySelector("#leaderboards");
+    if (!pop) return;
+    lbOpener = opener || null;
+    pop.hidden = false;
+    document.body.classList.add("modal-open");
+    renderAll();
+    var close = document.querySelector("#lbClose");
+    if (close) close.focus();
+  }
+
+  function closeLbPopup() {
+    var pop = document.querySelector("#leaderboards");
+    if (!pop || pop.hidden) return;
+    pop.hidden = true;
+    if (!document.querySelector("#gameModal.open")) {
+      document.body.classList.remove("modal-open");
+    }
+    if (lbOpener && lbOpener.focus) {
+      try { lbOpener.focus(); } catch (err) {}
+    }
+    lbOpener = null;
+  }
+
   // Expose a tiny API for debugging / future games.
   window.TrinketsBoards = {
     meta: GAME_META,
     onlineGames: ONLINE_GAMES,
     isOnline: isOnline,
     fetchOnline: fetchOnline,
+    open: openLbPopup,
+    close: closeLbPopup,
+    flushPending: flushPending,
+    pendingCount: function () { return pendingScores().length; },
     getBoard: getBoard,
     getBest: getBest,
     addScore: addScore,
@@ -554,21 +642,74 @@
     renderBoard();
     renderHall();
     renderBadges();
+    updateNameHint();
+  }
+
+  function updateNameHint() {
+    var hint = document.querySelector("#lbNameHint");
+    if (!hint) return;
+    var pend = pendingScores().length;
+    var hasName = !!getName();
+    if (!hasName && pend > 0) {
+      hint.hidden = false;
+      hint.textContent = pend + " global score" + (pend === 1 ? "" : "s") +
+        " waiting — set your name to post " + (pend === 1 ? "it" : "them") + ".";
+    } else if (!hasName) {
+      hint.hidden = false;
+      hint.textContent = "Set your name — it's required to post 🌍 global scores.";
+    } else if (pend > 0) {
+      hint.hidden = false;
+      hint.textContent = "Posting " + pend + " waiting score" + (pend === 1 ? "" : "s") + "…";
+    } else {
+      hint.hidden = true;
+      hint.textContent = "";
+    }
   }
 
   function initUI() {
     var section = document.querySelector("#leaderboards");
     // Beta-gated: beta.js strips [data-beta] for normal visitors, so when
-    // the section is gone we stay invisible (no badges either) but keep
-    // recording scores underneath.
+    // the popup is gone we stay invisible (no badges, no buttons either)
+    // but keep recording scores underneath.
     if (!section) {
       return;
     }
+    var closeBtn = document.querySelector("#lbClose");
+    if (closeBtn) {
+      closeBtn.addEventListener("click", function () { closeLbPopup(); });
+    }
+    section.addEventListener("click", function (e) {
+      if (e.target === section) closeLbPopup();
+    });
+    document.addEventListener("keydown", function (e) {
+      if (e.key === "Escape" && isLbOpen() && !document.querySelector("#gameModal.open")) {
+        closeLbPopup();
+      }
+    });
+    var heroBtn = document.querySelector("#lbOpenHero");
+    if (heroBtn) {
+      heroBtn.addEventListener("click", function () { openLbPopup(heroBtn); });
+    }
+    document.querySelectorAll('a[href="#leaderboards"]').forEach(function (a) {
+      a.addEventListener("click", function (e) {
+        e.preventDefault();
+        openLbPopup(a);
+      });
+    });
     var nameInput = document.querySelector("#lbName");
     if (nameInput) {
       nameInput.value = getName();
       nameInput.addEventListener("change", function () {
-        setName(nameInput.value.trim());
+        var v = nameInput.value.trim().slice(0, 12);
+        if (!v) {
+          // Name is required: refuse empties, keep the stored one.
+          nameInput.value = getName();
+          updateNameHint();
+          return;
+        }
+        setName(v);
+        nameInput.value = v;
+        flushPending();
         renderAll();
       });
     }
@@ -594,7 +735,9 @@
       selectedGame = "comet";
     }
     renderAll();
+    flushPending();
     window.addEventListener("storage", function (e) {
+      if (e.key === NAME_KEY) flushPending();
       if (e.key === LB_KEY || e.key === OLD_KEY || e.key === NAME_KEY) renderAll();
     });
   }
@@ -618,14 +761,7 @@
         var close = document.querySelector("#closeGame");
         if (close) close.click();
       } catch (err) {}
-      var target = document.querySelector("#leaderboards");
-      if (target && target.scrollIntoView) {
-        setTimeout(function () {
-          target.scrollIntoView({ behavior: "smooth" });
-        }, 60);
-      } else {
-        location.hash = "#leaderboards";
-      }
+      setTimeout(function () { openLbPopup(btn); }, 60);
     });
     header.insertBefore(btn, header.firstChild);
   }

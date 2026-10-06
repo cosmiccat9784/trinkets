@@ -7260,11 +7260,35 @@ body.embed .game-layout {
   .news-hero { align-items: start; }
 }
 
-/* ── Leaderboards (local hall of fame) ── */
-.leaderboards {
-  padding: clamp(46px, 7vw, 84px) clamp(18px, 6vw, 88px);
+/* ── Leaderboards popup (hall of fame) ── */
+.lb-popup {
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  background: rgba(25, 33, 43, 0.72);
+}
+
+.lb-popup-card {
+  width: min(980px, 100%);
+  max-height: calc(100dvh - 32px);
+  overflow: auto;
+  overscroll-behavior: contain;
+  padding: clamp(18px, 4vw, 32px);
   background: linear-gradient(180deg, #fffdf4 0%, var(--paper) 100%);
-  border-bottom: 3px solid var(--line);
+  border: 3px solid var(--line);
+  border-radius: 12px;
+  box-shadow: 8px 8px 0 rgba(0, 0, 0, 0.35);
+}
+
+.lb-popup-head {
+  position: sticky;
+  top: 0;
+  margin-bottom: 0;
+  padding-bottom: 12px;
+  background: linear-gradient(180deg, #fffdf4 0%, var(--paper) 100%);
 }
 
 .lb-sub {
@@ -7296,6 +7320,13 @@ body.embed .game-layout {
 
 .lb-clear {
   min-height: 44px;
+}
+
+.lb-name-hint {
+  margin: 8px 0 0;
+  color: #8a3b43;
+  font-size: 0.88rem;
+  font-weight: 900;
 }
 
 .lb-layout {
@@ -7469,7 +7500,7 @@ body.embed .game-layout {
     grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
     max-height: none;
   }
-  .leaderboards .section-heading {
+  .lb-popup-card .section-heading {
     flex-direction: column;
     align-items: start;
   }
