@@ -150,24 +150,24 @@
 
   reg('snow', { layer: 'ground' });
   reg('path', { layer: 'ground',
-    ground: T => T.dia('#e4f1fb'),
+    ground: T => T.dia('#e4f1fb', null),
     edges: T => { for (let i = 0; i < 4; i++) if (!T.same(i, 'path', 'gate')) T.edge(i, '#b3cde3', 2.2);
       const p = T.P(T.r * .6 - .3, hash(T.y, T.x) * .6 - .3); ell(p[0], p[1], 2.2 * S.k, 1.2 * S.k, '#cfe0ef'); } });
   reg('pond', { layer: 'ground',
-    ground: T => T.dia('#9fdcf3'),
+    ground: T => T.dia('#9fdcf3', null),
     edges: T => { for (let i = 0; i < 4; i++) if (!T.same(i, 'pond')) { T.edge(i, OL, 9); T.edge(i, '#fff', 5); }
       T.line([-.25, -.05], [.05, -.25], '#fff', 2.2);
       if (T.r > .45) ell(T.cx, T.cy, 16 * S.k, 7 * S.k, null, 'rgba(255,255,255,.9)', 1.8 * S.k); } });
   const WALL = .12, WH = 10;
   reg('enclosure', { layer: 'ground',
-    ground: T => T.dia('#e8f7ff'),
+    ground: T => T.dia('#e8f7ff', null),
     walls: (T, ph) => { const e = i => T.same(i, ...ENC);
       if (ph === 'back') { if (!e(0)) T.box(-.5, -.5, .5, -.5 + WALL, WH, C.ice);
         if (!e(3)) T.box(-.5, -.5 + (e(0) ? 0 : WALL), -.5 + WALL, .5, WH, C.ice);
       } else { if (!e(1)) T.box(.5 - WALL, -.5, .5, .5, WH, C.ice);
         if (!e(2)) T.box(-.5, .5 - WALL, .5 - (e(1) ? 0 : WALL), .5, WH, C.ice); } } });
   reg('gate', { layer: 'ground',
-    ground: T => { T.dia('#e8f7ff'); T.poly([T.P(-.18, -.5), T.P(.18, -.5), T.P(.18, .5), T.P(-.18, .5)], '#e4f1fb', null); },
+    ground: T => { T.dia('#e8f7ff', null); T.poly([T.P(-.18, -.5), T.P(.18, -.5), T.P(.18, .5), T.P(-.18, .5)], '#e4f1fb', null); },
     walls: (T, ph) => { if (ph !== 'front') return;
       T.box(-.46, .34, -.34, .46, 18, C.ice); T.box(.34, .34, .46, .46, 18, C.ice);
       T.at(T.P(-.4, .4, 18), .7, () => dFlag('#ff6b6b')); T.at(T.P(.4, .4, 18), .7, () => dFlag('#ffd93d')); } });
