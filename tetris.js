@@ -1342,10 +1342,31 @@ function startTinyBlocks() {
   }, () => { softHeld = false; });
   bindHold(btnDrop, () => primaryAction());
 
+  function tbCanvasPos(e) {
+    const rect = canvas.getBoundingClientRect();
+    return {
+      x: (e.clientX - rect.left) * (W / rect.width),
+      y: (e.clientY - rect.top) * (H / rect.height)
+    };
+  }
+
+  function tbInsideBoard(p) {
+    return p.x >= BX && p.x < BX + BW && p.y >= BY && p.y < BY + BH;
+  }
+
   canvas.addEventListener("pointerdown", (e) => {
     e.preventDefault();
-    if (mode === "ready" || mode === "dead") primaryAction();
-    else if (mode === "playing") tryRotate();
+    if (mode === "ready" || mode === "dead") {
+      primaryAction();
+      return;
+    }
+    if (mode !== "playing") return;
+    // The board (BX,BY,BW,BH) is only the left part of the canvas;
+    // the sidebar (next preview, stats) is not playable. Ignore taps there
+    // so sidebar clicks don't rotate the piece.
+    const p = tbCanvasPos(e);
+    if (!tbInsideBoard(p)) return;
+    tryRotate();
   });
 
   document.querySelector("#tbRetry").addEventListener("click", (e) => {

@@ -233,15 +233,19 @@ function startMagnetMess() {
 
   canvas.addEventListener("pointerdown", (e) => {
     e.preventDefault();
-    canvas.setPointerCapture(e.pointerId);
     const p = toCanvas(e);
+    // The magnet (r=26) is small compared to the 720x480 canvas.
+    // Only grab when the tap starts on/near the magnet — otherwise
+    // tapping empty space would yank the magnet across the board.
+    if (Math.hypot(p.x - mag.x, p.y - mag.y) > mag.r + 22) return;
+    try { canvas.setPointerCapture(e.pointerId); } catch (err) {}
     grab = true;
     grabDX = mag.x - p.x;
     grabDY = mag.y - p.y;
     mag.vx = 0;
     mag.vy = 0;
-    lastPX = e.clientX;
-    lastPY = e.clientY;
+    lastPX = p.x;
+    lastPY = p.y;
     lastPT = performance.now();
   });
   canvas.addEventListener("pointermove", (e) => {
@@ -251,10 +255,12 @@ function startMagnetMess() {
     mag.y = Math.min(H - mag.r, Math.max(mag.r, p.y + grabDY));
     const now = performance.now();
     const dt = Math.max(8, now - lastPT) / 1000;
-    mag.vx = (e.clientX - lastPX) / dt;
-    mag.vy = (e.clientY - lastPY) / dt;
-    lastPX = e.clientX;
-    lastPY = e.clientY;
+    // Velocity must be in canvas pixels/sec (physics space), not client
+    // pixels/sec, so the fling stays correct when CSS scales the canvas.
+    mag.vx = (p.x - lastPX) / dt;
+    mag.vy = (p.y - lastPY) / dt;
+    lastPX = p.x;
+    lastPY = p.y;
     lastPT = now;
   });
   const releaseMag = () => { grab = false; };
@@ -690,15 +696,22 @@ function startCoinFlip() {
     };
   }
 
+  function coinHit(p) {
+    return Math.hypot(p.x - CX, p.y - coin.y) < R + 34;
+  }
+
   function onDown(e) {
     e.preventDefault();
     const now = performance.now();
+    const p = toCanvas(e);
+    // The coin (R=64 at CX) is small vs the 720x420 canvas — only taps
+    // starting on the coin may flip / spin / catch / stop. Taps on empty
+    // felt are ignored so they can't yank the game state.
     if (coin.mode === "spinning") {
-      stopSpin();
+      if (coinHit(p)) stopSpin();
       return;
     }
     if (coin.mode === "flying") {
-      const p = toCanvas(e);
       if (Math.hypot(p.x - CX, p.y - coin.y) < R + 30) {
         const face = Math.cos(coin.angle) >= 0 ? "H" : "T";
         coin.mode = "idle";
@@ -708,6 +721,7 @@ function startCoinFlip() {
       }
       return;
     }
+    if (!coinHit(p)) return;
     if (now - coin.lastTap < 320) {
       coin.lastTap = 0;
       startSpin();
