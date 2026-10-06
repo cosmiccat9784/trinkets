@@ -100,7 +100,9 @@ var TYCOON_QUIPS = [
   "The ??? penguin blinked. The park shivered.",
   "The flock migrated. It came back richer. Weird.",
   "The penguins moonlight as night-shift fluff. Do not tell the union.",
-  "Migrating is just resetting with extra steps. Fancy steps."
+  "Migrating is just resetting with extra steps. Fancy steps.",
+  "The penguins insist the night shift pays double. It does not.",
+  "No lights, no nightlife. The penguins sleep. The coins don't."
 ];
 
 // The tile engine auto-creates a full-page canvas on DOMContentLoaded when it
@@ -133,10 +135,12 @@ function tycoonLoad() {
     if (typeof d.migrations !== "number") d.migrations = 0;
     if (typeof d.lastSeen !== "number") d.lastSeen = 0;
     if (typeof d.lastGiftDay !== "string") d.lastGiftDay = "";
+    if (typeof d.dayT !== "number") d.dayT = 0;
+    if (typeof d.dayNum !== "number") d.dayNum = 1;
     if (!d.counts.normal && totalTycoonPenguins(d) === 0) d.counts.normal = 1;
     return d;
   }
-  return { coins: 100, counts: { normal: 1 }, build: {}, up: {}, enclosure: 0, spent: 0, earned: 0, best: 0, seed: Math.floor(Math.random() * 1e9), flakes: 0, perks: {}, runEarned: 0, migrations: 0, lastSeen: 0, lastGiftDay: "" };
+  return { coins: 100, counts: { normal: 1 }, build: {}, up: {}, enclosure: 0, spent: 0, earned: 0, best: 0, seed: Math.floor(Math.random() * 1e9), flakes: 0, perks: {}, runEarned: 0, migrations: 0, lastSeen: 0, lastGiftDay: "", dayT: 0, dayNum: 1 };
 }
 function tycoonSave(d) { d.lastSeen = Date.now(); try { localStorage.setItem(TYCOON_KEY, JSON.stringify(d)); } catch (e) {} }
 function tycoonType(id) {
@@ -249,6 +253,7 @@ function startPenguinTycoon() {
           '<span class="pty-bar"><span class="pty-fill" id="ptyFill"></span></span>' +
         '</span>' +
         '<span class="pty-pill" id="ptyFlakes" hidden>❄ 0</span>' +
+        '<span class="pty-pill" id="ptyTime">☀️ Day 1</span>' +
       '</div>' +
       '<p class="game-message" id="ptyMsg">One penguin. One dream. Visitors pay you. Buy more penguins.</p>' +
       '<div class="pty-stage" id="ptyStage">' +
@@ -284,6 +289,7 @@ function startPenguinTycoon() {
   var lvlEl = document.querySelector("#ptyLvl");
   var fillEl = document.querySelector("#ptyFill");
   var flakesPill = document.querySelector("#ptyFlakes");
+  var timePill = document.querySelector("#ptyTime");
   var msgEl = document.querySelector("#ptyMsg");
   var sheet = document.querySelector("#ptySheet");
   var itemsEl = document.querySelector("#ptyItems");
@@ -308,6 +314,10 @@ function startPenguinTycoon() {
   var popupTimer = 0;
   var quipTimer = 14;
   var time = 0;
+  // day/night clock: 240s loops (~2.2 min of day, then night). Persists in the save.
+  var DAY_LEN = 240;
+  var dayT = (typeof data.dayT === "number") ? data.dayT : 0;
+  var dayNum = data.dayNum || 1;
   var soundOn = true;
   var sheetTab = null;
   var eventTimer = 45;
@@ -1138,6 +1148,22 @@ function startPenguinTycoon() {
     spots.push({ x: enterTile.x, y: enterTile.y });
     return spots.filter(function (p) { return inBounds(p.x, p.y) && !insideRect(p.x, p.y) && !occTiles[p.x + "," + p.y]; });
   }
+  // lamplight anchors: pen middles, stalls, attractions, gate
+  function glowSpots() {
+    var pts = [];
+    var i, k;
+    for (i = 0; i < pens.length; i++) {
+      var r = pens[i];
+      pts.push({ x: Math.round((r.x0 + r.x1) / 2), y: Math.round((r.y0 + r.y1) / 2) });
+    }
+    for (k in stallTiles) if (stallTiles.hasOwnProperty(k)) pts.push(stallTiles[k]);
+    for (k in attractionTiles) if (attractionTiles.hasOwnProperty(k)) {
+      var a = attractionTiles[k];
+      if (a && typeof a.x === "number" && typeof a.y === "number") pts.push(a);
+    }
+    pts.push({ x: gateTile.x, y: gateTile.y });
+    return pts;
+  }
   function spawnVisitor() {
     var spots = tycoonSpots();
     if (!spots.length) return;
@@ -1175,6 +1201,14 @@ function startPenguinTycoon() {
     return { x: (M.ox + (x - y) * M.tw / 2) / M.rw * GW, y: (M.oy + (x + y) * M.th / 2) / M.rh * GH };
   }
 
+  // 0 in full day, up to 0.5 in deep night, smooth at the edges.
+  function nightAlpha() {
+    if (dayT < 0.55) return 0;
+    if (dayT < 0.65) return 0.5 * (dayT - 0.55) / 0.1;
+    if (dayT < 0.92) return 0.5;
+    return 0.5 * (1 - (dayT - 0.92) / 0.08);
+  }
+  function isNight() { return nightAlpha() > 0.05; }
   function incomePerSec() {
     var m = tycoonMult(data);
     var e = fx ? fx.mult : 1;
@@ -1193,6 +1227,7 @@ function startPenguinTycoon() {
 
   function refreshHUD() {
     coinsEl.textContent = "🪙 $" + fmtCoins(data.coins) + " (+$" + fmtShort(incomePerSec()) + "/s)";
+    timePill.textContent = (isNight() ? "🌙 Night " : "☀️ Day ") + dayNum;
     visEl.textContent = "👥 " + visitors.length + " Visitors";
     var lvl = tycoonLevel(data);
     lvlEl.childNodes[0].textContent = "⭐ Level " + (lvl + 1);
@@ -1534,7 +1569,9 @@ function startPenguinTycoon() {
     relocateEntities();
     var at = stallTiles[u.id] || enterTile;
     addPopup(at.x, at.y, u.emoji + " " + u.name + "!", "#7a4a1e", 1.6);
-    msgEl.textContent = u.id === "toilets" ? "Toilets built. Visitors are thrilled. Nobody knows why. 💀" : u.name + " opened! More visitors incoming.";
+    msgEl.textContent = u.id === "toilets" ? "Toilets built. Visitors are thrilled. Nobody knows why. 💀"
+      : u.id === "lights" ? "Night Lights installed — the park stays open after dark! 🌙"
+      : u.name + " opened! More visitors incoming.";
     blip(700, 0.12, "triangle");
     checkEmpire();
     tycoonSave(data);
@@ -1698,6 +1735,42 @@ function startPenguinTycoon() {
       gtx.fill();
     }
     gtx.globalAlpha = 1;
+    // night falls: dim the park, then light what Night Lights own
+    var dark = 0;
+    try { dark = nightAlpha(); } catch (e) {}
+    if (dark > 0.01) {
+      gtx.fillStyle = "rgba(8,14,44," + dark.toFixed(3) + ")";
+      gtx.fillRect(0, 0, GW, GH);
+    }
+    if (dark > 0.2) {
+      var si, sx, sy;
+      gtx.fillStyle = "#ffffff";
+      for (si = 0; si < 26; si++) {
+        sx = (si * 251) % GW; sy = (si * 137) % Math.max(1, Math.floor(GH * 0.55));
+        gtx.globalAlpha = dark * (0.4 + 0.6 * Math.abs(Math.sin(time * 1.5 + si)));
+        gtx.beginPath();
+        gtx.arc(sx, sy, 1.4, 0, 6.29);
+        gtx.fill();
+      }
+      gtx.globalAlpha = Math.min(1, dark * 2);
+      gtx.beginPath();
+      gtx.arc(GW - 60, 56, 16, 0, 6.29);
+      gtx.fill();
+      gtx.globalAlpha = 1;
+      if (data.up && data.up.lights) {
+        var glows = glowSpots();
+        for (var gi = 0; gi < glows.length; gi++) {
+          var gs = tileScreen(glows[gi].x, glows[gi].y);
+          var gr = gtx.createRadialGradient(gs.x, gs.y, 4, gs.x, gs.y, 46);
+          gr.addColorStop(0, "rgba(255,196,110," + (0.25 + dark * 0.5).toFixed(3) + ")");
+          gr.addColorStop(1, "rgba(255,196,110,0)");
+          gtx.fillStyle = gr;
+          gtx.beginPath();
+          gtx.arc(gs.x, gs.y, 46, 0, 6.29);
+          gtx.fill();
+        }
+      }
+    }
     // popups
     gtx.textAlign = "center";
     for (var pi = popups.length - 1; pi >= 0; pi--) {
@@ -1794,8 +1867,10 @@ function startPenguinTycoon() {
     if (pg === "moving") return;
     if (pg === "blocked") { pickPenguinTarget(p); return; }
     if (Math.random() < 0.45) {
-        p.pause = 0.5 + Math.random() * 0.9;
-        if (Math.random() < 0.5) { p.opts.flip = p.opts.flip ? 0 : 1; set_tile(p.x, p.y, "penguin", p.opts); }
+        // penguins doze at night: longer naps, occasional "z"
+        p.pause = (0.5 + Math.random() * 0.9) * (isNight() ? 1.6 : 1);
+        if (isNight() && Math.random() < 0.12) addPopup(p.x, p.y, "z", "#4f8fcf", 0.9);
+        else if (Math.random() < 0.5) { p.opts.flip = p.opts.flip ? 0 : 1; set_tile(p.x, p.y, "penguin", p.opts); }
         else if (Math.random() < 0.12) addPopup(p.x, p.y, "♪", "#4f8fcf", 0.9);
       } else {
         pickPenguinTarget(p);
@@ -1860,6 +1935,16 @@ function startPenguinTycoon() {
 
   function update(dt) {
     time += dt;
+    // day/night clock
+    dayT += dt / DAY_LEN;
+    if (dayT >= 1) {
+      dayT -= 1;
+      dayNum++;
+      data.dayNum = dayNum;
+      addPopup(gates[0].x, gates[0].y, "☀️ Day " + dayNum + "!", "#8a5f14", 2);
+      msgEl.textContent = "☀️ Day " + dayNum + " — the park opens. Make it count.";
+    }
+    data.dayT = dayT;
     // overlay snowflakes
     var wind = (fx && fx.kind === "snow") ? 40 : 8;
     for (var i = 0; i < flakes.length; i++) {
@@ -1886,6 +1971,8 @@ function startPenguinTycoon() {
     var cap = tycoonCap(data) * ((fx && fx.kind === "viral") ? 1.6 : 1);
     cap = Math.min(60, cap);
     var want = Math.min(16, Math.round(cap));
+    // no lights, no nightlife: after dark the park empties and stays empty
+    if (isNight() && !data.up.lights) want = 0;
     if (visitors.length < want && Math.random() < dt * 2.2) spawnVisitor();
     if (visitors.length > want && Math.random() < dt * 1.2) {
       for (var mi = 0; mi < visitors.length; mi++) {
