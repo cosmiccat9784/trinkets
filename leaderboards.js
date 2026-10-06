@@ -425,18 +425,6 @@
     return String(id || "?").replace(/_/g, " ");
   }
 
-  function topEntry(counts) {
-    var key = "";
-    var n = 0;
-    Object.keys(counts || {}).forEach(function (k) {
-      if (counts[k] > n) {
-        n = counts[k];
-        key = k;
-      }
-    });
-    return { key: key, n: n };
-  }
-
   function renderStats() {
     var box = document.querySelector("#lbStats");
     if (!box) return;
@@ -462,32 +450,127 @@
     Object.keys(s.games || {}).forEach(function (g) {
       if (g.charAt(0) !== "_") plays[g] = s.games[g];
     });
-    var champ = topEntry(plays);
-    var dev = topEntry(s.devices);
-    var bro = topEntry(s.browsers);
-    function pct(n) {
-      return total > 0 ? Math.round((n / total) * 100) + "%" : "—";
-    }
     box.innerHTML = "";
-    function line(icon, label, value) {
-      var p = document.createElement("p");
-      p.className = "lb-stats-line";
-      var b = document.createElement("strong");
-      b.textContent = icon + " " + label + " ";
-      var span = document.createElement("span");
-      span.textContent = value;
-      p.append(b);
-      p.append(span);
-      box.append(p);
-    }
-    line("🎮", "Most played:", champ.key ? gameTitle(champ.key) + " · " + champ.n + " plays" : "no plays yet");
-    line("👥", "Visitors (approx):", total ? String(visitors) + " across " + total + " visits" : "—");
-    line("📱", "Top device:", dev.key ? dev.key + " · " + pct(dev.n) : "—");
-    line("🌐", "Top browser:", bro.key ? bro.key + " · " + pct(bro.n) : "—");
+    var head = document.createElement("p");
+    head.className = "lb-stats-line";
+    var hb = document.createElement("strong");
+    hb.textContent = "👥 Visitors (approx): ";
+    var hs = document.createElement("span");
+    hs.textContent = total ? String(visitors) + " across " + total + " visits" : "no visits yet";
+    head.append(hb);
+    head.append(hs);
+    box.append(head);
+    var grid = document.createElement("div");
+    grid.className = "lb-stats-charts";
+    grid.append(chartCard("🎮 Most played", chartEntries(plays, 5), gameTitle));
+    grid.append(chartCard("📱 Devices", chartEntries(s.devices, 5), identityLabel));
+    grid.append(chartCard("🌐 Browsers", chartEntries(s.browsers, 5), identityLabel));
+    box.append(grid);
     var foot = document.createElement("p");
     foot.className = "lb-stats-foot";
     foot.textContent = "Anonymous, coarse stats only." + (s.since ? " Counting since " + fmtDate(s.since) + "." : "");
     box.append(foot);
+  }
+
+  var CHART_COLORS = ["#ff6b6b", "#f6c445", "#43c6ac", "#4f8fcf", "#6a4c93", "#8a94a6"];
+
+  function identityLabel(k) {
+    return k;
+  }
+
+  function chartEntries(counts, max) {
+    var keys = Object.keys(counts || {}).sort(function (a, b) {
+      return counts[b] - counts[a];
+    });
+    var out = keys.slice(0, max).map(function (k) {
+      return { key: k, n: counts[k] };
+    });
+    var rest = keys.slice(max).reduce(function (sum, k) {
+      return sum + counts[k];
+    }, 0);
+    if (rest > 0) out.push({ key: "", n: rest });
+    return out;
+  }
+
+  function sliceName(entry, labelFn) {
+    return entry.key ? labelFn(entry.key) : "Other";
+  }
+
+  function donutChart(entries, labelFn, total) {
+    var NS = "http://www.w3.org/2000/svg";
+    var svg = document.createElementNS(NS, "svg");
+    svg.setAttribute("viewBox", "0 0 140 140");
+    svg.setAttribute("class", "lb-donut");
+    svg.setAttribute("role", "img");
+    var R = 54;
+    var C = 2 * Math.PI * R;
+    var acc = 0;
+    entries.forEach(function (e, i) {
+      var frac = total > 0 ? e.n / total : 0;
+      if (frac <= 0) return;
+      var c = document.createElementNS(NS, "circle");
+      c.setAttribute("cx", "70");
+      c.setAttribute("cy", "70");
+      c.setAttribute("r", String(R));
+      c.setAttribute("fill", "none");
+      c.setAttribute("stroke", CHART_COLORS[i % CHART_COLORS.length]);
+      c.setAttribute("stroke-width", "22");
+      c.setAttribute("stroke-dasharray", (frac * C).toFixed(2) + " " + C.toFixed(2));
+      c.setAttribute("stroke-dashoffset", String(-acc * C));
+      c.setAttribute("transform", "rotate(-90 70 70)");
+      var tip = document.createElementNS(NS, "title");
+      tip.textContent = sliceName(e, labelFn) + ": " + e.n + " (" + Math.round(frac * 100) + "%)";
+      c.append(tip);
+      svg.append(c);
+      acc += frac;
+    });
+    var mid = document.createElementNS(NS, "text");
+    mid.setAttribute("x", "70");
+    mid.setAttribute("y", "70");
+    mid.setAttribute("text-anchor", "middle");
+    mid.setAttribute("dominant-baseline", "central");
+    mid.setAttribute("class", "lb-donut-center");
+    mid.textContent = String(total);
+    svg.append(mid);
+    return svg;
+  }
+
+  function chartCard(title, entries, labelFn) {
+    var card = document.createElement("div");
+    card.className = "lb-chart-card";
+    var h = document.createElement("h4");
+    h.className = "lb-chart-title";
+    h.textContent = title;
+    card.append(h);
+    var total = entries.reduce(function (sum, e) {
+      return sum + e.n;
+    }, 0);
+    if (!total) {
+      var none = document.createElement("p");
+      none.className = "lb-stats-line";
+      none.textContent = "No data yet.";
+      card.append(none);
+      return card;
+    }
+    var body = document.createElement("div");
+    body.className = "lb-chart-body";
+    body.append(donutChart(entries, labelFn, total));
+    var ul = document.createElement("ul");
+    ul.className = "lb-legend";
+    entries.forEach(function (e, i) {
+      var li = document.createElement("li");
+      var dot = document.createElement("span");
+      dot.className = "lb-dot";
+      dot.style.background = CHART_COLORS[i % CHART_COLORS.length];
+      var tx = document.createElement("span");
+      tx.textContent = sliceName(e, labelFn) + " · " + Math.round((e.n / total) * 100) + "% (" + e.n + ")";
+      li.append(dot);
+      li.append(tx);
+      ul.append(li);
+    });
+    body.append(ul);
+    card.append(body);
+    return card;
   }
 
   /* ── Leaderboard popup ── */

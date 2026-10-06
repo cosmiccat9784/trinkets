@@ -7370,6 +7370,73 @@ body.embed .game-layout {
   font-weight: 700;
 }
 
+.lb-stats-charts {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 10px;
+}
+
+.lb-chart-card {
+  padding: 10px;
+  background: var(--cream);
+  border: 2px solid var(--line);
+  border-radius: 8px;
+}
+
+.lb-chart-title {
+  margin: 0 0 8px;
+  font-size: 0.9rem;
+}
+
+.lb-chart-body {
+  display: grid;
+  gap: 8px;
+  justify-items: center;
+}
+
+.lb-donut {
+  width: 120px;
+  height: 120px;
+}
+
+.lb-donut-center {
+  font-size: 22px;
+  font-weight: 900;
+  fill: var(--ink);
+}
+
+.lb-legend {
+  display: grid;
+  gap: 4px;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.lb-legend li {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.lb-dot {
+  flex: 0 0 auto;
+  width: 12px;
+  height: 12px;
+  border: 2px solid var(--line);
+  border-radius: 50%;
+}
+
+@media (max-width: 640px) {
+  .lb-stats-charts {
+    grid-template-columns: 1fr;
+  }
+}
+
 .lb-layout {
   display: grid;
   grid-template-columns: minmax(220px, 320px) minmax(0, 1fr);
