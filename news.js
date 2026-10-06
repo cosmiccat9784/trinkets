@@ -572,6 +572,14 @@
 
     var foot = document.createElement("footer");
     foot.className = "news-card-foot";
+    var shareBtn = document.createElement("button");
+    shareBtn.className = "game-action";
+    shareBtn.type = "button";
+    shareBtn.textContent = "Share";
+    shareBtn.addEventListener("click", function () {
+      shareArticle(release, title, tag, shareBtn);
+    });
+    foot.appendChild(shareBtn);
     var copyBtn = document.createElement("button");
     copyBtn.className = "game-action";
     copyBtn.type = "button";
@@ -592,6 +600,34 @@
     card.appendChild(foot);
 
     return card;
+  }
+
+  function shareArticle(release, title, tag, btn) {
+    var url = tag ? articleUrl(tag) : location.href;
+    var shareTitle = title || "Trinkets Arcade news";
+    function flash(text) {
+      if (!btn) return;
+      var prev = btn.textContent;
+      btn.textContent = text;
+      setTimeout(function () { btn.textContent = prev; }, 1200);
+    }
+    try {
+      if (navigator.share) {
+        var data = { title: shareTitle, text: shareTitle + " — Trinkets Arcade", url: url };
+        if (navigator.canShare && !navigator.canShare(data)) {
+          copyArticleLink(tag, btn);
+          return;
+        }
+        navigator.share(data).then(function () {
+          flash("Shared!");
+        }, function (err) {
+          if (err && err.name === "AbortError") return; // user dismissed the sheet
+          copyArticleLink(tag, btn);
+        });
+        return;
+      }
+    } catch (err) {}
+    copyArticleLink(tag, btn);
   }
 
   function copyArticleLink(tag, btn) {
