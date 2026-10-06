@@ -63,7 +63,18 @@ function startPowderSim() {
     const wrap = canvas.parentElement;
     const availW = Math.min(wrap.clientWidth || 600, window.innerWidth - 40);
     w = canvas.width = Math.max(300, availW);
-    h = canvas.height = Math.max(280, Math.min(440, Math.round(w * 0.7), window.innerHeight - 480));
+    // Fill the full-screen modal: panel height minus header, toolbar, chrome.
+    // (CSS already stretches the canvas element; this sizes the sim grid
+    // to match so it stays crisp instead of upscaling a 440px buffer.)
+    let want = Math.round(w * 0.7);
+    const panel = document.querySelector(".modal-panel");
+    const header = document.querySelector(".modal-header");
+    if (panel && header && panel.clientHeight > 0) {
+      const toolbar = document.querySelector(".powder-toolbar");
+      const chrome = header.offsetHeight + (toolbar ? toolbar.offsetHeight : 0) + 48;
+      want = panel.clientHeight - chrome;
+    }
+    h = canvas.height = Math.max(280, Math.min(1200, Math.round(want)));
     cols = Math.ceil(w / CELL);
     rows = Math.ceil(h / CELL);
     grid = new Uint8Array(cols * rows);
