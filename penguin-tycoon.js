@@ -82,8 +82,8 @@ var TYCOON_MOON = [
   { rate: 0, cap: 0 }, { rate: 0.15, cap: 4 }, { rate: 0.25, cap: 8 },
   { rate: 0.40, cap: 12 }, { rate: 0.60, cap: 24 }
 ];
-// Migration needs $25M earned in one run; payout grows with sqrt (diminishing).
-var TYCOON_MIGRATE_MIN = 25000000;
+// Migration works any time; payout is purely money-driven and grows with
+// sqrt of run earnings (diminishing). Migrate early for +0❄, or get rich first.
 function tycoonPerkCost(p, lvl) { return Math.max(1, Math.round(p.base * Math.pow(lvl + 1, 1.6))); }
 function migrateGain(d) { return Math.floor(20 * Math.sqrt((d.runEarned || 0) / 1e9)); }
 // Penguin prices inflate 65% per owned bird (was 22% — the 5-minute
@@ -1326,9 +1326,8 @@ function startPenguinTycoon() {
         else { var pkc = tycoonPerkCost(r.ref, pl); r.btn.textContent = "❄" + pkc; r.btn.disabled = (data.flakes || 0) < pkc; }
       } else if (r.kind === "migrate") {
         var g2 = migrateGain(data);
-        var ok2 = (data.runEarned || 0) >= TYCOON_MIGRATE_MIN;
-        r.btn.textContent = ok2 ? "MIGRATE +" + g2 + "❄" : "LOCKED";
-        r.btn.disabled = !ok2;
+        r.btn.textContent = "MIGRATE +" + g2 + "❄";
+        r.btn.disabled = false;
       }
     }
   }
@@ -1411,20 +1410,19 @@ function startPenguinTycoon() {
       sheetSub.textContent = " — reset rich, return stronger";
       // migrate panel
       var gain = migrateGain(data);
-      var canMig = (data.runEarned || 0) >= TYCOON_MIGRATE_MIN;
       var mig = document.createElement("div");
       mig.className = "pty-migrate";
       var migInfo = document.createElement("div");
       migInfo.className = "pty-info";
       migInfo.innerHTML = "<strong>🐧 Great Migration ×" + (data.migrations || 0) + "</strong>" +
-        "<span>Reset the park to 1 penguin, keep ❄ + perks. This run earned $" + fmtShort(data.runEarned || 0) +
-        " (needs $" + fmtShort(TYCOON_MIGRATE_MIN) + ").</span>";
+        "<span>Reset the park to 1 penguin, keep ❄ + perks. Migrating now banks +" + gain +
+        "❄ — this run earned $" + fmtShort(data.runEarned || 0) + ", richer runs earn more.</span>";
       mig.appendChild(migInfo);
       var mbtn = document.createElement("button");
       mbtn.type = "button";
       mbtn.className = "pty-buy";
-      mbtn.textContent = canMig ? "MIGRATE +" + gain + "❄" : "LOCKED";
-      mbtn.disabled = !canMig;
+      mbtn.textContent = "MIGRATE +" + gain + "❄";
+      mbtn.disabled = false;
       mbtn.addEventListener("click", doMigrate);
       mig.appendChild(mbtn);
       itemsEl.appendChild(mig);
@@ -1473,10 +1471,6 @@ function startPenguinTycoon() {
   }
   function doMigrate() {
     var gain = migrateGain(data);
-    if ((data.runEarned || 0) < TYCOON_MIGRATE_MIN || gain < 1) {
-      msgEl.textContent = "Earn $" + fmtShort(TYCOON_MIGRATE_MIN) + " in one run first. The flock isn't ready.";
-      return;
-    }
     if (!window.confirm("Migrate? The park resets to 1 penguin, but you bank +" + gain + "❄ snowflakes and keep all perks forever.")) return;
     data.flakes = (data.flakes || 0) + gain;
     data.migrations = (data.migrations || 0) + 1;
