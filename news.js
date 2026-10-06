@@ -82,11 +82,103 @@
     }
   }
 
+  function decodeEntities(s) {
+    return String(s)
+      .replace(/&amp;/g, "&")
+      .replace(/&lt;/g, "<")
+      .replace(/&gt;/g, ">")
+      .replace(/&quot;/g, '"')
+      .replace(/&#39;/g, "'");
+  }
+
+  var RAW_INLINE_TAGS = { a: 1, b: 1, strong: 1, i: 1, em: 1, s: 1, del: 1, strike: 1, u: 1, kbd: 1, code: 1, sub: 1, sup: 1 };
+  var RAW_CLOSE_TAGS = { a: 1, b: 1, strong: 1, i: 1, em: 1, s: 1, del: 1, strike: 1, u: 1, kbd: 1, code: 1, sub: 1, sup: 1, div: 1, p: 1 };
+  var RAW_BLOCK_TAGS = { div: 1, p: 1, hr: 1 };
+
+  function parseTagAttrs(attrStr) {
+    var attrs = [];
+    var re = /([a-zA-Z-]+)(?:\s*=\s*("[^"]*"|'[^']*'|[^\s>]+))?/g;
+    var m;
+    while ((m = re.exec(attrStr))) {
+      var raw = m[2] == null ? null : m[2];
+      attrs.push({ name: m[1].toLowerCase(), value: raw == null ? null : raw.replace(/^["']|["']$/g, "") });
+    }
+    return attrs;
+  }
+
+  // Sanitizes one raw HTML *opener* from release notes. Returns
+  // { tag, block, pair } for the small safe whitelist (images, links,
+  // basic formatting, centered divs — the stuff GitHub's own editor
+  // produces), or null. Null means "leave the text alone" so it gets
+  // escaped as plain text. Closers are handled by the opener stack in
+  // renderMarkdown so a rejected opener can't leak a live closer tag.
+  function sanitizeRawTag(full) {
+    if (/^<\//.test(full)) return null;
+    var open = /^<([a-zA-Z][a-zA-Z0-9]*)\b((?:"[^"]*"|'[^']*'|[^'">])*)>$/.exec(full);
+    if (!open) return null;
+    var name = open[1].toLowerCase();
+    var attrs = parseTagAttrs(open[2] || "");
+    function attr(n) {
+      for (var k = 0; k < attrs.length; k++) if (attrs[k].name === n) return attrs[k].value;
+      return undefined;
+    }
+    function onlyAllowed(list) {
+      return attrs.every(function (a) { return list.indexOf(a.name) !== -1; });
+    }
+    if (name === "br") return { tag: "<br />", block: false, pair: null };
+    if (name === "hr") return { tag: "<hr />", block: true, pair: null };
+    if (name === "img") {
+      if (!onlyAllowed(["src", "alt", "title", "width", "height", "align", "loading", "decoding"])) return null;
+      var src = attr("src");
+      if (!src || !isSafeUrl(src)) return null;
+      var out = '<img src="' + escapeHtml(src) + '"';
+      var alt = attr("alt");
+      out += ' alt="' + escapeHtml(alt == null ? "" : alt) + '"';
+      var title = attr("title");
+      if (title != null) out += ' title="' + escapeHtml(title) + '"';
+      var width = attr("width");
+      if (width != null && /^\d+%?$/.test(width)) out += ' width="' + escapeHtml(width) + '"';
+      var height = attr("height");
+      if (height != null && /^\d+%?$/.test(height)) out += ' height="' + escapeHtml(height) + '"';
+      var ialign = attr("align");
+      if (ialign != null) {
+        if (["left", "center", "right"].indexOf(ialign.toLowerCase()) === -1) return null;
+        out += ' align="' + ialign.toLowerCase() + '"';
+      }
+      out += ' loading="lazy" decoding="async" />';
+      return { tag: out, block: false, pair: null };
+    }
+    if (name === "a") {
+      if (!onlyAllowed(["href", "title"])) return null;
+      var href = attr("href");
+      if (!href || !isSafeUrl(href)) return null;
+      var link = '<a href="' + escapeHtml(href) + '"';
+      var atitle = attr("title");
+      if (atitle != null) link += ' title="' + escapeHtml(atitle) + '"';
+      if (/^https?:\/\//i.test(href)) link += ' target="_blank" rel="noopener noreferrer"';
+      return { tag: link + ">", block: false, pair: name };
+    }
+    if (name === "div" || name === "p") {
+      if (!onlyAllowed(["align"])) return null;
+      var align = attr("align");
+      if (align == null) return { tag: "<" + name + ">", block: true, pair: name };
+      if (["left", "center", "right", "justify"].indexOf(align.toLowerCase()) === -1) return null;
+      return { tag: "<" + name + ' align="' + align.toLowerCase() + '">', block: true, pair: name };
+    }
+    if (RAW_INLINE_TAGS[name]) {
+      if (attrs.length) return null;
+      return { tag: "<" + name + ">", block: false, pair: name };
+    }
+    return null;
+  }
+
   /* Minimal GitHub-flavoured markdown renderer (no dependencies).
    * Supports: fenced code, inline code, headings, bold, italic,
    * strikethrough, images, links, autolinks, blockquotes, hr,
-   * bullet/numbered/task lists, tables, paragraphs. Raw HTML is
-   * escaped on purpose so release notes can never inject scripts. */
+   * bullet/numbered/task lists, tables, paragraphs, plus a small
+   * sanitized raw-HTML whitelist (img, a, basic formatting, div/p
+   * align) so images pasted from GitHub render as images. Anything
+   * else HTML-shaped is escaped so notes can never inject scripts. */
   function renderMarkdown(src) {
     var text = String(src == null ? "" : src).replace(/\r\n?/g, "\n").replace(/\t/g, "    ");
     if (!text.trim()) return "";
@@ -111,6 +203,39 @@
       return "\x00INLINE" + idx + "\x00";
     });
 
+    // Raw HTML: sanitize + stash the safe whitelist as placeholders.
+    // Anything not allowed is left alone so the escaper below
+    // neutralizes it into visible plain text. A closer only survives
+    // when its opener did (opener stack), so rejected tags can't leak
+    // a live half-tag into the page.
+    var rawHtml = [];
+    var rawIsBlock = [];
+    var rawOpenStack = [];
+    function stashRaw(tag, block) {
+      var idx = rawHtml.length;
+      rawHtml.push(tag);
+      rawIsBlock.push(block);
+      return "\x00RAW" + idx + "\x00";
+    }
+    text = text.replace(/<(\/?)([a-zA-Z][a-zA-Z0-9]*)\b((?:"[^"]*"|'[^']*'|[^'">])*)>/gi, function (full) {
+      var close = /^<\/([a-zA-Z][a-zA-Z0-9]*)\s*>$/.exec(full);
+      if (close) {
+        var cname = close[1].toLowerCase();
+        if (!RAW_CLOSE_TAGS[cname]) return full;
+        for (var s = rawOpenStack.length - 1; s >= 0; s--) {
+          if (rawOpenStack[s] === cname) {
+            rawOpenStack.splice(s, 1);
+            return stashRaw("</" + cname + ">", !!RAW_BLOCK_TAGS[cname]);
+          }
+        }
+        return full;
+      }
+      var clean = sanitizeRawTag(full);
+      if (clean == null) return full;
+      if (clean.pair) rawOpenStack.push(clean.pair);
+      return stashRaw(clean.tag, clean.block);
+    });
+
     // Escape everything left; placeholders (\x00…) survive untouched.
     text = escapeHtml(text);
 
@@ -118,14 +243,17 @@
       var out = escaped;
       // Images: ![alt](url "title")
       out = out.replace(/!\[([^\]]*)\]\(\s*([^\s)]+)(?:\s+&quot;([^&]*?)&quot;)?\s*\)/g, function (m, alt, url) {
+        url = decodeEntities(url);
+        alt = decodeEntities(alt || "");
         if (!isSafeUrl(url)) return escapeHtml(alt || "image");
         return (
-          '<img src="' + escapeHtml(url) + '" alt="' + escapeHtml(alt || "") +
+          '<img src="' + escapeHtml(url) + '" alt="' + escapeHtml(alt) +
           '" loading="lazy" decoding="async" />'
         );
       });
       // Links: [text](url "title")
       out = out.replace(/\[([^\]]+)\]\(\s*([^\s)]+)(?:\s+&quot;([^&]*?)&quot;)?\s*\)/g, function (m, label, url) {
+        url = decodeEntities(url);
         if (!isSafeUrl(url)) return label;
         var external = /^https?:\/\//i.test(url);
         return (
@@ -135,13 +263,16 @@
         );
       });
       // Autolinks: <https://…>
-      out = out.replace(/&lt;(https?:\/\/[^&\s<>]+)&gt;/g, function (m, url) {
+      out = out.replace(/&lt;(https?:\/\/[^<>\s]+?)&gt;/g, function (m, url) {
+        url = decodeEntities(url);
+        if (!isSafeUrl(url)) return m;
         return '<a href="' + escapeHtml(url) + '" target="_blank" rel="noopener noreferrer">' + escapeHtml(url) + "</a>";
       });
       // Bare URLs.
       out = out.replace(/(^|[\s(>])((https?:\/\/)[^\s<)]+)/g, function (m, pre, url) {
         var clean = url.replace(/[.,;:!?]+$/, "");
         var trail = url.slice(clean.length);
+        clean = decodeEntities(clean);
         if (!isSafeUrl(clean)) return m;
         return pre + '<a href="' + escapeHtml(clean) + '" target="_blank" rel="noopener noreferrer">' +
           escapeHtml(clean) + "</a>" + escapeHtml(trail);
@@ -152,15 +283,25 @@
       out = out.replace(/\*([^*\n]+)\*/g, "<em>$1</em>");
       out = out.replace(/(^|\W)_([^_\n]+)_(\W|$)/g, "$1<em>$2</em>$3");
       out = out.replace(/~~([^~]+)~~/g, "<del>$1</del>");
-      // Restore inline code.
+      // Restore inline code, then sanitized raw HTML.
       out = out.replace(/\x00INLINE(\d+)\x00/g, function (m, i) {
         return inlineCode[Number(i)] || "";
+      });
+      out = out.replace(/\x00RAW(\d+)\x00/g, function (m, i) {
+        return rawHtml[Number(i)] || "";
       });
       return out;
     }
 
     function isFencedPlaceholder(line) {
       return /^\x00FENCED\d+\x00$/.test(line.trim());
+    }
+
+    // A line holding only a block-level sanitized tag (<div>, <p>, <hr>).
+    function blockRawHtml(line) {
+      var m = /^\x00RAW(\d+)\x00$/.exec(line.trim());
+      if (m && rawIsBlock[Number(m[1])]) return rawHtml[Number(m[1])];
+      return null;
     }
 
     function restoreFenced(line) {
@@ -194,6 +335,9 @@
       if (!line.trim()) { i += 1; continue; }
 
       if (isFencedPlaceholder(line)) { html.push(restoreFenced(line)); i += 1; continue; }
+
+      var blockRaw = blockRawHtml(line);
+      if (blockRaw != null) { html.push(blockRaw); i += 1; continue; }
 
       var heading = /^(#{1,6})\s+(.*)$/.exec(line);
       if (heading) {
@@ -278,6 +422,7 @@
         !/^\s*[-*+]\s+/.test(lines[i]) &&
         !/^\s*\d+[.)]\s+/.test(lines[i]) &&
         !isFencedPlaceholder(lines[i]) &&
+        blockRawHtml(lines[i]) == null &&
         !(lines[i].indexOf("|") !== -1 && i + 1 < lines.length && isTableDivider(lines[i + 1]))
       ) {
         para.push(lines[i]);
