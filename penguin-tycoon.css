@@ -98,7 +98,7 @@
 
 .pty-actions {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 10px;
   width: min(100%, 720px);
   margin: 0 auto;
@@ -128,6 +128,7 @@
 .pty-btn.build { background: linear-gradient(180deg, #3ddc84, #22b45e); }
 .pty-btn.peng { background: linear-gradient(180deg, #5aa9e6, #2f7fc4); }
 .pty-btn.up { background: linear-gradient(180deg, #ffb14e, #f08a1d); }
+.pty-btn.perk { background: linear-gradient(180deg, #8a7dff, #5a3fa0); }
 .pty-btn:hover { filter: brightness(1.06); }
 
 .pty-dot {
@@ -220,6 +221,19 @@
 
 .pty-buy:disabled { background: #c7cfdb; cursor: not-allowed; opacity: 0.8; }
 .pty-buy:not(:disabled):hover { transform: translate(-1px, -1px); }
+
+/* prestige migrate / flakes panels inside the perks sheet */
+.pty-migrate {
+  display: grid;
+  gap: 8px;
+  padding: 10px 12px;
+  background: #fff;
+  border: 3px solid var(--line);
+  border-radius: 10px;
+  box-shadow: 3px 3px 0 var(--line);
+}
+
+.pty-migrate .pty-buy { justify-self: start; }
 
 /* ——— bubble event wipe ——— */
 .pty-bubbles {

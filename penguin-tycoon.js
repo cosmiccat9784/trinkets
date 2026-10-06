@@ -4,26 +4,38 @@
 
 var TYCOON_KEY = "trinkets-tycoon-v1";
 
+// max: pen space per species — cheap birds cap out, so the only way up is
+// rarer penguins (and, eventually, ❄ prestige multipliers).
 var TYCOON_TYPES = [
-  { id: "normal",  name: "Normal Penguin",  emoji: "🐧", cost: 50,    income: 2,   scarf: null,      desc: "+$2/sec · reliable" },
-  { id: "baby",    name: "Baby Penguin",    emoji: "🐤", cost: 175,   income: 5,   scarf: "#ff8fb1", desc: "+$5/sec · tiny & loud" },
-  { id: "emperor", name: "Emperor Penguin", emoji: "👑", cost: 600,   income: 15,  scarf: "#ffffff", desc: "+$15/sec · royal glide" },
-  { id: "golden",  name: "Golden Penguin",  emoji: "✨", cost: 3000,   income: 75,  scarf: "#ffd93d", desc: "+$75/sec · extremely shiny" },
-  { id: "mystery", name: "??? Penguin",     emoji: "🌀", cost: 12000,  income: 300,  scarf: "#8a7dff", desc: "+$300/sec · do not ask" },
-  { id: "robot",   name: "Robot Penguin",   emoji: "🤖", cost: 30000,  income: 700,  scarf: "#6c8cff", desc: "+$700/sec · beep boop waddle" },
-  { id: "diamond", name: "Diamond Penguin", emoji: "💎", cost: 75000,  income: 1600, scarf: "#9fdcf3", desc: "+$1,600/sec · dangerously shiny" },
-  { id: "cosmic",  name: "Cosmic Penguin",  emoji: "🛸", cost: 200000, income: 4000, scarf: "#ff8fb1", desc: "+$4,000/sec · from beyond the ice" }
+  { id: "normal",  name: "Normal Penguin",  emoji: "🐧", cost: 50,    income: 2,   scarf: null,      max: 40, desc: "+$2/sec · reliable" },
+  { id: "baby",    name: "Baby Penguin",    emoji: "🐤", cost: 175,   income: 5,   scarf: "#ff8fb1", max: 35, desc: "+$5/sec · tiny & loud" },
+  { id: "emperor", name: "Emperor Penguin", emoji: "👑", cost: 600,   income: 15,  scarf: "#ffffff", max: 30, desc: "+$15/sec · royal glide" },
+  { id: "golden",  name: "Golden Penguin",  emoji: "✨", cost: 4000,   income: 60,  scarf: "#ffd93d", max: 26, desc: "+$60/sec · extremely shiny" },
+  { id: "mystery", name: "??? Penguin",     emoji: "🌀", cost: 18000,  income: 300,  scarf: "#8a7dff", max: 22, desc: "+$300/sec · do not ask" },
+  { id: "robot",   name: "Robot Penguin",   emoji: "🤖", cost: 45000,  income: 700,  scarf: "#6c8cff", max: 20, desc: "+$700/sec · beep boop waddle" },
+  { id: "diamond", name: "Diamond Penguin", emoji: "💎", cost: 120000, income: 1600, scarf: "#9fdcf3", max: 18, desc: "+$1,600/sec · dangerously shiny" },
+  { id: "cosmic",  name: "Cosmic Penguin",  emoji: "🛸", cost: 350000, income: 4000, scarf: "#ff8fb1", max: 16, desc: "+$4,000/sec · from beyond the ice" },
+  { id: "ninja",   name: "Ninja Penguin",   emoji: "🥷", cost: 1000000,   income: 9000,   scarf: "#23232e", max: 14, desc: "+$9K/sec · silent waddle" },
+  { id: "sailor",  name: "Sailor Penguin",  emoji: "⚓", cost: 3000000,   income: 20000,  scarf: "#4f8fcf", max: 12, desc: "+$20K/sec · seven seas pro" },
+  { id: "alien",   name: "Alien Penguin",   emoji: "👽", cost: 8000000,   income: 45000,  scarf: "#00ffaa", max: 12, desc: "+$45K/sec · definitely not from here" },
+  { id: "shadow",  name: "Shadow Penguin",  emoji: "🌑", cost: 20000000,  income: 120000, scarf: "#9775fa", max: 10, desc: "+$120K/sec · eclipse crew" },
+  { id: "phoenix", name: "Phoenix Penguin", emoji: "🔥", cost: 60000000,  income: 250000, scarf: "#ff6b35", max: 8,  desc: "+$250K/sec · comfortably warm" },
+  { id: "aurora",  name: "Aurora Penguin",  emoji: "🌌", cost: 800000000, income: 800000, scarf: "#7dff9a", max: 6,  desc: "+$800K/sec · the sky itself" }
 ];
 
 var TYCOON_BUILD = [
-  { id: "enclosure", name: "Bigger Enclosure", emoji: "🏔️", base: 80,   scale: 1.7, max: 9, cap: 6,  bonus: 0.05, desc: "+6 visitors · a new pen every 2 buys" },
+  { id: "enclosure", name: "Bigger Enclosure", emoji: "🏔️", base: 80,   scale: 2.0, max: 30, cap: 6,  bonus: 0.05, desc: "+6 visitors · a new habitat annex every 2 levels" },
   { id: "snow",      name: "Snow Machine",     emoji: "❄️", cost: 200,  cap: 2,  bonus: 0.25, desc: "+25% income · happy flakes" },
   { id: "pool",      name: "Swimming Pool",    emoji: "🏊", cost: 350,  cap: 8,  bonus: 0.15, desc: "penguins swim in circles" },
   { id: "slide",     name: "Penguin Slide",    emoji: "🛝", cost: 450,  cap: 10, bonus: 0.20, desc: "wheee +20% income" },
   { id: "cave",      name: "Ice Cave",         emoji: "🧊", cost: 650,  cap: 12, bonus: 0.25, desc: "mysterious & cold" },
   { id: "climb",     name: "Climbing Area",    emoji: "🧗", cost: 1000, cap: 15, bonus: 0.30, desc: "tiny harnesses included" },
   { id: "iceberg",   name: "Giant Iceberg",    emoji: "🏔️", cost: 1800, cap: 20, bonus: 0.50, desc: "the centrepiece · +50%" },
-  { id: "stage",     name: "Penguin Stage",    emoji: "🎤", cost: 4500,  cap: 10, bonus: 0.25, desc: "live waddle shows nightly" }
+  { id: "stage",     name: "Penguin Stage",    emoji: "🎤", cost: 4500,  cap: 10, bonus: 0.25, desc: "live waddle shows nightly" },
+  { id: "tram",      name: "Sky Tram",          emoji: "🚡", cost: 60000,   cap: 6,  bonus: 0.20, desc: "sky rides over the pens" },
+  { id: "lab",       name: "Penguin Lab",       emoji: "🔬", cost: 250000,  cap: 8,  bonus: 0.35, desc: "science says: more penguins" },
+  { id: "dome",      name: "Aurora Dome",       emoji: "🌐", cost: 5000000,  cap: 10, bonus: 0.60, desc: "northern lights, nightly" },
+  { id: "volcano",   name: "Warm Volcano",      emoji: "🌋", cost: 20000000, cap: 12, bonus: 1.00, desc: "warm rocks · DOUBLE income" }
 ];
 
 var TYCOON_UPGRADES = [
@@ -36,15 +48,47 @@ var TYCOON_UPGRADES = [
   { id: "cocoa",   name: "Hot Cocoa Stand",   emoji: "🍫", cost: 1800,  cap: 6,  bonus: 0.12, desc: "warm beaks, warm hearts" },
   { id: "parade",  name: "Penguin Parade",     emoji: "🎺", cost: 3000,  cap: 8,  bonus: 0.20, desc: "marching band, waddling" },
   { id: "lights",  name: "Night Lights",      emoji: "💡", cost: 9000,  cap: 10, bonus: 0.30, desc: "the park glows after dark" },
-  { id: "festival", name: "Snow Festival",     emoji: "🎆", cost: 22000, cap: 15, bonus: 0.50, desc: "the biggest night of the year" }
+  { id: "festival", name: "Snow Festival",     emoji: "🎆", cost: 22000, cap: 15, bonus: 0.50, desc: "the biggest night of the year" },
+  { id: "photo",    name: "Photo Booth",       emoji: "📷", cost: 120000,  cap: 6,  bonus: 0.15, desc: "pose with a penguin" },
+  { id: "balloon",  name: "Balloon Stand",     emoji: "🎈", cost: 400000,  cap: 8,  bonus: 0.20, desc: "penguin-shaped, obviously" },
+  { id: "aquarium", name: "Aquarium",          emoji: "🐠", cost: 8000000,  cap: 12, bonus: 0.40, desc: "fish too?! the crowds gasp" },
+  { id: "hotel",    name: "Ice Hotel",         emoji: "🏨", cost: 30000000, cap: 15, bonus: 0.60, desc: "sleep over. never leave." }
 ];
 
 // Pure level ladder: Level 1, Level 2, Level 3... no names.
+// Stretches into the billions so the park keeps dinging for weeks.
 var TYCOON_LEVELS = [
   { at: 0 }, { at: 100 }, { at: 350 }, { at: 900 }, { at: 1800 },
   { at: 3500 }, { at: 7000 }, { at: 18000 }, { at: 40000 }, { at: 80000 },
-  { at: 150000 }, { at: 250000 }, { at: 400000 }, { at: 650000 }, { at: 1000000 }
+  { at: 150000 }, { at: 250000 }, { at: 400000 }, { at: 650000 }, { at: 1000000 },
+  { at: 1600000 }, { at: 2500000 }, { at: 4000000 }, { at: 6500000 }, { at: 10000000 },
+  { at: 16000000 }, { at: 25000000 }, { at: 40000000 }, { at: 65000000 }, { at: 100000000 },
+  { at: 160000000 }, { at: 250000000 }, { at: 400000000 }, { at: 650000000 }, { at: 1000000000 },
+  { at: 1600000000 }, { at: 2500000000 }, { at: 4000000000 }
 ];
+
+// Great Migration prestige: reset the park, keep ❄ snowflakes + perks.
+// Perk cost: base * (level+1)^1.6 in ❄.
+var TYCOON_PERKS = [
+  { id: "moon",      name: "Moonlight Foraging", emoji: "🌙", max: 4,  base: 2, desc: "earn income while away" },
+  { id: "efficient", name: "Efficiency",         emoji: "⚙️", max: 10, base: 2, desc: "+10% production per level" },
+  { id: "bargain",   name: "Bulk Discount",      emoji: "🏷️", max: 10, base: 2, desc: "everything 5% cheaper per level" },
+  { id: "early",     name: "Early Bird",         emoji: "🦉", max: 5,  base: 1, desc: "start each run with bonus coins" },
+  { id: "caller",    name: "Event Caller",       emoji: "🍀", max: 5,  base: 3, desc: "events more often, richer rewards" },
+  { id: "crowd",     name: "Crowd Bonus",        emoji: "🎟️", max: 8,  base: 3, desc: "every visitor boosts income" }
+];
+// Offline earnings per Moonlight level: {rate of income, max hours away}.
+var TYCOON_MOON = [
+  { rate: 0, cap: 0 }, { rate: 0.15, cap: 4 }, { rate: 0.25, cap: 8 },
+  { rate: 0.40, cap: 12 }, { rate: 0.60, cap: 24 }
+];
+// Migration needs $25M earned in one run; payout grows with sqrt (diminishing).
+var TYCOON_MIGRATE_MIN = 25000000;
+function tycoonPerkCost(p, lvl) { return Math.max(1, Math.round(p.base * Math.pow(lvl + 1, 1.6))); }
+function migrateGain(d) { return Math.floor(20 * Math.sqrt((d.runEarned || 0) / 1e9)); }
+// Penguin prices inflate 65% per owned bird (was 22% — the 5-minute
+// everything-must-go sale is over).
+var PENG_GROWTH = 1.65;
 
 var TYCOON_QUIPS = [
   "Visitors arrive → look at penguins → pay you → repeat.",
@@ -53,7 +97,10 @@ var TYCOON_QUIPS = [
   "A visitor tried to pay in fish. Accepted.",
   "Penguins unionized. Demands: more slide.",
   "Someone cried seeing the baby penguin. Same.",
-  "The ??? penguin blinked. The park shivered."
+  "The ??? penguin blinked. The park shivered.",
+  "The flock migrated. It came back richer. Weird.",
+  "The penguins moonlight as night-shift fluff. Do not tell the union.",
+  "Migrating is just resetting with extra steps. Fancy steps."
 ];
 
 // The tile engine auto-creates a full-page canvas on DOMContentLoaded when it
@@ -80,12 +127,18 @@ function tycoonLoad() {
     if (typeof d.earned !== "number") d.earned = 0;
     if (typeof d.best !== "number") d.best = 0;
     if (typeof d.seed !== "number") d.seed = Math.floor(Math.random() * 1e9);
+    if (typeof d.flakes !== "number") d.flakes = 0;
+    if (!d.perks) d.perks = {};
+    if (typeof d.runEarned !== "number") d.runEarned = d.earned || 0;
+    if (typeof d.migrations !== "number") d.migrations = 0;
+    if (typeof d.lastSeen !== "number") d.lastSeen = 0;
+    if (typeof d.lastGiftDay !== "string") d.lastGiftDay = "";
     if (!d.counts.normal && totalTycoonPenguins(d) === 0) d.counts.normal = 1;
     return d;
   }
-  return { coins: 100, counts: { normal: 1 }, build: {}, up: {}, enclosure: 0, spent: 0, earned: 0, best: 0, seed: Math.floor(Math.random() * 1e9) };
+  return { coins: 100, counts: { normal: 1 }, build: {}, up: {}, enclosure: 0, spent: 0, earned: 0, best: 0, seed: Math.floor(Math.random() * 1e9), flakes: 0, perks: {}, runEarned: 0, migrations: 0, lastSeen: 0, lastGiftDay: "" };
 }
-function tycoonSave(d) { try { localStorage.setItem(TYCOON_KEY, JSON.stringify(d)); } catch (e) {} }
+function tycoonSave(d) { d.lastSeen = Date.now(); try { localStorage.setItem(TYCOON_KEY, JSON.stringify(d)); } catch (e) {} }
 function tycoonType(id) {
   for (var i = 0; i < TYCOON_TYPES.length; i++) if (TYCOON_TYPES[i].id === id) return TYCOON_TYPES[i];
   return TYCOON_TYPES[0];
@@ -100,6 +153,31 @@ function tycoonBaseIncome(d) {
   for (var k in d.counts) s += (d.counts[k] || 0) * tycoonType(k).income;
   return s;
 }
+function perkLvl(d, id) { return (d.perks && d.perks[id]) || 0; }
+function tycoonDiscount(d) { return Math.pow(0.95, perkLvl(d, "bargain")); }
+function tycoonPengCost(t, owned, d) {
+  return Math.max(1, Math.round(t.cost * Math.pow(PENG_GROWTH, owned) * tycoonDiscount(d)));
+}
+function tycoonUpCost(u, d) { return Math.max(1, Math.round(u.cost * tycoonDiscount(d))); }
+function tycoonEarlyStart(d) { return 100 * Math.pow(6, perkLvl(d, "early")); }
+function fmtShort(n) {
+  n = Math.floor(n || 0);
+  if (n >= 1e9) return (n / 1e9).toFixed(1) + "B";
+  if (n >= 1e6) return (n / 1e6).toFixed(1) + "M";
+  if (n >= 1e3) return (n / 1e3).toFixed(1) + "K";
+  return "" + n;
+}
+function fmtCoins(n) {
+  n = Math.floor(n || 0);
+  return n < 10000000 ? n.toLocaleString("en-US") : fmtShort(n);
+}
+function fmtAway(s) {
+  s = Math.floor(s);
+  var h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60);
+  if (h > 0) return h + "h " + m + "m";
+  if (m > 0) return m + "m";
+  return s + "s";
+}
 function tycoonMult(d) {
   var m = 1;
   var i, b;
@@ -109,6 +187,10 @@ function tycoonMult(d) {
     if (d.build[b.id]) m += b.bonus;
   }
   for (i = 0; i < TYCOON_UPGRADES.length; i++) { if (d.up[TYCOON_UPGRADES[i].id]) m += TYCOON_UPGRADES[i].bonus; }
+  // Crowded parks have diminishing returns: stacked attractions are each
+  // worth a bit less than the sign says. (Keeps the late game honest.)
+  m = 1 + (m - 1) * 0.5;
+  m *= 1 + 0.1 * perkLvl(d, "efficient");
   return m;
 }
 function tycoonCap(d) {
@@ -128,8 +210,31 @@ function tycoonLevel(d) {
   return lvl;
 }
 function tycoonBuildCost(b, d) {
-  if (b.id === "enclosure") return Math.round(b.base * Math.pow(b.scale, d.enclosure || 0));
-  return b.cost;
+  if (b.id === "enclosure") return Math.max(1, Math.round(b.base * Math.pow(b.scale, d.enclosure || 0) * tycoonDiscount(d)));
+  return Math.max(1, Math.round(b.cost * tycoonDiscount(d)));
+}
+function perkDesc(p, lvl) {
+  function moonTxt(l) {
+    var mo = TYCOON_MOON[Math.min(l, TYCOON_MOON.length - 1)];
+    return Math.round(mo.rate * 100) + "% income while away (up to " + mo.cap + "h)";
+  }
+  if (p.id === "moon") {
+    if (lvl <= 0) return "LOCKED — earn income while you're gone. Next: " + moonTxt(1);
+    if (lvl >= p.max) return "MAX — " + moonTxt(lvl);
+    return "Now: " + moonTxt(lvl) + ". Next: " + moonTxt(lvl + 1);
+  }
+  if (p.id === "efficient") return lvl <= 0 ? "LOCKED — production +10% per level" : "+" + (lvl * 10) + "% production" + (lvl >= p.max ? " (MAX)" : " → +" + ((lvl + 1) * 10) + "%");
+  if (p.id === "bargain") {
+    var now = Math.round((1 - Math.pow(0.95, lvl)) * 100), next = Math.round((1 - Math.pow(0.95, lvl + 1)) * 100);
+    return lvl <= 0 ? "LOCKED — everything cheaper, forever" : now + "% off everything" + (lvl >= p.max ? " (MAX)" : " → " + next + "% off");
+  }
+  if (p.id === "early") return lvl <= 0 ? "LOCKED — start runs with bonus coins" : "Runs start with $" + fmtShort(tycoonEarlyStart({ perks: { early: lvl } })) + (lvl >= p.max ? " (MAX)" : " → $" + fmtShort(tycoonEarlyStart({ perks: { early: lvl + 1 } })));
+  if (p.id === "caller") return lvl <= 0 ? "LOCKED — events more often, richer rewards" : "Events +" + Math.round(lvl * 30) + "% often, +" + Math.round(lvl * 50) + "% rewards" + (lvl >= p.max ? " (MAX)" : " (next: more!)");
+  if (p.id === "crowd") {
+    var cb = Math.min(0.25 * lvl, 16 * 0.02 * lvl);
+    return lvl <= 0 ? "LOCKED — a full park pays extra" : "Full house: +" + Math.round(cb * 100) + "% income" + (lvl >= p.max ? " (MAX)" : " (next: juicier)");
+  }
+  return p.desc;
 }
 
 function startPenguinTycoon() {
@@ -143,6 +248,7 @@ function startPenguinTycoon() {
         '<span class="pty-pill pty-level" id="ptyLvl">⭐ Level 1' +
           '<span class="pty-bar"><span class="pty-fill" id="ptyFill"></span></span>' +
         '</span>' +
+        '<span class="pty-pill" id="ptyFlakes" hidden>❄ 0</span>' +
       '</div>' +
       '<p class="game-message" id="ptyMsg">One penguin. One dream. Visitors pay you. Buy more penguins.</p>' +
       '<div class="pty-stage" id="ptyStage">' +
@@ -160,6 +266,7 @@ function startPenguinTycoon() {
         '<button class="pty-btn build" id="ptyBuildBtn" type="button"><span aria-hidden="true">➕</span> BUILD<span class="pty-dot" id="ptyDotBuild" hidden></span></button>' +
         '<button class="pty-btn peng" id="ptyPengBtn" type="button"><span aria-hidden="true">🐧</span> PENGUINS<span class="pty-dot" id="ptyDotPeng" hidden></span></button>' +
         '<button class="pty-btn up" id="ptyUpBtn" type="button"><span aria-hidden="true">⬆️</span> UPGRADES<span class="pty-dot" id="ptyDot" hidden></span></button>' +
+        '<button class="pty-btn perk" id="ptyPerkBtn" type="button"><span aria-hidden="true">❄️</span> PERKS<span class="pty-dot" id="ptyDotPerk" hidden></span></button>' +
       '</div>' +
       '<div class="game-actions pty-sub">' +
         '<button class="game-action" id="ptyMute" type="button">🔊 Sound on</button>' +
@@ -176,6 +283,7 @@ function startPenguinTycoon() {
   var visEl = document.querySelector("#ptyVis");
   var lvlEl = document.querySelector("#ptyLvl");
   var fillEl = document.querySelector("#ptyFill");
+  var flakesPill = document.querySelector("#ptyFlakes");
   var msgEl = document.querySelector("#ptyMsg");
   var sheet = document.querySelector("#ptySheet");
   var itemsEl = document.querySelector("#ptyItems");
@@ -188,6 +296,7 @@ function startPenguinTycoon() {
   var dotEl = document.querySelector("#ptyDot");
   var dotPengEl = document.querySelector("#ptyDotPeng");
   var dotBuildEl = document.querySelector("#ptyDotBuild");
+  var dotPerkEl = document.querySelector("#ptyDotPerk");
   var sheetRows = [];
   var lastSheetLive = -99;
 
@@ -272,6 +381,20 @@ function startPenguinTycoon() {
         T.poly([T.P(-0.2, -0.2, 14), T.P(-0.32, -0.32, 26), T.P(-0.08, -0.32, 26), T.P(0.04, -0.2, 14)], "#6b7280");
         T.poly([T.P(-0.3, -0.3, 26), T.P(-0.1, -0.3, 26), T.P(-0.2, -0.42, 26)], "#ffffff");
       }});
+      // sky tram: cable tower with a dangling red car
+      TileEngine.register("tram", { layer: "object", draw: function (T) {
+        T.shadow(0.7, 0.5);
+        T.box(-0.08, -0.08, 0.08, 0.08, 44, ["#8a93a1", "#6b7280", "#565d68"]);
+        T.poly([T.P(-0.44, 0, 40), T.P(0.44, 0, 40), T.P(0.44, 0.07, 40), T.P(-0.44, 0.07, 40)], "#3a4356");
+        T.box(-0.2, 0.0, 0.12, 0.24, 10, ["#ff5d6e", "#ff8fa0", "#c9184a"], 28);
+      }});
+      // aurora dome: glass house with a green-violet sky shimmer inside
+      TileEngine.register("dome", { layer: "object", draw: function (T) {
+        T.shadow(0.9, 0.7);
+        T.poly([T.P(-0.4, 0.2), T.P(-0.4, 0.2, 18), T.P(0.4, 0.2, 18), T.P(0.4, 0.2)], "#bfe6f7");
+        T.poly([T.P(-0.4, -0.2, 18), T.P(0.4, -0.2, 18), T.P(0, -0.42, 18)], "#8a7dff");
+        T.poly([T.P(-0.15, 0.2, 10), T.P(0.15, 0.2, 10), T.P(0, 0.2, 16)], "#7dff9a");
+      }});
       // gift shop: teal kiosk with a pressie + bow on top
       TileEngine.register("giftshop", { layer: "object", draw: function (T) {
         T.shadow(0.95, 0.85);
@@ -354,7 +477,13 @@ function startPenguinTycoon() {
     mystery: { body: "rainbow", belly: "#e5dbff", beak: "#ff9f2e", feet: "#ff9f43", ws: 1.02, hs: 1.05, dots: true },
     robot:   { body: "#c0c8d4", belly: "#e8f0ff", beak: "#ff9f2e", feet: "#4a5a6b", ws: 1.02, hs: 1.02, robot: true },
     diamond: { body: "#bfe6f7", belly: "#ffffff", beak: "#4f8fcf", feet: "#4f8fcf", ws: 1,    hs: 1.05, facets: true },
-    cosmic:  { body: "#3a2a6e", belly: "#241a4d", beak: "#ffd166", feet: "#ffd166", ws: 1.04, hs: 1.08, stars: true }
+    cosmic:  { body: "#3a2a6e", belly: "#241a4d", beak: "#ffd166", feet: "#ffd166", ws: 1.04, hs: 1.08, stars: true },
+    ninja:   { body: "#23232e", belly: "#3d3d52", beak: "#ffb02e", feet: "#ff9f43", ws: 1, hs: 1.02, mask: true },
+    sailor:  { body: "#2e5f8a", belly: "#ffffff", beak: "#ffb02e", feet: "#ff9f43", ws: 1, hs: 1, cap: true },
+    alien:   { body: "#51cf66", belly: "#d3f9d8", beak: "#2b8a3e", feet: "#2b8a3e", ws: 1, hs: 1.06, bigEyes: true, antenna: true },
+    shadow:  { body: "#14141c", belly: "#2b2b3d", beak: "#9775fa", feet: "#5f3dc4", ws: 1, hs: 1.05, stars: true },
+    phoenix: { body: "#e8590c", belly: "#ffd43b", beak: "#ffe066", feet: "#d9480f", ws: 1.02, hs: 1.06, flames: true },
+    aurora:  { body: "rainbow", belly: "#e5dbff", beak: "#ffd166", feet: "#ff9f43", ws: 1.04, hs: 1.08, stars: true, glints: true }
   };
   function drawGlidePenguin(T, o, e) {
     var H = spHelper(T, e.fx - e.x, e.fy - e.y, T.bob());
@@ -422,6 +551,28 @@ function startPenguinTycoon() {
       H.poly(H.ell(-2 * ws, -14 * hs, 1.2, 1.2), "#ffffff", null);
       H.poly(H.ell(3 * flip * ws, -10 * hs, 1.4, 1.4), "#ffffff", null);
       H.poly(H.ell(0, -6 * hs, 1, 1), "#ffffff", null);
+    }
+    if (P.mask) {
+      // bandit band over the eyes, with fresh eye dots on top
+      H.poly([H.pt(-9 * ws, -27 * hs), H.pt(9 * ws, -27 * hs), H.pt(9 * ws, -20.5 * hs), H.pt(-9 * ws, -20.5 * hs)], "#1c1c26");
+      H.poly(H.ell(-3.5 * ws, -23.5 * hs, 2, 2), "#ffffff", null);
+      H.poly(H.ell(3.5 * ws, -23.5 * hs, 2, 2), "#ffffff", null);
+      H.poly(H.ell(-3.5 * ws, -23.5 * hs, 0.9, 0.9), "#2a3f66", null);
+      H.poly(H.ell(3.5 * ws, -23.5 * hs, 0.9, 0.9), "#2a3f66", null);
+    }
+    if (P.cap) {
+      // tiny tilted sailor cap
+      H.poly([H.pt(-8 * ws, -34 * hs), H.pt(6 * ws, -36 * hs), H.pt(6 * ws, -30 * hs), H.pt(-8 * ws, -28 * hs)], "#ffffff");
+      H.poly([H.pt(-8 * ws, -28 * hs), H.pt(6 * ws, -30 * hs), H.pt(6 * ws, -28.5 * hs), H.pt(-8 * ws, -26.5 * hs)], "#4f8fcf", null);
+    }
+    if (P.antenna) {
+      H.poly([H.pt(-0.8, -34 * hs), H.pt(0.8, -34 * hs), H.pt(0.8, -44 * hs), H.pt(-0.8, -44 * hs)], "#2a3f66");
+      H.poly(H.ell(0, -46 * hs, 2.4, 2.4), "#00ffaa", null);
+    }
+    if (P.flames) {
+      H.poly([H.pt(-7 * ws, -30 * hs), H.pt(-3 * ws, -30 * hs), H.pt(-5 * ws, -40 * hs)], "#ff6b35");
+      H.poly([H.pt(-1 * ws, -30 * hs), H.pt(4 * ws, -30 * hs), H.pt(1.5 * ws, -42 * hs)], "#ffd43b");
+      H.poly([H.pt(4 * ws, -30 * hs), H.pt(8 * ws, -30 * hs), H.pt(6 * ws, -38 * hs)], "#ff6b35");
     }
     if (o.scarf) {
       H.poly([H.pt(-9 * flip * ws, -16 * hs), H.pt(11 * flip * ws, -16 * hs), H.pt(11 * flip * ws, -11 * hs), H.pt(-9 * flip * ws, -11 * hs)], o.scarf);
@@ -508,7 +659,7 @@ function startPenguinTycoon() {
   function parkTemplate() {
     var lvl = tycoonLevel(data);
     var seed = data.seed || 0;
-    var tier = lvl >= 6 ? 3 : lvl >= 4 ? 2 : lvl >= 2 ? 1 : 0;
+    var tier = lvl >= 12 ? 5 : lvl >= 9 ? 4 : lvl >= 6 ? 3 : lvl >= 4 ? 2 : lvl >= 2 ? 1 : 0;
     return {
       tier: tier,
       mirror: tier === 1 ? true : tier >= 2 ? (seed % 2 === (tier === 3 ? 0 : 1)) : false,
@@ -551,7 +702,7 @@ function startPenguinTycoon() {
       set_tile(7, 2, "gate");
       fill_tiles(7, 3, 7, 4, "path");
       enterTile = { x: 7, y: 4 };
-      staticAt(5, 4, "sign", { text: "PARK" });
+      staticAt(5, 4, "sign", { text: "PARK" + (data.migrations > 0 ? " ❄×" + data.migrations : "") });
       var a;
       if (data.build.slide) { a = placeNear(8, 0, "slide"); if (a) attractionTiles.slide = a; }
       if (data.build.iceberg) { a = placeNear(6, 0, "iceberg"); if (a) attractionTiles.iceberg = a; }
@@ -562,6 +713,13 @@ function startPenguinTycoon() {
       }
       if (data.build.climb) { a = placePair(7, 0, "platform"); if (a) attractionTiles.climb = a[0]; }
       if (data.build.stage) { a = placeNear(8, 1, "platform"); if (a) attractionTiles.stage = a; }
+      if (data.build.tram) { a = placeNear(6, 0, "tram"); if (a) attractionTiles.tram = a; }
+      if (data.build.lab) {
+        a = placeNear(8, 2, "crystal");
+        if (a) { attractionTiles.lab = a; placeNear(a.x, a.y, "crystal"); }
+      }
+      if (data.build.dome) { a = placeNear(6, 2, "dome"); if (a) attractionTiles.dome = a; }
+      if (data.build.volcano) { a = placeNear(8, 1, "iceberg"); if (a) attractionTiles.volcano = a; }
       if (data.up.food) { staticAt(7, 7, "icecream"); stallTiles.food = { x: 7, y: 7 }; }
       if (data.up.bench) {
         staticAt(2, 4, "bench"); staticAt(3, 6, "bench"); staticAt(6, 7, "bench", { flip: 1 });
@@ -575,18 +733,37 @@ function startPenguinTycoon() {
       if (data.up.parade) { staticAt(1, 8, "flag", { color: "#ff6b6b" }); stallTiles.parade = { x: 1, y: 8 }; }
       if (data.up.lights) { staticAt(10, 6, "crystal"); stallTiles.lights = { x: 10, y: 6 }; }
       if (data.up.festival) { staticAt(4, 6, "iceberg"); stallTiles.festival = { x: 4, y: 6 }; }
+      if (data.up.photo) { staticAt(9, 8, "sign", { text: "PHOTO" }); stallTiles.photo = { x: 9, y: 8 }; }
+      if (data.up.balloon) { staticAt(4, 8, "flag", { color: "#ff8fb1" }); stallTiles.balloon = { x: 4, y: 8 }; }
+      if (data.up.aquarium) { staticAt(3, 7, "giftshop"); stallTiles.aquarium = { x: 3, y: 7 }; }
+      if (data.up.hotel) { staticAt(8, 8, "plushstall"); stallTiles.hotel = { x: 8, y: 8 }; }
       return;
     }
-    // ---- resort era: one pen per two enclosure buys, up to five ----
+    // ---- resort era: one pen per two enclosure buys, plus habitat annexes
+    // on the big grid — the park physically sprawls as enclosures grow ----
     var PEN_SLOTS = [
       { x0: 1, y0: 1, x1: 3, y1: 3 },
       { x0: 5, y0: 1, x1: 7, y1: 3 },
       { x0: 8, y0: 1, x1: 10, y1: 3 },
       { x0: 1, y0: 6, x1: 3, y1: 8 },
-      { x0: 5, y0: 6, x1: 7, y1: 8 }
+      { x0: 5, y0: 6, x1: 7, y1: 8 },
+      // annexes: east wing + south row (16-grid only)
+      { x0: 12, y0: 1, x1: 14, y1: 3 },
+      { x0: 12, y0: 5, x1: 14, y1: 7 },
+      { x0: 12, y0: 9, x1: 14, y1: 11 },
+      { x0: 1, y0: 12, x1: 3, y1: 14 },
+      { x0: 5, y0: 12, x1: 7, y1: 14 },
+      { x0: 8, y0: 12, x1: 10, y1: 14 }
     ];
-    var order = tmpl.mirror ? [2, 1, 0, 4, 3] : [0, 1, 2, 3, 4];
-    var nPens = Math.min(5, 1 + Math.floor((data.enclosure || 0) / 2));
+    var order = tmpl.mirror ? [2, 1, 0, 4, 3, 10, 9, 8, 7, 6, 5] : [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+    // slots are ordered small-grid-first: stop counting at the first one
+    // that doesn't fit, so small parks never draw off the map
+    var fitting = 0;
+    for (var fs = 0; fs < PEN_SLOTS.length; fs++) {
+      if (PEN_SLOTS[fs].x1 < N && PEN_SLOTS[fs].y1 < N) fitting++;
+      else break;
+    }
+    var nPens = Math.min(fitting, 1 + Math.floor((data.enclosure || 0) / 2));
     pens = [];
     gates = [];
     for (var pi = 0; pi < nPens; pi++) {
@@ -683,6 +860,14 @@ function startPenguinTycoon() {
     c0 = penCenter(4); c1 = penCenter(1);
     if (data.build.climb) { t = placePair(c0.x, c0.y, "platform"); if (t) attractionTiles.climb = t[0]; }
     if (data.build.stage) { t = placeNear(c1.x, c1.y, "platform"); if (t) attractionTiles.stage = t; }
+    var cT = penCenter(0), cL = penCenter(2), cD = penCenter(3), cV = penCenter(4);
+    if (data.build.tram) { t = placeNear(cT.x, cT.y, "tram"); if (t) attractionTiles.tram = t; }
+    if (data.build.lab) {
+      t = placeNear(cL.x, cL.y, "crystal");
+      if (t) { attractionTiles.lab = t; placeNear(t.x, t.y, "crystal"); }
+    }
+    if (data.build.dome) { t = placeNear(cD.x, cD.y, "dome"); if (t) attractionTiles.dome = t; }
+    if (data.build.volcano) { t = placeNear(cV.x, cV.y, "iceberg"); if (t) attractionTiles.volcano = t; }
     // arch entrance: PARK sign + pennants flanking the gate path
     function freeOutside(sx, sy) {
       var best = null, bd = 1e9;
@@ -696,7 +881,7 @@ function startPenguinTycoon() {
       return best;
     }
     var s1 = freeOutside(MX(4), 10);
-    if (s1) staticAt(s1.x, s1.y, "sign", { text: "PENGUIN PARK" });
+    if (s1) staticAt(s1.x, s1.y, "sign", { text: "PENGUIN PARK" + (data.migrations > 0 ? " ❄×" + data.migrations : "") });
     var f1 = freeOutside(MX(5), 10), f2 = freeOutside(MX(7), 10);
     if (f1) staticAt(f1.x, f1.y, "flag", { color: "#ff6b6b" });
     if (f2) staticAt(f2.x, f2.y, "flag", { color: "#8a7dff" });
@@ -721,6 +906,10 @@ function startPenguinTycoon() {
     if (data.up.parade) { t = placePlaza(10, 11, "flag", { color: "#ff6b6b" }); if (t) stallTiles.parade = t; }
     if (data.up.lights) { t = placePlaza(0, 9, "crystal"); if (t) stallTiles.lights = t; }
     if (data.up.festival) { t = placePlaza(6, 8, "iceberg"); if (t) stallTiles.festival = t; }
+    if (data.up.photo) { t = placePlaza(4, 11, "sign", { text: "PHOTO" }); if (t) stallTiles.photo = t; }
+    if (data.up.balloon) { t = placePlaza(8, 11, "flag", { color: "#ff8fb1" }); if (t) stallTiles.balloon = t; }
+    if (data.up.aquarium) { t = placePlaza(1, 11, "giftshop"); if (t) stallTiles.aquarium = t; }
+    if (data.up.hotel) { t = placePlaza(9, 10, "plushstall"); if (t) stallTiles.hotel = t; }
     // scenery: tall stuff stays on back rows (low x+y) so it never occludes.
     // decoAt skips pen tiles, so scenery never eats play space.
     function decoAt(x, y, type, opts) {
@@ -835,7 +1024,7 @@ function startPenguinTycoon() {
       var r = pens[i];
       total += Math.floor(((r.x1 - r.x0 + 1) * (r.y1 - r.y0 + 1)) / 2);
     }
-    return Math.max(1, total);
+    return Math.min(40, Math.max(1, total));
   }
   function rebuildPenguins() {
     penguins = [];
@@ -989,7 +1178,11 @@ function startPenguinTycoon() {
   function incomePerSec() {
     var m = tycoonMult(data);
     var e = fx ? fx.mult : 1;
-    return tycoonBaseIncome(data) * m * e;
+    var ips = tycoonBaseIncome(data) * m * e;
+    // Crowd Bonus perk: a full house pays extra
+    var cl = perkLvl(data, "crowd");
+    if (cl > 0 && visitors.length > 0) ips *= 1 + Math.min(0.25 * cl, visitors.length * 0.02 * cl);
+    return ips;
   }
   function levelProgress() {
     var lvl = tycoonLevel(data);
@@ -999,22 +1192,33 @@ function startPenguinTycoon() {
   }
 
   function refreshHUD() {
-    coinsEl.textContent = "🪙 $" + Math.floor(data.coins);
+    coinsEl.textContent = "🪙 $" + fmtCoins(data.coins) + " (+$" + fmtShort(incomePerSec()) + "/s)";
     visEl.textContent = "👥 " + visitors.length + " Visitors";
     var lvl = tycoonLevel(data);
     lvlEl.childNodes[0].textContent = "⭐ Level " + (lvl + 1);
     fillEl.style.width = Math.round(levelProgress() * 100) + "%";
-    sheetCoins.textContent = Math.floor(data.coins);
+    sheetCoins.textContent = fmtCoins(data.coins);
     // affordable dots on every menu button, recomputed live as coins tick up
     var affordUp = false, affordPeng = false, affordBuild = false;
     var ai, aj, ab;
     for (ai = 0; ai < TYCOON_UPGRADES.length; ai++) {
-      if (!data.up[TYCOON_UPGRADES[ai].id] && data.coins >= TYCOON_UPGRADES[ai].cost) affordUp = true;
+      if (!data.up[TYCOON_UPGRADES[ai].id] && data.coins >= tycoonUpCost(TYCOON_UPGRADES[ai], data)) affordUp = true;
     }
     for (aj = 0; aj < TYCOON_TYPES.length; aj++) {
       var pto = data.counts[TYCOON_TYPES[aj].id] || 0;
-      if (data.coins >= Math.round(TYCOON_TYPES[aj].cost * Math.pow(1.18, pto))) affordPeng = true;
+      if (pto < (TYCOON_TYPES[aj].max || 999) && data.coins >= tycoonPengCost(TYCOON_TYPES[aj], pto, data)) affordPeng = true;
     }
+    var affordPerk = false;
+    for (var aq = 0; aq < TYCOON_PERKS.length; aq++) {
+      var pq = TYCOON_PERKS[aq];
+      var pql = perkLvl(data, pq.id);
+      if (pql < pq.max && (data.flakes || 0) >= tycoonPerkCost(pq, pql)) affordPerk = true;
+    }
+    dotPerkEl.hidden = !affordPerk;
+    if ((data.flakes || 0) > 0 || (data.migrations || 0) > 0) {
+      flakesPill.hidden = false;
+      flakesPill.textContent = "❄ " + (data.flakes || 0) + ((data.migrations || 0) > 0 ? " ×" + data.migrations : "");
+    } else flakesPill.hidden = true;
     for (ab = 0; ab < TYCOON_BUILD.length; ab++) {
       var bb = TYCOON_BUILD[ab];
       if (bb.id === "enclosure") {
@@ -1056,7 +1260,7 @@ function startPenguinTycoon() {
 
   function refreshSheetLive() {
     // price buttons enable the moment coins cover them — no reopen needed
-    sheetCoins.textContent = Math.floor(data.coins);
+    sheetCoins.textContent = fmtCoins(data.coins);
     for (var i = 0; i < sheetRows.length; i++) {
       var r = sheetRows[i];
       if (r.kind === "build") {
@@ -1072,12 +1276,24 @@ function startPenguinTycoon() {
         if (r.title && r.ref.id === "enclosure") r.title.textContent = r.ref.name + " Lv." + (data.enclosure || 0);
       } else if (r.kind === "peng") {
         var ow = data.counts[r.ref.id] || 0;
-        var pc = Math.round(r.ref.cost * Math.pow(1.18, ow));
-        r.btn.textContent = fmt(pc);
-        r.btn.disabled = data.coins < pc;
-      } else {
+        if (ow >= (r.ref.max || 999)) { r.btn.textContent = "FULL"; r.btn.disabled = true; }
+        else {
+          var pc = tycoonPengCost(r.ref, ow, data);
+          r.btn.textContent = fmt(pc);
+          r.btn.disabled = data.coins < pc;
+        }
+      } else if (r.kind === "up") {
         if (data.up[r.ref.id]) { r.btn.textContent = "OWNED"; r.btn.disabled = true; }
-        else { r.btn.textContent = fmt(r.ref.cost); r.btn.disabled = data.coins < r.ref.cost; }
+        else { var uc = tycoonUpCost(r.ref, data); r.btn.textContent = fmt(uc); r.btn.disabled = data.coins < uc; }
+      } else if (r.kind === "perk") {
+        var pl = perkLvl(data, r.ref.id);
+        if (pl >= r.ref.max) { r.btn.textContent = "MAX"; r.btn.disabled = true; }
+        else { var pkc = tycoonPerkCost(r.ref, pl); r.btn.textContent = "❄" + pkc; r.btn.disabled = (data.flakes || 0) < pkc; }
+      } else if (r.kind === "migrate") {
+        var g2 = migrateGain(data);
+        var ok2 = (data.runEarned || 0) >= TYCOON_MIGRATE_MIN;
+        r.btn.textContent = ok2 ? "MIGRATE +" + g2 + "❄" : "LOCKED";
+        r.btn.disabled = !ok2;
       }
     }
   }
@@ -1115,28 +1331,30 @@ function startPenguinTycoon() {
       sheetSub.textContent = " — every penguin pays you every second";
       TYCOON_TYPES.forEach(function (t) {
         var owned = data.counts[t.id] || 0;
-        var cost = Math.round(t.cost * Math.pow(1.22, owned));
+        var capped = owned >= (t.max || 999);
+        var cost = tycoonPengCost(t, owned, data);
         var row = document.createElement("div");
-        row.className = "pty-item";
+        row.className = "pty-item" + (capped ? " owned" : "");
         row.innerHTML =
           '<div class="pty-emoji">' + t.emoji + "</div>" +
-          '<div class="pty-info"><strong>' + t.name + " ×" + owned + "</strong>" +
+          '<div class="pty-info"><strong>' + t.name + " ×" + owned + "/" + (t.max || "∞") + "</strong>" +
           "<span>" + t.desc + "</span></div>";
         var btn = document.createElement("button");
         btn.type = "button";
         btn.className = "pty-buy";
-        btn.textContent = fmt(cost);
-        btn.disabled = data.coins < cost;
+        btn.textContent = capped ? "FULL" : fmt(cost);
+        btn.disabled = capped || data.coins < cost;
         btn.addEventListener("click", function () { buyPenguin(t); });
         row.appendChild(btn);
         itemsEl.appendChild(row);
         sheetRows.push({ kind: "peng", ref: t, btn: btn });
       });
-    } else {
+    } else if (sheetTab === "up") {
       sheetTitle.textContent = "Upgrades — visitor stuff";
       sheetSub.textContent = " — more visitors, more money";
       TYCOON_UPGRADES.forEach(function (u) {
         var owned = !!data.up[u.id];
+        var uc0 = tycoonUpCost(u, data);
         var row = document.createElement("div");
         row.className = "pty-item" + (owned ? " owned" : "");
         row.innerHTML =
@@ -1146,20 +1364,110 @@ function startPenguinTycoon() {
         var btn = document.createElement("button");
         btn.type = "button";
         btn.className = "pty-buy";
-        btn.textContent = owned ? "OWNED" : fmt(u.cost);
-        btn.disabled = owned || data.coins < u.cost;
+        btn.textContent = owned ? "OWNED" : fmt(uc0);
+        btn.disabled = owned || data.coins < uc0;
         btn.addEventListener("click", function () { buyUpgrade(u); });
         row.appendChild(btn);
         itemsEl.appendChild(row);
         sheetRows.push({ kind: "up", ref: u, btn: btn });
       });
+    } else if (sheetTab === "perk") {
+      sheetTitle.textContent = "Snowflakes & Migration";
+      sheetSub.textContent = " — reset rich, return stronger";
+      // migrate panel
+      var gain = migrateGain(data);
+      var canMig = (data.runEarned || 0) >= TYCOON_MIGRATE_MIN;
+      var mig = document.createElement("div");
+      mig.className = "pty-migrate";
+      var migInfo = document.createElement("div");
+      migInfo.className = "pty-info";
+      migInfo.innerHTML = "<strong>🐧 Great Migration ×" + (data.migrations || 0) + "</strong>" +
+        "<span>Reset the park to 1 penguin, keep ❄ + perks. This run earned $" + fmtShort(data.runEarned || 0) +
+        " (needs $" + fmtShort(TYCOON_MIGRATE_MIN) + ").</span>";
+      mig.appendChild(migInfo);
+      var mbtn = document.createElement("button");
+      mbtn.type = "button";
+      mbtn.className = "pty-buy";
+      mbtn.textContent = canMig ? "MIGRATE +" + gain + "❄" : "LOCKED";
+      mbtn.disabled = !canMig;
+      mbtn.addEventListener("click", doMigrate);
+      mig.appendChild(mbtn);
+      itemsEl.appendChild(mig);
+      sheetRows.push({ kind: "migrate", btn: mbtn });
+      var bal = document.createElement("div");
+      bal.className = "pty-migrate";
+      bal.innerHTML = '<div class="pty-info"><strong>❄ ' + (data.flakes || 0) + ' snowflakes</strong>' +
+        "<span>Perks are permanent — they survive every migration.</span></div>";
+      itemsEl.appendChild(bal);
+      TYCOON_PERKS.forEach(function (p) {
+        var lvl = perkLvl(data, p.id);
+        var maxed = lvl >= p.max;
+        var pcost = maxed ? 0 : tycoonPerkCost(p, lvl);
+        var row = document.createElement("div");
+        row.className = "pty-item" + (maxed ? " owned" : "");
+        row.innerHTML =
+          '<div class="pty-emoji">' + p.emoji + "</div>" +
+          '<div class="pty-info"><strong>' + p.name + " Lv." + lvl + "/" + p.max + "</strong>" +
+          "<span>" + perkDesc(p, lvl) + "</span></div>";
+        var btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "pty-buy";
+        btn.textContent = maxed ? "MAX" : "❄" + pcost;
+        btn.disabled = maxed || (data.flakes || 0) < pcost;
+        btn.addEventListener("click", function () { buyPerk(p); });
+        row.appendChild(btn);
+        itemsEl.appendChild(row);
+        sheetRows.push({ kind: "perk", ref: p, btn: btn });
+      });
     }
     refreshHUD();
   }
 
+  function buyPerk(p) {
+    var lvl = perkLvl(data, p.id);
+    if (lvl >= p.max) return;
+    var cost = tycoonPerkCost(p, lvl);
+    if ((data.flakes || 0) < cost) { msgEl.textContent = "Not enough ❄ for " + p.name + " yet. Migrate to earn more."; return; }
+    data.flakes -= cost;
+    if (!data.perks) data.perks = {};
+    data.perks[p.id] = lvl + 1;
+    msgEl.textContent = p.emoji + " " + p.name + " Lv." + (lvl + 1) + "! Permanent, forever. ❄";
+    blip(660, 0.15, "triangle"); setTimeout(function () { blip(990, 0.2, "triangle"); }, 120);
+    tycoonSave(data);
+    renderSheet(); refreshHUD();
+  }
+  function doMigrate() {
+    var gain = migrateGain(data);
+    if ((data.runEarned || 0) < TYCOON_MIGRATE_MIN || gain < 1) {
+      msgEl.textContent = "Earn $" + fmtShort(TYCOON_MIGRATE_MIN) + " in one run first. The flock isn't ready.";
+      return;
+    }
+    if (!window.confirm("Migrate? The park resets to 1 penguin, but you bank +" + gain + "❄ snowflakes and keep all perks forever.")) return;
+    data.flakes = (data.flakes || 0) + gain;
+    data.migrations = (data.migrations || 0) + 1;
+    data.coins = tycoonEarlyStart(data);
+    data.counts = { normal: 1 };
+    data.build = {}; data.up = {};
+    data.enclosure = 0; data.spent = 0; data.runEarned = 0;
+    if (escaped) { try { remove_object(escaped.x, escaped.y); } catch (e) {} escaped = null; }
+    buildParkStatics();
+    rebuildPenguins();
+    visitors = []; popups = []; fx = null; eventTimer = 45;
+    sheet.hidden = true; sheetTab = null;
+    msgEl.textContent = "❄ Migration ×" + data.migrations + "! +" + gain + "❄ banked. The flock flies further this time.";
+    showBubble({
+      emoji: "❄️", title: "MIGRATION ×" + data.migrations + "!", sub: "REBORN",
+      body: "+" + gain + "❄ snowflakes. Spend them on permanent perks — come back stronger.",
+      btn: "❄ SHINY!"
+    });
+    blip(520, 0.15, "triangle"); setTimeout(function () { blip(780, 0.2, "triangle"); }, 140);
+    tycoonSave(data);
+    renderSheet(); refreshHUD();
+  }
   function buyPenguin(t) {
     var owned = data.counts[t.id] || 0;
-    var cost = Math.round(t.cost * Math.pow(1.22, owned));
+    if (owned >= (t.max || 999)) { msgEl.textContent = "The pens are full of " + t.name + "s — adopt a rarer bird!"; return; }
+    var cost = tycoonPengCost(t, owned, data);
     if (data.coins < cost) { msgEl.textContent = "Not enough coins for " + t.name + " yet. The penguins wait."; return; }
     data.coins -= cost;
     data.spent += cost;
@@ -1217,9 +1525,10 @@ function startPenguinTycoon() {
   }
   function buyUpgrade(u) {
     if (data.up[u.id]) return;
-    if (data.coins < u.cost) { msgEl.textContent = "Not enough coins for " + u.name + " yet."; return; }
-    data.coins -= u.cost;
-    data.spent += u.cost;
+    var ucost = tycoonUpCost(u, data);
+    if (data.coins < ucost) { msgEl.textContent = "Not enough coins for " + u.name + " yet."; return; }
+    data.coins -= ucost;
+    data.spent += ucost;
     data.up[u.id] = true;
     buildParkStatics();
     relocateEntities();
@@ -1241,7 +1550,11 @@ function startPenguinTycoon() {
         sub: "The ultimate park.",
         body: "You did it. The penguins rule everything, everywhere, now.",
         btn: "👑 RULE",
-        fn: function () { msgEl.textContent = "🏆 Ultimate tribute: +$2,000!"; data.coins += 2000; }
+        fn: function () {
+          var tribute = Math.max(2000, Math.round(incomePerSec() * 120));
+          data.coins += tribute; data.earned += tribute; data.runEarned += tribute;
+          msgEl.textContent = "🏆 Ultimate tribute: +$" + fmtShort(tribute) + "!";
+        }
       });
       try { recordScore("tycoon", Math.floor(data.earned), "high"); } catch (e) {}
     } else {
@@ -1263,7 +1576,9 @@ function startPenguinTycoon() {
     { kind: "snow", emoji: "❄️", title: "MEGA SNOWSTORM!", sub: "BRRR!", body: "The park is covered in snow! Penguins are 2× happier for 30s!", btn: "❄️ COZY!" },
     { kind: "viral", emoji: "📸", title: "VIRAL PENGUIN!", sub: "TRENDING!", body: "Someone posted your penguin online! Visitors ×3 for 30 seconds!", btn: "📸 FAME!" },
     { kind: "icecream", emoji: "🍦", title: "ICE CREAM FESTIVAL!", sub: "YUM!", body: "Everyone wants something cold! Income ×2 for 30s!", btn: "🍦 SERVE!" },
-    { kind: "famous", emoji: "👑", title: "FAMOUS PENGUIN VISIT!", sub: "GASP!", body: "A celebrity penguin waddles through! +$150 and 2× income for 20s!", btn: "👑 WELCOME!" }
+    { kind: "famous", emoji: "👑", title: "FAMOUS PENGUIN VISIT!", sub: "GASP!", body: "A celebrity penguin waddles through! Cash bonus and 2× income for 20s!", btn: "👑 WELCOME!" },
+    { kind: "rainbow", emoji: "🌈", title: "DOUBLE RAINBOW!", sub: "WOW!", body: "All the way across the park! Income ×4 for 20s!", btn: "🌈 WOW!" },
+    { kind: "seal", emoji: "🦭", title: "SEAL OF APPROVAL!", sub: "STAMPED!", body: "A very official seal approves your park! Instant cash bonus!", btn: "🦭 HONORED!" }
   ];
 
   function showBubble(ev) {
@@ -1339,14 +1654,30 @@ function startPenguinTycoon() {
         emoji: ev.emoji, title: ev.title, sub: ev.sub, body: ev.body, btn: ev.btn, kind: "icecream",
         fn: function () { fx = { kind: "icecream", label: "🍦 Festival ×2", mult: 2, t: 30, dur: 30 }; msgEl.textContent = "🍦 ICE CREAM FESTIVAL! Income ×2 for 30s!"; }
       });
+    } else if (ev.kind === "rainbow") {
+      showBubble({
+        emoji: ev.emoji, title: ev.title, sub: ev.sub, body: ev.body, btn: ev.btn, kind: "rainbow",
+        fn: function () { fx = { kind: "rainbow", label: "🌈 Rainbow ×4", mult: 4, t: 20, dur: 20 }; msgEl.textContent = "🌈 DOUBLE RAINBOW! Income ×4 for 20s!"; }
+      });
+    } else if (ev.kind === "seal") {
+      showBubble({
+        emoji: ev.emoji, title: ev.title, sub: ev.sub, body: ev.body, btn: ev.btn, kind: "seal",
+        fn: function () {
+          var pay = Math.max(200, Math.round(incomePerSec() * 60 * (1 + 0.5 * perkLvl(data, "caller"))));
+          data.coins += pay; data.earned += pay; data.runEarned += pay;
+          msgEl.textContent = "🦭 SEAL OF APPROVAL! +$" + fmtShort(pay) + "!";
+          addPopup(gates[0].x, gates[0].y, "+$" + fmtShort(pay) + " seal!", "#1e4a7a", 1.8);
+        }
+      });
     } else {
       showBubble({
         emoji: ev.emoji, title: ev.title, sub: ev.sub, body: ev.body, btn: ev.btn, kind: "famous",
         fn: function () {
-          data.coins += 150; data.earned += 150;
+          var bonus = Math.max(150, Math.round(incomePerSec() * 45 * (1 + 0.5 * perkLvl(data, "caller"))));
+          data.coins += bonus; data.earned += bonus; data.runEarned += bonus;
           fx = { kind: "famous", label: "👑 Famous ×2", mult: 2, t: 20, dur: 20 };
-          msgEl.textContent = "👑 A FAMOUS penguin visited! +$150! Income ×2 for 20s!";
-          addPopup(gates[0].x, gates[0].y, "+$150 famous visit!", "#8a5f14", 1.8);
+          msgEl.textContent = "👑 A FAMOUS penguin visited! +$" + fmtShort(bonus) + "! Income ×2 for 20s!";
+          addPopup(gates[0].x, gates[0].y, "+$" + fmtShort(bonus) + " famous visit!", "#8a5f14", 1.8);
         }
       });
     }
@@ -1542,6 +1873,7 @@ function startPenguinTycoon() {
     if (ips > 0) {
       data.coins += ips * dt;
       data.earned += ips * dt;
+      data.runEarned += ips * dt;
       popupTimer += dt;
       if (popupTimer > 2.2 && visitors.length > 0) {
         popupTimer = 0;
@@ -1613,7 +1945,7 @@ function startPenguinTycoon() {
     } else {
       eventTimer -= dt;
       if (eventTimer <= 0) {
-        eventTimer = 50 + Math.random() * 30;
+        eventTimer = (50 + Math.random() * 30) / (1 + 0.3 * perkLvl(data, "caller"));
         triggerEvent();
       }
     }
@@ -1642,11 +1974,12 @@ function startPenguinTycoon() {
     if (escaped && escaped.x === x && escaped.y === y) {
       remove_object(x, y);
       escaped = null;
-      data.coins += 50; data.earned += 50;
-      addPopup(x, y, "FOUND! +$50", "#1e7a4a", 1.6);
-      msgEl.textContent = "🐧 PENGUIN FOUND! +$50 bonus. Crisis averted.";
+      var found = Math.max(50, Math.round(incomePerSec() * 15 * (1 + 0.5 * perkLvl(data, "caller"))));
+      data.coins += found; data.earned += found; data.runEarned += found;
+      addPopup(x, y, "FOUND! +$" + fmtShort(found), "#1e7a4a", 1.6);
+      msgEl.textContent = "🐧 PENGUIN FOUND! +$" + fmtShort(found) + " bonus. Crisis averted.";
       blip(780, 0.15, "triangle"); setTimeout(function () { blip(1040, 0.2, "triangle"); }, 110);
-      eventTimer = 55 + Math.random() * 25;
+      eventTimer = (55 + Math.random() * 25) / (1 + 0.3 * perkLvl(data, "caller"));
       tycoonSave(data); refreshHUD();
       return;
     }
@@ -1654,7 +1987,7 @@ function startPenguinTycoon() {
       var p = penguins[i];
       if (!p.swim && p.x === x && p.y === y && p.pet <= 0) {
         p.pet = 1.2;
-        data.coins += 1; data.earned += 1;
+        data.coins += 1; data.earned += 1; data.runEarned += 1;
         addPopup(x, y, "+$1 ❤", "#c94a6a", 0.9);
         blip(900 + Math.random() * 200, 0.07, "sine");
         try { recordScore("tycoon", Math.floor(data.earned), "high"); } catch (err) {}
@@ -1667,13 +2000,14 @@ function startPenguinTycoon() {
   document.querySelector("#ptyBuildBtn").addEventListener("click", function () { openSheet("build"); blip(500, 0.08, "square"); });
   document.querySelector("#ptyPengBtn").addEventListener("click", function () { openSheet("peng"); blip(500, 0.08, "square"); });
   document.querySelector("#ptyUpBtn").addEventListener("click", function () { openSheet("up"); blip(500, 0.08, "square"); });
+  document.querySelector("#ptyPerkBtn").addEventListener("click", function () { openSheet("perk"); blip(500, 0.08, "square"); });
   document.querySelector("#ptyClose").addEventListener("click", function () { sheet.hidden = true; sheetTab = null; });
   document.querySelector("#ptyMute").addEventListener("click", function (e) {
     soundOn = !soundOn;
     e.currentTarget.textContent = soundOn ? "🔊 Sound on" : "🔇 Muted";
   });
   document.querySelector("#ptyReset").addEventListener("click", function () {
-    if (!window.confirm("Bulldoze the whole park and start over with 1 penguin?")) return;
+    if (!window.confirm("Bulldoze EVERYTHING — park, ❄ snowflakes, perks, migrations — and start over with 1 penguin?")) return;
     try { localStorage.removeItem(TYCOON_KEY); } catch (e) {}
     data = tycoonLoad();
     if (escaped) { try { remove_object(escaped.x, escaped.y); } catch (e) {} escaped = null; }
@@ -1689,6 +2023,7 @@ function startPenguinTycoon() {
     if (e.key === "1") openSheet("build");
     if (e.key === "2") openSheet("peng");
     if (e.key === "3") openSheet("up");
+    if (e.key === "4") openSheet("perk");
     if (e.key === "Escape" && !sheet.hidden) { sheet.hidden = true; sheetTab = null; }
   }
   document.addEventListener("keydown", keydown);
@@ -1717,9 +2052,47 @@ function startPenguinTycoon() {
   } catch (e) {}
   buildParkStatics();
   rebuildPenguins();
-  msgEl.textContent = totalTycoonPenguins(data) > 1
-    ? "Welcome back! " + totalTycoonPenguins(data) + " penguins missed you. Tap a penguin to pet it (+$1)."
-    : "One penguin. One dream. Tap it to pet it (+$1). Save $50 for penguin #2!";
+  // returning players: offline earnings (Moonlight perk) + a daily gift
+  var awayNote = "", giftNote = "";
+  var nowMs = Date.now();
+  var moonLvl = perkLvl(data, "moon");
+  if (data.lastSeen && moonLvl > 0) {
+    var moon = TYCOON_MOON[Math.min(moonLvl, TYCOON_MOON.length - 1)];
+    var awaySec = Math.min(Math.max(0, (nowMs - data.lastSeen) / 1000), moon.cap * 3600);
+    if (awaySec > 120) {
+      var ipsNow = tycoonBaseIncome(data) * tycoonMult(data);
+      var grant = Math.floor(ipsNow * moon.rate * awaySec);
+      if (grant > 0) {
+        data.coins += grant; data.earned += grant; data.runEarned += grant;
+        // pocket change gets banked silently; real hauls get a parade
+        if (grant >= Math.max(100, ipsNow * 120)) {
+          awayNote = "🌙 While you were away (" + fmtAway(awaySec) + "): +$" + fmtShort(grant) + "! ";
+        }
+      }
+    }
+  }
+  var todayStr = new Date().toDateString();
+  if (data.lastGiftDay !== todayStr && totalTycoonPenguins(data) > 0) {
+    var gift = Math.floor(300 * tycoonBaseIncome(data) * tycoonMult(data));
+    if (gift > 0) {
+      data.coins += gift; data.earned += gift; data.runEarned += gift;
+      data.lastGiftDay = todayStr;
+      giftNote = "🎁 Daily gift: +$" + fmtShort(gift) + "! ";
+    }
+  }
+  if (awayNote || giftNote) {
+    msgEl.textContent = "Welcome back! " + awayNote + giftNote;
+    showBubble({
+      emoji: "🌙", title: "WELCOME BACK!", sub: "THE FLOCK WAITED",
+      body: awayNote + giftNote + "Tap BUILD to keep growing.",
+      btn: "🐧 WADDLE ON"
+    });
+    tycoonSave(data);
+  } else {
+    msgEl.textContent = totalTycoonPenguins(data) > 1
+      ? "Welcome back! " + totalTycoonPenguins(data) + " penguins missed you. Tap a penguin to pet it (+$1)."
+      : "One penguin. One dream. Tap it to pet it (+$1). Save $50 for penguin #2!";
+  }
   refreshHUD();
   last = performance.now();
   raf = requestAnimationFrame(tick);
