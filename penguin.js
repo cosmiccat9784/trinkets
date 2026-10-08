@@ -542,8 +542,24 @@ function startPenguinParkour() {
 
   var canvas = document.querySelector("#penguinCanvas");
   var ctx = canvas.getContext("2d");
-  var W = canvas.width;
-  var H = canvas.height;
+  // Crisp rendering on HiDPI: keep logical 720x480 for game math, but
+  // back the canvas with device pixels so it isn't upscaled blurry.
+  var W = 720;
+  var H = 480;
+  try {
+    var DPR = Math.min(2, window.devicePixelRatio || 1);
+    if (DPR > 1) {
+      canvas.width = Math.round(W * DPR);
+      canvas.height = Math.round(H * DPR);
+      ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+    } else {
+      canvas.width = W;
+      canvas.height = H;
+    }
+  } catch (e) {
+    W = canvas.width;
+    H = canvas.height;
+  }
   var msg = document.querySelector("#pengMsg");
   var levelEl = document.querySelector("#pengLevel");
   var coinsEl = document.querySelector("#pengCoins");

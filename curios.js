@@ -26,8 +26,6 @@ function startMagnetMess() {
   let links = [];
   let raf = 0;
   let last = performance.now();
-  document.querySelector("#one1P").addEventListener("click", ()=>setTwoP(false));
-  document.querySelector("#one2P").addEventListener("click", ()=>setTwoP(true));
   const mag = { x: W / 2, y: H / 2, vx: 0, vy: 0, r: 26 };
   let grab = false;
   let grabDX = 0;
@@ -225,9 +223,13 @@ function startMagnetMess() {
 
   function toCanvas(e) {
     const rect = canvas.getBoundingClientRect();
+    const bl = (rect.width - canvas.clientWidth) / 2;
+    const bt = (rect.height - canvas.clientHeight) / 2;
+    const innerW = Math.max(1, rect.width - bl * 2);
+    const innerH = Math.max(1, rect.height - bt * 2);
     return {
-      x: (e.clientX - rect.left) * (W / rect.width),
-      y: (e.clientY - rect.top) * (H / rect.height)
+      x: (e.clientX - rect.left - bl) * (W / innerW),
+      y: (e.clientY - rect.top - bt) * (H / innerH)
     };
   }
 
@@ -586,7 +588,7 @@ function startCoinFlip() {
           <span class="game-stat">Tap the coin. Catch it mid-air. Double-tap to spin.</span>
         </div>
         <canvas class="coin-canvas" id="coinCanvas" width="720" height="420"></canvas>
-        <div class="word-panel coin-stats" id="coinStats"></div>
+        <div class="coin-stats" id="coinStats"></div>
         <div class="game-actions">
           <button class="game-action" id="coinFlipBtn" type="button">Flip</button>
           <button class="game-action" id="coinSpinBtn" type="button">Spin</button>
@@ -690,14 +692,18 @@ function startCoinFlip() {
 
   function toCanvas(e) {
     const rect = canvas.getBoundingClientRect();
+    const bl = (rect.width - canvas.clientWidth) / 2;
+    const bt = (rect.height - canvas.clientHeight) / 2;
+    const innerW = Math.max(1, rect.width - bl * 2);
+    const innerH = Math.max(1, rect.height - bt * 2);
     return {
-      x: (e.clientX - rect.left) * (W / rect.width),
-      y: (e.clientY - rect.top) * (H / rect.height)
+      x: (e.clientX - rect.left - bl) * (W / innerW),
+      y: (e.clientY - rect.top - bt) * (H / innerH)
     };
   }
 
   function coinHit(p) {
-    return Math.hypot(p.x - CX, p.y - coin.y) < R + 34;
+    return Math.hypot(p.x - CX, p.y - coin.y) < R + 60;
   }
 
   function onDown(e) {
@@ -733,11 +739,12 @@ function startCoinFlip() {
   }
 
   function onUp(e) {
-    if (coin.mode !== "idle" || coin.pressY === undefined) return;
-    const dy = coin.pressY - e.clientY;
+    if ((coin.mode !== "idle" && coin.mode !== "landed") || coin.pressY === undefined) return;
+    const dy = coin.pressY - (e.clientY ?? coin.pressY);
     const dt = Math.max(60, performance.now() - coin.pressT) / 1000;
     const strength = Math.min(1.8, Math.max(0.7, 0.9 + (dy / 300) * (0.35 / dt)));
     delete coin.pressY;
+    delete coin.pressT;
     flip(strength);
   }
 
@@ -877,9 +884,10 @@ function startCheeseThief() {
         </div>
         <p class="game-message" id="cheeseMsg">Drag the mouse. Grab cheese. Get home. Mind the light.</p>
         <canvas class="cheese-canvas" id="cheeseCanvas" width="720" height="480"></canvas>
+        <p class="game-message" id="cheeseHint">Drag / touch to sneak · WASD or arrows also work · carry each cheese to the dark hole · 3 strikes and the kitchen closes.</p>
         <div class="game-actions">
           <button class="game-action" id="cheeseRetry" type="button">Retry kitchen</button>
-          <button class="game-action" id="cheeseNext" type="button" hidden>Next kitchen</button>
+          <button class="game-action" id="cheeseNext" type="button" hidden>Next kitchen →</button>
         </div>
       </div>
     `
@@ -987,7 +995,7 @@ function startCheeseThief() {
       def.vacuum.dir = 1;
     }
     message.textContent = def.hint;
-    render();
+    if (state) draw();
   }
 
   function levelDef() {
@@ -1072,7 +1080,7 @@ function startCheeseThief() {
       return;
     }
     message.textContent = `${reason} Strikes: ${strikes}/3.`;
-    render();
+    draw();
   }
 
   function update(dt) {
@@ -1123,8 +1131,8 @@ function startCheeseThief() {
         }
       }
     }
-    if (seen && !cleared && state.protect <= 0) sus = Math.min(1, sus + dt * 1.4);
-    else sus = Math.max(0, sus - dt * 1.1);
+    if (seen && !cleared && state.protect <= 0) sus = Math.min(1, sus + dt * 1.15);
+    else sus = Math.max(0, sus - dt * 1.25);
     if (sus >= 1 && !cleared) {
       if (hurt("Spotted!")) return;
     }
@@ -1241,7 +1249,18 @@ function startCheeseThief() {
     ctx.fill();
   }
 
+  function rr(x, y, w, h, r) {
+    if (ctx.roundRect) {
+      ctx.beginPath();
+      ctx.roundRect(x, y, w, h, r);
+    } else {
+      ctx.beginPath();
+      ctx.rect(x, y, w, h);
+    }
+  }
+
   function draw() {
+    if (!state || !levelDef()) return;
     const def = levelDef();
     ctx.fillStyle = "#4a3524";
     ctx.fillRect(0, 0, W, H);
@@ -1263,8 +1282,7 @@ function startCheeseThief() {
       ctx.fillStyle = "#7a5c3e";
       ctx.strokeStyle = "#2e1f14";
       ctx.lineWidth = 3;
-      ctx.beginPath();
-      ctx.roundRect(f.x, f.y, f.w, f.h, 10);
+      rr(f.x, f.y, f.w, f.h, 10);
       ctx.fill();
       ctx.stroke();
       ctx.fillStyle = "rgba(255,255,255,0.12)";
@@ -1285,11 +1303,22 @@ function startCheeseThief() {
         ctx.setLineDash([]);
       }
     }
+    // Home hole with a warm pulsing glow so the goal is unmissable.
+    const holePulse = 0.5 + 0.5 * Math.sin(time * 3);
+    ctx.fillStyle = `rgba(246,196,69,${0.12 + holePulse * 0.12})`;
+    ctx.beginPath();
+    ctx.arc(def.hole.x, def.hole.y, 34 + holePulse * 4, 0, Math.PI * 2);
+    ctx.fill();
     ctx.fillStyle = "#0c0c14";
     ctx.beginPath();
     ctx.arc(def.hole.x, def.hole.y, 24, Math.PI, 0);
     ctx.fill();
     ctx.fillRect(def.hole.x - 24, def.hole.y - 4, 48, 8);
+    ctx.strokeStyle = "#f6c445";
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(def.hole.x, def.hole.y, 24, Math.PI, 0);
+    ctx.stroke();
     for (const lamp of def.lamps) {
       const ang = lamp.angle === undefined ? lamp.phase : lamp.angle;
       drawCone(lamp.x, lamp.y, ang, lamp.half, lamp.range, "rgba(255,240,180,0.28)");
@@ -1321,8 +1350,16 @@ function startCheeseThief() {
     }
     state.cheese.forEach((c, i) => {
       if (c.delivered) return;
-      const cx = state.carried === i ? state.player.x : c.x;
-      const cy = state.carried === i ? state.player.y - 24 : c.y;
+      const carried = state.carried === i;
+      const bob = carried ? 0 : Math.sin(time * 2.5 + c.x * 0.05 + c.y * 0.03) * 3;
+      const cx = carried ? state.player.x : c.x;
+      const cy = (carried ? state.player.y - 24 : c.y) + bob;
+      if (!carried) {
+        ctx.fillStyle = "rgba(246,196,69,0.22)";
+        ctx.beginPath();
+        ctx.arc(c.x, c.y, 20 + Math.sin(time * 3 + i) * 2, 0, Math.PI * 2);
+        ctx.fill();
+      }
       ctx.fillStyle = "#f6c445";
       ctx.strokeStyle = "#7a4a21";
       ctx.lineWidth = 2;
@@ -1333,6 +1370,16 @@ function startCheeseThief() {
       ctx.closePath();
       ctx.fill();
       ctx.stroke();
+      // Holes in the wedge + sparkle.
+      ctx.fillStyle = "#d9a92f";
+      ctx.beginPath();
+      ctx.arc(cx - 3, cy + 2, 2.2, 0, Math.PI * 2);
+      ctx.arc(cx + 4, cy + 4, 1.6, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = "rgba(255,255,255,0.7)";
+      ctx.beginPath();
+      ctx.arc(cx - 4, cy - 3, 1.8, 0, Math.PI * 2);
+      ctx.fill();
     });
     const p = state.player;
     if (def.cat && state.catPos) {
@@ -1355,8 +1402,7 @@ function startCheeseThief() {
       ctx.fillStyle = "#394354";
       ctx.strokeStyle = "#0f1320";
       ctx.lineWidth = 2;
-      ctx.beginPath();
-      ctx.roundRect(v.x - 22, v.y - 14, 44, 28, 8);
+      rr(v.x - 22, v.y - 14, 44, 28, 8);
       ctx.fill();
       ctx.stroke();
       ctx.fillStyle = "#ff6b6b";
@@ -1378,8 +1424,31 @@ function startCheeseThief() {
     ctx.fillRect(chef.pos.x - 10, chef.pos.y - 34, 20, 12);
     ctx.strokeRect(chef.pos.x - 10, chef.pos.y - 34, 20, 12);
   }
+  // Suspicion meter across the top so near-misses are readable.
+  if (sus > 0.02 && !cleared) {
+    ctx.fillStyle = "rgba(0,0,0,0.35)";
+    ctx.fillRect(14, 12, W - 28, 10);
+    ctx.fillStyle = sus > 0.6 ? "#ff6b6b" : "#f6c445";
+    ctx.fillRect(16, 14, (W - 32) * Math.min(1, sus), 6);
+  }
+  // Carried cheese count pips.
+  const done = state.cheese.filter((c) => c.delivered).length;
+  ctx.fillStyle = "rgba(0,0,0,0.35)";
+  ctx.font = "bold 13px sans-serif";
+  ctx.textAlign = "left";
+  ctx.textBaseline = "middle";
+  ctx.fillText(`🧀 ${done}/${state.cheese.length}${state.carried >= 0 ? " · carrying!" : ""}`, 16, 36);
   ctx.save();
-  if (state.protect > 0) ctx.globalAlpha = 0.55;
+  if (state.protect > 0) {
+    ctx.strokeStyle = `rgba(125,255,154,${0.5 + 0.4 * Math.sin(time * 6)})`;
+    ctx.lineWidth = 3;
+    ctx.setLineDash([6, 5]);
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, 22, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.globalAlpha = 0.75;
+  }
   ctx.fillStyle = "#9aa3b2";
     ctx.strokeStyle = "#0f1320";
     ctx.lineWidth = 2;
@@ -1388,11 +1457,23 @@ function startCheeseThief() {
     ctx.arc(p.x + 10, p.y - 12, 7, 0, Math.PI * 2);
     ctx.fill();
     ctx.stroke();
+    // Pink inner ears.
+    ctx.fillStyle = "#f4a7b9";
+    ctx.beginPath();
+    ctx.arc(p.x - 10, p.y - 12, 3, 0, Math.PI * 2);
+    ctx.arc(p.x + 10, p.y - 12, 3, 0, Math.PI * 2);
+    ctx.fill();
     ctx.fillStyle = "#b9c1cf";
     ctx.beginPath();
     ctx.arc(p.x, p.y, 14, 0, Math.PI * 2);
     ctx.fill();
     ctx.stroke();
+    // Eyes + nose face the carry direction.
+    ctx.fillStyle = "#0f1320";
+    ctx.beginPath();
+    ctx.arc(p.x - 4, p.y - 2, 2, 0, Math.PI * 2);
+    ctx.arc(p.x + 4, p.y - 2, 2, 0, Math.PI * 2);
+    ctx.fill();
     ctx.strokeStyle = "#7a8494";
     ctx.beginPath();
     ctx.moveTo(p.x + 12, p.y + 8);
@@ -1427,9 +1508,13 @@ function startCheeseThief() {
 
   function toCanvas(e) {
     const rect = canvas.getBoundingClientRect();
+    const bl = (rect.width - canvas.clientWidth) / 2;
+    const bt = (rect.height - canvas.clientHeight) / 2;
+    const innerW = Math.max(1, rect.width - bl * 2);
+    const innerH = Math.max(1, rect.height - bt * 2);
     return {
-      x: (e.clientX - rect.left) * (W / rect.width),
-      y: (e.clientY - rect.top) * (H / rect.height)
+      x: (e.clientX - rect.left - bl) * (W / innerW),
+      y: (e.clientY - rect.top - bt) * (H / innerH)
     };
   }
 
@@ -1464,6 +1549,7 @@ function startCheeseThief() {
   function keyup(e) {
     keys.delete(e.key);
   }
+  function blurKeys() { keys.clear(); dragging = false; }
 
   document.querySelector("#cheeseRetry").addEventListener("click", () => {
     score = scoreAtLevel;
@@ -1483,12 +1569,14 @@ function startCheeseThief() {
   });
   document.addEventListener("keydown", keydown);
   document.addEventListener("keyup", keyup);
+  window.addEventListener("blur", blurKeys);
   setSnapshot({ mode: "playing", game: "Cheese Thief", level: 1, score: 0, strikes: 0 });
   activeCleanup = () => {
     cancelAnimationFrame(raf);
     raf = 0;
     document.removeEventListener("keydown", keydown);
     document.removeEventListener("keyup", keyup);
+    window.removeEventListener("blur", blurKeys);
   };
   scoreAtLevel = 0;
   startLevel(0);
@@ -1742,8 +1830,10 @@ function startOneButton() {
     pressBtn2.style.display = on ? "" : "none";
     resetRun();
     message.textContent = on ? "P1: SPACE/W · P2: ↑ — last runner wins!" : "One button. Press to jump. That's the whole game. Probably.";
-    syncHud();
+    syncHudOne();
   }
+  document.querySelector("#one1P").addEventListener("click", () => setTwoP(false));
+  document.querySelector("#one2P").addEventListener("click", () => setTwoP(true));
 
   const QUIPS = [
     "SPLAT.",
@@ -2756,7 +2846,8 @@ function startOneButton() {
       const tw = ctx.measureText(banner.text).width + 44;
       ctx.fillStyle = "rgba(12,10,20,0.82)";
       ctx.beginPath();
-      ctx.roundRect(W / 2 - tw / 2, 22, tw, 44, 12);
+      if (ctx.roundRect) ctx.roundRect(W / 2 - tw / 2, 22, tw, 44, 12);
+      else ctx.rect(W / 2 - tw / 2, 22, tw, 44);
       ctx.fill();
       ctx.fillStyle = "#f6c445";
       ctx.textBaseline = "middle";

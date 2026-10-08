@@ -118,7 +118,10 @@ function startGravityBall() {
   let gScale = 1;
   let grounded = null; // null | "floor" | "ceil"
   let coyote = 0; // brief grace to flip just after rolling off an edge
-  const COYOTE_TIME = 0.09;
+  const COYOTE_TIME = 0.18;
+  let flipBuffer = 0;
+  let flipBuffer2 = 0;
+  const FLIP_BUFFER_TIME = 0.18;
   let speed = 265;
   let score = 0;
   let flips = 0;
@@ -472,6 +475,8 @@ function startGravityBall() {
     gScale2 = 1;
     coyote2 = 0;
     grounded2 = toReady ? null : "floor";
+    flipBuffer = 0;
+    flipBuffer2 = 0;
     alive1 = true;
     alive2 = twoP;
     distAtDeath1 = 0;
@@ -569,6 +574,33 @@ function startGravityBall() {
     syncHud();
   }
 
+  function doFlipVisual(who) {
+    if (twoP) {
+      if (who===1) {
+        grav2 = grav2 === 1 ? -1 : 1;
+        grounded2 = null; coyote2 = 0; flipBuffer2 = 0;
+        vy2 = vy2 * 0.25 + grav2 * KICK * 0.4;
+        flipFlash2 = 0.16;
+        burst(PX2, playerY2, 6, grav2 === 1 ? "#a5d8ff" : "#ffc078", 120);
+      } else {
+        grav = grav === 1 ? -1 : 1;
+        grounded = null; coyote = 0; flipBuffer = 0;
+        vy = vy * 0.25 + grav * KICK * 0.4;
+        flipFlash = 0.16;
+        burst(PX1, playerY, 6, grav === 1 ? "#a5d8ff" : "#ffc078", 120);
+      }
+    } else {
+      grav = grav === 1 ? -1 : 1;
+      grounded = null; coyote = 0; flipBuffer = 0;
+      vy = vy * 0.25 + grav * KICK * 0.4;
+      flipFlash = 0.16;
+      burst(PX, playerY, 6, grav === 1 ? "#a5d8ff" : "#ffc078", 120);
+    }
+    flips += 1;
+    if (stageFor(distM()) >= 5) shake = Math.max(shake, 5);
+    if (flips > bestFlips) bestFlips = flips;
+  }
+
   function flip(idx) {
     const who = (idx===1 ? 1 : 0);
     if (twoP && !(who===0 ? alive1 : alive2)) return;
@@ -579,38 +611,32 @@ function startGravityBall() {
       syncHud();
       return;
     }
-    if (mode !== "playing") return;
-    if (twoP) {
-      if (who===1) {
-        if (grounded2 === null && coyote2 <= 0) return;
-        grav2 = grav2 === 1 ? -1 : 1;
-        grounded2 = null; coyote2 = 0;
-        vy2 = vy2 * 0.25 + grav2 * KICK * 0.4;
-        flipFlash2 = 0.16;
-        burst(PX2, playerY2, 6, grav2 === 1 ? "#a5d8ff" : "#ffc078", 120);
-      } else {
-        if (grounded === null && coyote <= 0) return;
-        grav = grav === 1 ? -1 : 1;
-        grounded = null; coyote = 0;
-        vy = vy * 0.25 + grav * KICK * 0.4;
-        flipFlash = 0.16;
-        burst(PX1, playerY, 6, grav === 1 ? "#a5d8ff" : "#ffc078", 120);
+    if (mode === "dead") {
+      // Clicks while dead restart — previously they were silently dropped.
+      if (deadAge > 0.5) {
+        resetRun(false);
+        message.textContent = "Ride the platforms. Flip before the edge — mid-air won't save you!";
+        showBanner("ROLL · TAP TO FLIP · LAND IT");
+        syncHud();
       }
-      flips += 1;
-      if (stageFor(distM()) >= 5) shake = Math.max(shake, 5);
-      if (flips > bestFlips) bestFlips = flips;
       return;
     }
-    if (grounded === null && coyote <= 0) return;
-    grav = grav === 1 ? -1 : 1;
-    flips += 1;
-    grounded = null;
-    coyote = 0;
-    vy = vy * 0.25 + grav * KICK * 0.4;
-    flipFlash = 0.16;
-    if (stageFor(distM()) >= 5) shake = Math.max(shake, 5);
-    burst(PX, playerY, 6, grav === 1 ? "#a5d8ff" : "#ffc078", 120);
-    if (flips > bestFlips) bestFlips = flips;
+    if (mode !== "playing") return;
+    const canFlip = twoP
+      ? (who===1 ? (grounded2 !== null || coyote2 > 0) : (grounded !== null || coyote > 0))
+      : (grounded !== null || coyote > 0);
+    if (canFlip) {
+      doFlipVisual(who);
+      return;
+    }
+    // Buffer mid-air taps so a slightly-early click still flips on landing.
+    if (twoP) {
+      if (who===1) flipBuffer2 = FLIP_BUFFER_TIME;
+      else flipBuffer = FLIP_BUFFER_TIME;
+    } else {
+      flipBuffer = FLIP_BUFFER_TIME;
+    }
+    message.textContent = "Only while rolling — buffered for landing!";
   }
 
   function milestone(d) {
@@ -857,15 +883,20 @@ function startGravityBall() {
     swayAmp += (swayTarget - swayAmp) * Math.min(1, dt * 1.5);
     swayOff = swayAmp * Math.sin(time * 1.8);
 
+    if (flipBuffer > 0) flipBuffer = Math.max(0, flipBuffer - dt);
+    if (flipBuffer2 > 0) flipBuffer2 = Math.max(0, flipBuffer2 - dt);
     if (!twoP) {
       const ok = stepBall(0, dt, d, st);
       if (!ok) return;
+      if (flipBuffer > 0 && grounded !== null && mode === "playing") doFlipVisual(0);
     } else {
       const aliveBefore1 = alive1;
       const aliveBefore2 = alive2;
       if (alive1) { const ok = stepBall(0, dt, d, st); if (!ok && !alive1 && !alive2) return; }
       if (alive2) { const ok = stepBall(1, dt, d, st); if (!ok && !alive1 && !alive2) return; }
       if (!alive1 && !alive2) return;
+      if (flipBuffer > 0 && grounded !== null && alive1 && mode === "playing") doFlipVisual(0);
+      if (flipBuffer2 > 0 && grounded2 !== null && alive2 && mode === "playing") doFlipVisual(1);
     }
 
     // coins (shared pool)

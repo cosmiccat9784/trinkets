@@ -1117,8 +1117,14 @@ body.embed {
 .coin-stats {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(90px, 1fr));
-  gap: 10px;
-  padding: 14px;
+  gap: 8px;
+  width: min(100%, 560px);
+  margin: 0 auto;
+  padding: 8px 10px;
+  background: white;
+  border: 3px solid var(--line);
+  border-radius: 8px;
+  box-shadow: 4px 4px 0 var(--line);
 }
 
 .coin-stat {
@@ -1142,8 +1148,10 @@ body.embed {
   display: grid;
   grid-template-columns: repeat(6, minmax(0, 1fr));
   gap: 6px;
-  width: min(100%, 360px, calc(100dvh - 560px));
+  width: min(100%, 360px, max(220px, calc(100dvh - 560px)));
   margin: 0 auto;
+  padding: 6px;
+  justify-self: center;
   touch-action: none;
   user-select: none;
   -webkit-user-select: none;
@@ -1195,11 +1203,15 @@ body.embed {
 .nm-panel {
   display: grid;
   gap: 12px;
+  justify-items: center;
+  width: min(100%, 560px);
+  margin: 0 auto;
   padding: 16px;
   background: linear-gradient(135deg, #d4d9e1 0%, #a9b0bc 100%);
   border: 3px solid var(--line);
   border-radius: 12px;
   box-shadow: 6px 6px 0 var(--line);
+  text-align: center;
 }
 
 .nm-readout {
@@ -1238,9 +1250,14 @@ body.embed {
 
 .nm-controls {
   display: grid;
-  grid-template-columns: repeat(6, 1fr);
+  grid-template-columns: repeat(6, minmax(44px, 1fr));
   gap: 10px;
   align-items: center;
+  justify-items: center;
+  justify-content: center;
+  width: 100%;
+  max-width: 480px;
+  margin: 0 auto;
 }
 
 .nm-btn {
@@ -1302,11 +1319,13 @@ body.embed {
 
 .nm-topline {
   display: flex;
-  justify-content: space-between;
-  gap: 10px;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 10px 22px;
   font-size: 0.85rem;
   font-weight: 800;
   color: #2b3547;
+  text-align: center;
 }
 
 .magnet-art {
@@ -1586,9 +1605,10 @@ body.embed {
 
 .spider-canvas {
   display: block;
-  width: min(100%, 720px, calc((100dvh - 460px) * 3 / 2));
+  width: min(100%, 720px, max(280px, calc((100dvh - 460px) * 3 / 2)));
   aspect-ratio: 3 / 2;
   margin: 0 auto;
+  justify-self: center;
   border: 3px solid var(--line);
   border-radius: 12px;
   box-shadow: 8px 8px 0 var(--line);
@@ -1656,7 +1676,8 @@ body.embed {
 
 .flappy-canvas {
   display: block;
-  width: min(100%, 720px, calc((100dvh - 460px) * 3 / 2));
+  width: min(100%, 720px, max(280px, calc((100dvh - 460px) * 3 / 2)));
+  justify-self: center;
   aspect-ratio: 3 / 2;
   margin: 0 auto;
   border: 3px solid var(--line);
@@ -1784,7 +1805,8 @@ body.embed {
 
 .zigzag-canvas {
   display: block;
-  width: min(100%, 720px, calc((100dvh - 460px) * 3 / 2));
+  width: min(100%, 720px, max(280px, calc((100dvh - 460px) * 3 / 2)));
+  justify-self: center;
   aspect-ratio: 3 / 2;
   margin: 0 auto;
   border: 3px solid var(--line);
@@ -1901,7 +1923,8 @@ body.embed {
 
 .gravball-canvas {
   display: block;
-  width: min(100%, 720px, calc((100dvh - 460px) * 3 / 2));
+  width: min(100%, 720px, max(280px, calc((100dvh - 460px) * 3 / 2)));
+  justify-self: center;
   aspect-ratio: 3 / 2;
   margin: 0 auto;
   border: 3px solid var(--line);
@@ -2236,20 +2259,23 @@ body.embed {
 
 .penguin-canvas {
   display: block;
-  width: min(100%, 720px, calc((100dvh - 380px) * 3 / 2));
+  width: min(100%, 720px, max(280px, calc((100dvh - 380px) * 3 / 2)));
   aspect-ratio: 3 / 2;
   margin: 0 auto;
+  justify-self: center;
   border: 3px solid var(--line);
   border-radius: 12px;
   box-shadow: 8px 8px 0 var(--line);
   background: #8ecae6;
   touch-action: none;
+  image-rendering: auto;
 }
 
 .penguin-stage {
   position: relative;
-  width: min(100%, 720px, calc((100dvh - 380px) * 3 / 2));
+  width: min(100%, 720px, max(280px, calc((100dvh - 380px) * 3 / 2)));
   margin: 0 auto;
+  justify-self: center;
 }
 
 .penguin-touch {
@@ -3032,6 +3058,8 @@ body.embed {
   grid-template-columns: minmax(0, 1fr) 220px;
   gap: 12px;
   align-items: start;
+  justify-items: center;
+  justify-content: center;
   width: min(100%, 940px);
   margin: 0 auto;
   contain: layout;
@@ -3060,27 +3088,32 @@ body.embed {
   width: 100%;
   margin: 0;
 }
-/* Lock chrome so message/stats never push the canvas */
+/* Defence chrome stays centered and wraps instead of clipping. */
 .game-layout:has(.defence-canvas) .game-topline {
-  flex-wrap: nowrap;
-  height: 42px;
-  min-height: 42px;
-  max-height: 42px;
-  overflow: hidden;
+  flex-wrap: wrap;
+  justify-content: center;
   align-items: center;
+  min-height: 42px;
+  overflow: visible;
 }
 .game-layout:has(.defence-canvas) .game-stat {
-  flex-shrink: 0;
-  white-space: nowrap;
+  flex-shrink: 1;
+  white-space: normal;
+  text-align: center;
 }
 .game-layout:has(.defence-canvas) .game-message {
-  height: 22px;
   min-height: 22px;
-  max-height: 22px;
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-  line-height: 22px;
+  overflow: visible;
+  white-space: normal;
+  text-overflow: clip;
+  line-height: 1.4;
+  text-align: center;
+  max-width: 640px;
+  margin-left: auto;
+  margin-right: auto;
+}
+.game-layout:has(.defence-canvas) .game-actions {
+  justify-content: center;
 }
 .game-layout:has(.defence-canvas) .defence-stage,
 .game-layout:has(.defence-canvas) .defence-canvas {
@@ -3209,13 +3242,23 @@ select.game-input {
 .game-layout {
   display: grid;
   gap: 18px;
+  padding: 6px 4px 10px;
+  justify-items: center;
+  text-align: center;
+}
+
+.game-layout > * {
+  max-width: 100%;
+  min-width: 0;
 }
 
 .game-topline {
   display: flex;
   flex-wrap: wrap;
-  justify-content: space-between;
+  justify-content: center;
+  align-items: center;
   gap: 12px;
+  text-align: center;
 }
 
 .game-stat {
@@ -3233,16 +3276,23 @@ select.game-input {
 
 .game-message {
   min-height: 32px;
-  margin: 0;
+  margin: 0 auto;
+  max-width: 640px;
   color: #394354;
   font-weight: 800;
   line-height: 1.45;
+  text-align: center;
+  padding: 4px 12px;
 }
 
 .game-actions {
   display: flex;
   flex-wrap: wrap;
   gap: 10px;
+  justify-content: center;
+  align-items: center;
+  padding: 8px 6px;
+  text-align: center;
 }
 
 .game-action {
@@ -3272,17 +3322,21 @@ select.game-input {
 
 .pipe-grid {
   grid-template-columns: repeat(5, minmax(0, 1fr));
-  width: min(100%, 412px, calc(100dvh - 420px));
+  width: min(100%, 412px, max(200px, calc(100dvh - 420px)));
   margin: 0 auto;
+  padding: 8px;
+  overflow: visible;
 }
 
 .pipe-tile {
   aspect-ratio: 1;
   min-width: 0;
+  min-height: 0;
   padding: 0;
   background: white;
   box-shadow: 4px 4px 0 var(--line);
   font-size: clamp(1.5rem, 6vw, 2.4rem);
+  overflow: visible;
 }
 
 .pipe-tile.start,
@@ -3387,32 +3441,62 @@ select.game-input {
 .arcade-canvas {
   display: block;
   touch-action: none;
-  width: min(100%, 720px, calc((100dvh - 380px) * 4 / 3));
+  width: min(100%, 720px, max(280px, calc((100dvh - 380px) * 4 / 3)));
   aspect-ratio: 4 / 3;
   margin: 0 auto;
+  justify-self: center;
   background: #fff8ea;
   border: 3px solid var(--line);
   border-radius: 8px;
   box-shadow: 8px 8px 0 var(--line);
+  cursor: crosshair;
 }
 
 .word-panel,
 .clue-panel {
   display: grid;
   gap: 16px;
+  justify-items: center;
   max-width: 720px;
+  width: min(100%, 720px);
   margin: 0 auto;
   padding: 20px;
   background: white;
   border: 3px solid var(--line);
   border-radius: 8px;
   box-shadow: 7px 7px 0 var(--line);
+  text-align: center;
+}
+
+.word-panel > *,
+.clue-panel > * {
+  width: 100%;
+  max-width: 100%;
 }
 
 .word-row {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
+  justify-content: center;
+  align-items: center;
+}
+
+.word-panel .game-actions,
+.clue-panel .game-actions {
+  justify-content: center;
+}
+
+.word-panel .game-message,
+.clue-panel .game-message {
+  text-align: center;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.word-panel .tag,
+.clue-panel .tag {
+  text-align: center;
 }
 
 .letter-box {
@@ -3776,13 +3860,18 @@ select.game-input {
   grid-template-columns: repeat(3, minmax(0, 1fr));
   width: min(100%, 362px);
   margin: 0 auto;
+  padding: 8px;
+  overflow: visible;
 }
 
 .bash-button {
   aspect-ratio: 1;
+  min-width: 0;
+  min-height: 0;
   background: white;
   box-shadow: 5px 5px 0 var(--line);
   font-size: 1.5rem;
+  overflow: visible;
 }
 
 .bash-button.lit {
@@ -3821,7 +3910,7 @@ select.game-input {
 
 .t-board-wrap {
   position: relative;
-  width: min(100%, 560px, calc(100dvh - 560px));
+  width: min(100%, 440px, max(240px, calc(100dvh - 560px)));
   aspect-ratio: 1;
   margin: 0 auto;
   padding: 14px;
@@ -3829,14 +3918,19 @@ select.game-input {
   border: 3px solid var(--line);
   border-radius: 8px;
   touch-action: none;
+  justify-self: center;
 }
 
 .t-pad {
   display: grid;
   grid-template-columns: repeat(3, 52px);
+  grid-auto-rows: 48px;
   justify-content: center;
+  justify-items: stretch;
   gap: 8px;
   margin: 0 auto;
+  width: max-content;
+  max-width: 100%;
 }
 
 .t-pad-button {
@@ -3861,6 +3955,31 @@ select.game-input {
 }
 
 .t-pad-button[data-dir="right"] {
+  grid-column: 3;
+  grid-row: 2;
+}
+
+/* Orchard Go (data-step) and Ice Cube (data-ice) share the .t-pad D-pad. */
+.t-pad-button[data-step="up"],
+.t-pad-button[data-ice="up"] {
+  grid-column: 2;
+  grid-row: 1;
+}
+
+.t-pad-button[data-step="left"],
+.t-pad-button[data-ice="left"] {
+  grid-column: 1;
+  grid-row: 2;
+}
+
+.t-pad-button[data-step="down"],
+.t-pad-button[data-ice="down"] {
+  grid-column: 2;
+  grid-row: 2;
+}
+
+.t-pad-button[data-step="right"],
+.t-pad-button[data-ice="right"] {
   grid-column: 3;
   grid-row: 2;
 }
@@ -4089,8 +4208,20 @@ select.game-input {
 
 .toybox-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
   gap: 14px;
+  width: 100%;
+  max-width: 860px;
+  margin: 0 auto;
+  justify-items: stretch;
+}
+
+.toybox-pager {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 6px 4px;
 }
 
 .toybox-toy {
@@ -4596,9 +4727,11 @@ select.game-input {
 .bw-sheet {
   --bw-cols: 12;
   display: grid;
-  grid-template-columns: repeat(var(--bw-cols), 1fr);
+  grid-template-columns: repeat(var(--bw-cols), minmax(0, 1fr));
   gap: 6px;
-  width: min(100%, 640px, calc((100dvh - 380px) * 1.75));
+  width: min(100%, 640px, max(280px, calc((100dvh - 380px) * 1.75)));
+  max-width: 100%;
+  max-height: min(58dvh, 520px);
   margin: 0 auto;
   padding: 14px;
   background: #fdeef0;
@@ -4609,6 +4742,10 @@ select.game-input {
   user-select: none;
   -webkit-user-select: none;
   -webkit-touch-callout: none;
+  overflow: auto;
+  overflow-x: hidden;
+  box-sizing: border-box;
+  justify-self: center;
 }
 
 .bw-cell {
@@ -4645,8 +4782,9 @@ select.game-input {
 
 .zen-stage {
   position: relative;
-  width: min(100%, 720px, calc((100dvh - 360px) * 12 / 7));
+  width: min(100%, 720px, max(280px, calc((100dvh - 360px) * 12 / 7)));
   margin: 0 auto;
+  justify-self: center;
   border: 3px solid var(--line);
   border-radius: 12px;
   box-shadow: 8px 8px 0 var(--line);
@@ -4659,6 +4797,7 @@ select.game-input {
   width: 100%;
   height: auto;
   cursor: crosshair;
+  touch-action: none;
 }
 
 .zen-fx {
@@ -4697,20 +4836,22 @@ select.game-input {
 
 .grav-canvas {
   display: block;
-  width: min(100%, 720px, calc((100dvh - 380px) * 3 / 2));
+  width: min(100%, 720px, max(280px, calc((100dvh - 380px) * 3 / 2)));
   aspect-ratio: 3 / 2;
   margin: 0 auto;
+  justify-self: center;
   border: 3px solid var(--line);
   border-radius: 12px;
   background: #131a2b;
   box-shadow: 8px 8px 0 var(--line);
-  cursor: pointer;
+  cursor: crosshair;
   touch-action: none;
 }
 
 .spiro-canvas {
   display: block;
-  width: min(100%, 520px, calc(100dvh - 460px));
+  width: min(100%, 520px, max(240px, calc(100dvh - 460px)));
+  justify-self: center;
   aspect-ratio: 1;
   margin: 0 auto;
   border: 3px solid var(--line);
@@ -4755,8 +4896,10 @@ select.game-input {
   display: grid;
   grid-template-columns: repeat(7, minmax(0, 1fr));
   gap: 6px;
-  width: min(100%, 400px, calc(100dvh - 500px));
+  width: min(100%, 400px, max(220px, calc(100dvh - 500px)));
   margin: 0 auto;
+  padding: 6px;
+  justify-self: center;
   touch-action: none;
   user-select: none;
   -webkit-user-select: none;
@@ -5506,6 +5649,8 @@ footer p {
   display: grid;
   place-items: center;
   min-height: 76px;
+  width: min(100%, 560px);
+  margin: 0 auto;
   padding: 10px 14px;
   background: #0058a3;
   border: 3px solid var(--line);
@@ -5516,10 +5661,27 @@ footer p {
   font-weight: 900;
   letter-spacing: 0.06em;
   text-align: center;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .ikea-choices {
+  display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  width: min(100%, 560px);
+  margin: 0 auto;
+  min-width: 0;
+}
+
+.ikea-choices .choice-button {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  white-space: normal;
+  text-align: center;
+  justify-content: center;
+  line-height: 1.3;
 }
 
 @media (max-width: 560px) {
@@ -6443,7 +6605,8 @@ footer p {
 /* ── Magnet Mayhem ── */
 .mayhem-canvas {
   display: block;
-  width: min(100%, 720px, calc((100dvh - 460px) * 3 / 2));
+  width: min(100%, 720px, max(280px, calc((100dvh - 460px) * 3 / 2)));
+  justify-self: center;
   aspect-ratio: 3 / 2;
   margin: 0 auto;
   border: 3px solid var(--line);
@@ -6559,8 +6722,8 @@ footer p {
 @keyframes ludo-shake { 0% { transform: rotate(-12deg) scale(1.1); } 50% { transform: rotate(12deg) scale(0.95); } 100% { transform: rotate(-12deg) scale(1.1); } }
 .ludo-roll { background: var(--coral); color: #fff; }
 .ludo-roll:disabled { opacity: 0.45; cursor: default; transform: none; }
-.ludo-mid { display: flex; gap: 14px; align-items: flex-start; justify-content: center; flex-wrap: wrap; }
-.ludo-board { position: relative; width: min(100%, 440px, calc((100dvh - 390px))); min-width: 240px; aspect-ratio: 1; border: 3px solid var(--line); border-radius: 12px; overflow: hidden; box-shadow: 8px 8px 0 var(--line); background: #fffdf6; flex: none; }
+.ludo-mid { display: flex; gap: 14px; align-items: center; justify-content: center; flex-wrap: wrap; }
+.ludo-board { position: relative; width: min(100%, 440px, max(240px, calc((100dvh - 390px)))); min-width: 240px; aspect-ratio: 1; border: 3px solid var(--line); border-radius: 12px; overflow: hidden; box-shadow: 8px 8px 0 var(--line); background: #fffdf6; flex: 0 1 440px; margin: 0 auto; }
 .ludo-grid { position: absolute; inset: 0; display: grid; grid-template-columns: repeat(15, 1fr); grid-template-rows: repeat(15, 1fr); }
 .ludo-cell { border: 1px solid rgba(39,49,63,0.18); display: grid; place-items: center; font-size: clamp(6px, 1.6vw, 12px); font-weight: 900; }
 .ludo-cell.track { background: #fff; }
@@ -6591,7 +6754,7 @@ footer p {
 @keyframes ludo-pulse { 0%, 100% { box-shadow: 0 0 0 3px #fff, 0 0 0 5px var(--gold), 1px 1px 0 var(--line); } 50% { box-shadow: 0 0 0 3px #fff, 0 0 0 7px var(--gold), 1px 1px 0 var(--line); } }
 .ludo-pieces.capture-flash { animation: ludo-flash 0.45s ease; }
 @keyframes ludo-flash { 0%, 100% { filter: none; } 50% { filter: brightness(1.6) saturate(1.6); } }
-.ludo-side { display: grid; gap: 10px; width: min(100%, 300px); flex: 1 1 220px; }
+.ludo-side { display: grid; gap: 10px; width: min(100%, 300px); flex: 1 1 220px; justify-items: center; text-align: center; }
 .ludo-players { display: grid; gap: 6px; }
 .ludo-player { display: flex; justify-content: space-between; gap: 8px; padding: 6px 10px; background: white; border: 3px solid var(--line); border-radius: 8px; font-weight: 900; font-size: 0.82rem; box-shadow: 3px 3px 0 var(--line); }
 .ludo-player.active { outline: 3px solid var(--gold); }
@@ -6617,9 +6780,10 @@ footer p {
 /* ── Trinkets Tag ── */
 .tag-canvas {
   display: block;
-  width: min(100%, 720px, calc((100dvh - 560px) * 3 / 2));
+  width: min(100%, 720px, max(280px, calc((100dvh - 560px) * 3 / 2)));
   aspect-ratio: 3 / 2;
   margin: 0 auto;
+  justify-self: center;
   border: 3px solid var(--line);
   border-radius: 12px;
   box-shadow: 8px 8px 0 var(--line);
@@ -6639,7 +6803,10 @@ footer p {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
+  justify-content: center;
   gap: 6px;
+  text-align: center;
+  padding: 4px 6px;
 }
 
 .tag-label {
@@ -6779,12 +6946,13 @@ body.embed .game-layout {
   min-width: 0;
   display: flex !important;
   flex-direction: column !important;
-  gap: 0 !important;
-  padding: 0 !important;
+  gap: 10px !important;
+  padding: 10px 12px 12px !important;
   margin: 0 !important;
   width: 100% !important;
   max-width: none !important;
   overflow: hidden !important;
+  align-items: center;
 }
 
 .game-topline,
@@ -6841,12 +7009,16 @@ body.embed .game-layout {
 .game-message {
   flex: 0 0 auto;
   min-height: 0 !important;
+  max-width: 640px;
+  margin-left: auto !important;
+  margin-right: auto !important;
   padding: 4px 12px !important;
   font-size: 0.85rem !important;
-  line-height: 1.3 !important;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  line-height: 1.4 !important;
+  white-space: normal;
+  overflow: visible;
+  text-overflow: clip;
+  text-align: center !important;
 }
 
 .game-actions,
@@ -6854,7 +7026,9 @@ body.embed .game-layout {
 .pty-sub,
 .spiro-sliders,
 .zen-actions {
-  padding: 8px 12px !important;
+  padding: 10px 12px !important;
+  justify-content: center !important;
+  text-align: center !important;
 }
 
 .game-actions:last-child,
@@ -6893,8 +7067,6 @@ body.embed .game-layout {
 .game-layout .penguin-stage,
 .game-layout .defence-canvas,
 .game-layout .defence-stage,
-.game-layout .toybox-grid,
-.game-layout .bw-sheet,
 .game-layout .ludo-main,
 .game-layout .ludo-mid,
 .powder-canvas-wrap > .powder-canvas {
@@ -6926,28 +7098,50 @@ body.embed .game-layout {
   min-height: 0 !important;
 }
 
-/* Grid / board puzzlers: fit height, keep square cells, centered */
+/* Toybox single window + Bubble Wrap sheet stay contained with internal
+   scroll instead of overflowing the modal. */
+.game-layout .toybox-grid {
+  flex: 0 1 auto !important;
+  width: min(100%, 860px) !important;
+  max-height: 100% !important;
+  margin: 0 auto !important;
+  overflow: auto !important;
+  padding: 4px !important;
+}
+
+.game-layout .bw-sheet {
+  flex: 0 1 auto !important;
+  width: min(100%, 640px) !important;
+  max-height: 100% !important;
+  margin: 0 auto !important;
+  overflow: auto !important;
+}
+
+/* Grid / board puzzlers: fit height, keep square cells, centered.
+   Keep overflow visible + breathing room so tile shadows and focus
+   rings are not clipped (Switchback / Button Bash cutoff fix). */
 .game-layout .pipe-grid,
 .game-layout .maze-grid,
 .game-layout .bash-grid,
 .game-layout .ice-grid,
 .game-layout .orch-grid,
 .game-layout .ludo-board {
-  flex: 1 1 0 !important;
+  flex: 0 1 auto !important;
   min-height: 0 !important;
-  height: 100% !important;
+  height: auto !important;
   max-height: 100% !important;
   width: auto !important;
-  max-width: 100% !important;
+  max-width: min(100%, 440px) !important;
   aspect-ratio: 1 !important;
   margin: auto !important;
-  overflow: hidden !important;
+  padding: 6px !important;
+  overflow: visible !important;
 }
 
 /* 2048: always stay square, viewport-capped (RULES law: no scroll, d-pad visible) */
 .game-layout .t-board-wrap {
   flex: 0 0 auto !important;
-  width: min(calc(100% - 16px), 560px, calc(100dvh - 560px)) !important;
+  width: min(calc(100% - 16px), 440px, max(240px, calc(100dvh - 560px))) !important;
   height: auto !important;
   max-height: 100% !important;
   aspect-ratio: 1 !important;

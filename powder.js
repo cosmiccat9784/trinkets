@@ -81,6 +81,7 @@ function startPowderSim() {
     nextGrid = new Uint8Array(cols * rows);
     life = new Int16Array(cols * rows);
     targeted = new Uint8Array(cols * rows);
+    cachedCount = 0;
   }
 
   function idx(x, y) { return y * cols + x; }
@@ -130,13 +131,23 @@ function startPowderSim() {
     return false;
   }
 
+  let cachedCount = 0;
+  let frame = 0;
+  const MAX_PARTICLES = 22000;
+
   function step() {
     nextGrid.set(grid);
     targeted.fill(0);
     for (let y = rows - 1; y >= 0; y--) {
-      for (let x = 0; x < cols; x++) {
+      // Alternate scan direction per row to avoid left-to-right bias
+      // (otherwise contested cells are always won by the left claimant,
+      // which made liquids drift right).
+      const ltr = ((y + frame) & 1) === 0;
+      for (let xi = 0; xi < cols; xi++) {
+        const x = ltr ? xi : cols - 1 - xi;
         const type = grid[idx(x, y)];
         if (type === 0 || type === STONE || type === OBSIDIAN) continue;
+        if (targeted[idx(x, y)]) continue;
         if (type === SAND) stepSand(x, y);
         else if (type === WATER) stepLiquid(x, y, WATER);
         else if (type === ACID) stepLiquid(x, y, ACID);
@@ -151,6 +162,8 @@ function startPowderSim() {
     const tmp = grid;
     grid = nextGrid;
     nextGrid = tmp;
+    // Acid dissolving merged here would cost another pass; keep it sparse:
+    // only scan when acid exists (checked via cheap flag below in animate).
   }
 
   function stepSand(x, y) {
@@ -165,7 +178,13 @@ function startPowderSim() {
     const dir = Math.random() < 0.5 ? -1 : 1;
     if (tryMove(x, y, x + dir, y + 1)) return;
     if (tryMove(x, y, x - dir, y + 1)) return;
-    if (Math.random() < 0.35) {
+    // Symmetric lateral spread: try both sides in random order so there
+    // is no systematic rightward drift.
+    if (Math.random() < 0.5) {
+      if (tryMove(x, y, x + dir, y)) return;
+      if (tryMove(x, y, x - dir, y)) return;
+    } else {
+      if (tryMove(x, y, x - dir, y)) return;
       if (tryMove(x, y, x + dir, y)) return;
     }
   }
@@ -211,7 +230,14 @@ function startPowderSim() {
     if (tryMove(x, y, x, y - 1)) return;
     const dir = Math.random() < 0.5 ? -1 : 1;
     if (tryMove(x, y, x + dir, y - 1)) return;
-    if (tryMove(x, y, x + dir, y)) return;
+    if (tryMove(x, y, x - dir, y - 1)) return;
+    if (Math.random() < 0.5) {
+      if (tryMove(x, y, x + dir, y)) return;
+      if (tryMove(x, y, x - dir, y)) return;
+    } else {
+      if (tryMove(x, y, x - dir, y)) return;
+      if (tryMove(x, y, x + dir, y)) return;
+    }
   }
 
   function stepPlant(x, y) {
@@ -323,6 +349,13 @@ function startPowderSim() {
   function isType(x, y, t) { return getCell(x, y) === t; }
 
   function paint(cx, cy) {
+    // Particle budget: refuse new particles once over cap so the sim
+    // stays interactive past 20k particles.
+    if (selectedElement !== 0 && cachedCount >= MAX_PARTICLES) {
+      const el = document.querySelector("#powderCount");
+      if (el) el.textContent = cachedCount + " particles (cap — erase or clear)";
+      return;
+    }
     const r = brushSize;
     for (let dy = -r; dy <= r; dy++) {
       for (let dx = -r; dx <= r; dx++) {
@@ -331,10 +364,13 @@ function startPowderSim() {
         if (x < 0 || x >= cols || y < 0 || y >= rows) continue;
         const i = idx(x, y);
         if (selectedElement === 0) {
+          if (grid[i] !== 0) cachedCount--;
           grid[i] = 0;
           life[i] = 0;
-        } else if (grid[i] === 0 || grid[i] === selectedElement) {
+        } else if (grid[i] === 0) {
+          if (cachedCount >= MAX_PARTICLES) return;
           grid[i] = selectedElement;
+          cachedCount++;
           if (selectedElement === FIRE) life[i] = 30 + Math.random() * 40 | 0;
           else if (selectedElement === SMOKE) life[i] = 30 + Math.random() * 30 | 0;
           else life[i] = 0;
@@ -346,12 +382,23 @@ function startPowderSim() {
   function render() {
     ctx.fillStyle = "#1a1a2e";
     ctx.fillRect(0, 0, w, h);
+    // Batch consecutive same-color cells in a row to cut fillStyle churn.
     for (let y = 0; y < rows; y++) {
+      let runColor = null;
+      let runX0 = 0;
+      let runX1 = 0;
+      const flush = () => {
+        if (runColor !== null) {
+          ctx.fillStyle = runColor;
+          ctx.fillRect(runX0 * CELL, y * CELL, (runX1 - runX0) * CELL, CELL);
+          runColor = null;
+        }
+      };
       for (let x = 0; x < cols; x++) {
         const type = grid[idx(x, y)];
-        if (type === 0) continue;
+        if (type === 0) { flush(); continue; }
         const colors = COLORS[type];
-        if (!colors) continue;
+        if (!colors) { flush(); continue; }
         let c;
         if (type === FIRE) {
           const l = life[idx(x, y)];
@@ -362,26 +409,57 @@ function startPowderSim() {
         } else {
           c = colors[(x + y * 3) % colors.length];
         }
-        ctx.fillStyle = c;
-        ctx.fillRect(x * CELL, y * CELL, CELL, CELL);
+        if (runColor === c) {
+          runX1 = x + 1;
+        } else {
+          flush();
+          runColor = c;
+          runX0 = x;
+          runX1 = x + 1;
+        }
       }
+      flush();
     }
-    let count = 0;
-    for (let i = 0; i < grid.length; i++) { if (grid[i] !== 0) count++; }
-    document.querySelector("#powderCount").textContent = count + " particles";
+    // Full count is O(n); refresh only every 15 frames or when under cap.
+    if (frame % 15 === 0 || cachedCount < MAX_PARTICLES) {
+      let count = 0;
+      for (let i = 0; i < grid.length; i++) { if (grid[i] !== 0) count++; }
+      cachedCount = count;
+    }
+    const label = cachedCount >= MAX_PARTICLES
+      ? cachedCount + " particles (cap — erase or clear)"
+      : cachedCount + " particles";
+    const el = document.querySelector("#powderCount");
+    if (el && el.textContent !== label) el.textContent = label;
   }
 
+  let hasAcid = false;
   function animate() {
+    frame++;
     if (!paused) {
-      step();
-      for (let y = 0; y < rows; y++) {
-        for (let x = 0; x < cols; x++) {
-          const i = idx(x, y);
-          if (grid[i] === ACID) {
-            const dirs = [[0, 1], [0, -1], [-1, 0], [1, 0]];
-            for (const [dx, dy] of dirs) {
-              const nx = x + dx, ny = y + dy;
-              if (nx >= 0 && nx < cols && ny >= 0 && ny < rows) {
+      // Heavy scenes: physics at half rate to avoid spiral of death.
+      const heavy = cachedCount > 15000;
+      if (!heavy || (frame & 1) === 0) {
+        step();
+        // Sparse acid pass: only scan when acid was painted, and only
+        // a random subset of rows per frame.
+        if (selectedElement === ACID) hasAcid = true;
+        if (hasAcid) {
+          let acidSeen = false;
+          const rowStep = heavy ? 3 : 1;
+          const rowOff = frame % (rowStep + 1);
+          for (let y = rowOff; y < rows; y += rowStep + 1) {
+            for (let x = 0; x < cols; x++) {
+              const i = idx(x, y);
+              if (grid[i] !== ACID) continue;
+              acidSeen = true;
+              if (Math.random() < 0.5) continue;
+              const dir = Math.random() < 0.5 ? 0 : 2;
+              const dirs = [[0, 1], [1, 0], [0, -1], [-1, 0]];
+              for (let k = 0; k < 2; k++) {
+                const [dx, dy] = dirs[(dir + k) % 4];
+                const nx = x + dx, ny = y + dy;
+                if (nx < 0 || nx >= cols || ny < 0 || ny >= rows) continue;
                 const ni = idx(nx, ny);
                 const nb = grid[ni];
                 if (nb !== 0 && nb !== OBSIDIAN && nb !== ACID) {
@@ -389,11 +467,13 @@ function startPowderSim() {
                   if (Math.random() < chance) {
                     grid[ni] = 0;
                     life[ni] = 0;
+                    cachedCount--;
                   }
                 }
               }
             }
           }
+          hasAcid = acidSeen;
         }
       }
     }
@@ -454,6 +534,7 @@ function startPowderSim() {
     grid.fill(0);
     nextGrid.fill(0);
     life.fill(0);
+    cachedCount = 0;
   });
 
   document.querySelector("#powderPause").addEventListener("click", () => {

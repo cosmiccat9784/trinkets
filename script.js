@@ -974,7 +974,7 @@ function startCometCatch() {
     state = {
       player: { x: 360, y: 270, r: 16 },
       comets: Array.from({ length: 5 }, () => makeDot(11, "#f6c445")),
-      greens: Array.from({ length: 2 }, () => makeDot(10, "#4ade80")),
+      greens: Array.from({ length: 1 }, () => makeDot(10, "#4ade80")),
       sparks: Array.from({ length: 3 }, () => makeDot(13, "#ff6b6b")),
       particles: [],
       popups: [],
@@ -984,8 +984,8 @@ function startCometCatch() {
       shakeX: 0,
       shakeY: 0,
       nextCometScore: 30,
-      nextGreenScore: 80,
-      nextSparkScore: 60,
+      nextGreenScore: 150,
+      nextSparkScore: 50,
       hintTimer: 3.5
     };
     running = true;
@@ -1099,8 +1099,9 @@ function startCometCatch() {
       state.nextCometScore += 30;
     }
     while (state.score >= state.nextGreenScore) {
-      state.greens.push(makeDot(10, "#4ade80"));
-      state.nextGreenScore += 80;
+      // Green comets stay rare: cap at 2 and cost more score per spawn.
+      if (state.greens.length < 2) state.greens.push(makeDot(10, "#4ade80"));
+      state.nextGreenScore += 150;
     }
     while (state.score >= state.nextSparkScore) {
       state.sparks.push(makeDot(13, "#ff6b6b"));
@@ -1348,15 +1349,25 @@ function startCometCatch() {
   }
 
   function pointerMove(event) {
+    // getBoundingClientRect includes the 3px canvas border, but the
+    // drawing buffer maps to the inside of the border — subtract it so
+    // the catcher sits exactly under the cursor.
     const rect = canvas.getBoundingClientRect();
+    const bl = (rect.width - canvas.clientWidth) / 2;
+    const bt = (rect.height - canvas.clientHeight) / 2;
     const point = event.touches ? event.touches[0] : event;
-    state.player.x = ((point.clientX - rect.left) / rect.width) * canvas.width;
-    state.player.y = ((point.clientY - rect.top) / rect.height) * canvas.height;
+    const innerW = Math.max(1, rect.width - bl * 2);
+    const innerH = Math.max(1, rect.height - bt * 2);
+    state.player.x = ((point.clientX - rect.left - bl) / innerW) * canvas.width;
+    state.player.y = ((point.clientY - rect.top - bt) / innerH) * canvas.height;
+    state.player.x = Math.max(state.player.r, Math.min(canvas.width - state.player.r, state.player.x));
+    state.player.y = Math.max(state.player.r, Math.min(canvas.height - state.player.r, state.player.y));
   }
 
   document.addEventListener("keydown", keydown);
   document.addEventListener("keyup", keyup);
   canvas.addEventListener("mousemove", pointerMove);
+  canvas.addEventListener("pointermove", pointerMove);
   canvas.addEventListener("touchmove", pointerMove, { passive: true });
   document.querySelector("#cometRestart").addEventListener("click", reset);
   activeAdvance = (ms) => {
@@ -3163,49 +3174,13 @@ function startToybox() {
     addCleanup(() => cancelAnimationFrame(raf));
   })();
 
+  // Single-window Toybox: every toy lives in one responsive grid that
+  // fits the fullscreen modal (the window is big enough for them all).
   const allToys = [...grid.children];
-  let toysPerPage = grid.clientWidth < 560 ? 2 : 4;
-  let toyPage = 0;
-  const pager = document.createElement("div");
-  pager.className = "toybox-pager";
-  pager.innerHTML = `<button class="game-action toybox-mini" id="toyPrev" type="button">‹ Prev</button><span class="toybox-page-label" id="toyPageLabel"></span><button class="game-action toybox-mini" id="toyNext" type="button">Next ›</button>`;
-  grid.after(pager);
-  const prevBtn = pager.querySelector("#toyPrev");
-  const nextBtn = pager.querySelector("#toyNext");
-  const pageLabel = pager.querySelector("#toyPageLabel");
-  function toyPageCount() {
-    return Math.max(1, Math.ceil(allToys.length / toysPerPage));
+  allToys.forEach((toy) => toy.classList.remove("toybox-hidden"));
+  if (typeof fitGameShell === "function") {
+    try { fitGameShell(); } catch (err) {}
   }
-  function showToyPage(n) {
-    toyPage = Math.max(0, Math.min(toyPageCount() - 1, n));
-    allToys.forEach((toy, i) => {
-      toy.classList.toggle("toybox-hidden", Math.floor(i / toysPerPage) !== toyPage);
-    });
-    pageLabel.textContent = `Page ${toyPage + 1} of ${toyPageCount()}`;
-    prevBtn.disabled = toyPage === 0;
-    nextBtn.disabled = toyPage === toyPageCount() - 1;
-    fitGameShell();
-  }
-  prevBtn.addEventListener("click", () => showToyPage(toyPage - 1));
-  nextBtn.addEventListener("click", () => showToyPage(toyPage + 1));
-  let toyResizeTimer = 0;
-  function onToyResize() {
-    clearTimeout(toyResizeTimer);
-    toyResizeTimer = setTimeout(() => {
-      if (!grid.isConnected) return;
-      const want = grid.clientWidth < 560 ? 2 : 4;
-      if (want === toysPerPage) return;
-      const firstVisible = toyPage * toysPerPage;
-      toysPerPage = want;
-      showToyPage(Math.floor(firstVisible / toysPerPage));
-    }, 200);
-  }
-  window.addEventListener("resize", onToyResize);
-  cleanups.push(() => {
-    window.removeEventListener("resize", onToyResize);
-    clearTimeout(toyResizeTimer);
-  });
-  showToyPage(0);
 
   setSnapshot({
     mode: "playing",

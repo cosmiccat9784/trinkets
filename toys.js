@@ -158,10 +158,17 @@ function startZenSand() {
   paintSand();
 
   function toCanvas(e) {
+    // Subtract the canvas border so strokes land exactly under the cursor.
     const rect = base.getBoundingClientRect();
+    const bl = (rect.width - base.clientWidth) / 2;
+    const bt = (rect.height - base.clientHeight) / 2;
+    const innerW = Math.max(1, rect.width - bl * 2);
+    const innerH = Math.max(1, rect.height - bt * 2);
+    const cx = e.touches ? e.touches[0].clientX : e.clientX;
+    const cy = e.touches ? e.touches[0].clientY : e.clientY;
     return {
-      x: (e.clientX - rect.left) * (W / rect.width),
-      y: (e.clientY - rect.top) * (H / rect.height)
+      x: (cx - rect.left - bl) * (W / innerW),
+      y: (cy - rect.top - bt) * (H / innerH)
     };
   }
 
@@ -417,9 +424,13 @@ function startGravityBalls() {
 
   function toCanvas(e) {
     const rect = canvas.getBoundingClientRect();
+    const bl = (rect.width - canvas.clientWidth) / 2;
+    const bt = (rect.height - canvas.clientHeight) / 2;
+    const innerW = Math.max(1, rect.width - bl * 2);
+    const innerH = Math.max(1, rect.height - bt * 2);
     return {
-      x: (e.clientX - rect.left) * (W / rect.width),
-      y: (e.clientY - rect.top) * (H / rect.height)
+      x: (e.clientX - rect.left - bl) * (W / innerW),
+      y: (e.clientY - rect.top - bt) * (H / innerH)
     };
   }
 
