@@ -642,6 +642,41 @@ function fitGameShell() {
   }
 }
 
+// Map a pointer position to canvas buffer pixels. The full-screen CSS
+// stretches the canvas *element* to fill leftover space while the fixed
+// buffer is drawn letterboxed inside it (object-fit: contain), so a naive
+// (clientX - rect.left) / rect.width mapping tracks the window, not the
+// game. This accounts for borders (scale-safe) and the contain fit, and
+// degenerates to the naive ratio when aspects already match.
+function canvasPoint(canvas, clientX, clientY) {
+  const bufW = canvas.width || 1;
+  const bufH = canvas.height || 1;
+  const rect = canvas.getBoundingClientRect();
+  let bl = 0, br = 0, bt = 0, bb = 0;
+  try {
+    const cs = getComputedStyle(canvas);
+    bl = parseFloat(cs.borderLeftWidth) || 0;
+    br = parseFloat(cs.borderRightWidth) || 0;
+    bt = parseFloat(cs.borderTopWidth) || 0;
+    bb = parseFloat(cs.borderBottomWidth) || 0;
+    // getBoundingClientRect is in screen px but computed borders are in
+    // CSS px — rescale them if a transform scale is ever applied.
+    const ow = canvas.offsetWidth || rect.width || 1;
+    const k = ow ? rect.width / ow : 1;
+    if (isFinite(k) && k > 0 && Math.abs(k - 1) > 0.001) {
+      bl *= k; br *= k; bt *= k; bb *= k;
+    }
+  } catch (err) {}
+  const ix = rect.left + bl;
+  const iy = rect.top + bt;
+  const iw = Math.max(1, rect.width - bl - br);
+  const ih = Math.max(1, rect.height - bt - bb);
+  const s = Math.min(iw / bufW, ih / bufH);
+  const ox = ix + (iw - bufW * s) / 2;
+  const oy = iy + (ih - bufH * s) / 2;
+  return { x: (clientX - ox) / s, y: (clientY - oy) / s };
+}
+
 window.addEventListener("resize", fitGameShell);
 
 function setSnapshot(payload) {
@@ -1349,19 +1384,13 @@ function startCometCatch() {
   }
 
   function pointerMove(event) {
-    // getBoundingClientRect includes the 3px canvas border, but the
-    // drawing buffer maps to the inside of the border — subtract it so
-    // the catcher sits exactly under the cursor.
-    const rect = canvas.getBoundingClientRect();
-    const bl = (rect.width - canvas.clientWidth) / 2;
-    const bt = (rect.height - canvas.clientHeight) / 2;
+    // Map through canvasPoint: the canvas element is stretched by the
+    // full-screen layout while the buffer is letterboxed inside it, so
+    // the catcher must follow the game, not the window.
     const point = event.touches ? event.touches[0] : event;
-    const innerW = Math.max(1, rect.width - bl * 2);
-    const innerH = Math.max(1, rect.height - bt * 2);
-    state.player.x = ((point.clientX - rect.left - bl) / innerW) * canvas.width;
-    state.player.y = ((point.clientY - rect.top - bt) / innerH) * canvas.height;
-    state.player.x = Math.max(state.player.r, Math.min(canvas.width - state.player.r, state.player.x));
-    state.player.y = Math.max(state.player.r, Math.min(canvas.height - state.player.r, state.player.y));
+    const p = canvasPoint(canvas, point.clientX, point.clientY);
+    state.player.x = Math.max(state.player.r, Math.min(canvas.width - state.player.r, p.x));
+    state.player.y = Math.max(state.player.r, Math.min(canvas.height - state.player.r, p.y));
   }
 
   document.addEventListener("keydown", keydown);

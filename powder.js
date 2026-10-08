@@ -482,11 +482,16 @@ function startPowderSim() {
   }
 
   function canvasCoords(e) {
+    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+    // Map to the letterboxed buffer so paint lands under the cursor.
+    if (typeof canvasPoint === "function") {
+      const p = canvasPoint(canvas, clientX, clientY);
+      return { x: Math.floor(p.x / CELL), y: Math.floor(p.y / CELL) };
+    }
     const rect = canvas.getBoundingClientRect();
     const scaleX = w / rect.width;
     const scaleY = h / rect.height;
-    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
     return {
       x: Math.floor((clientX - rect.left) * scaleX / CELL),
       y: Math.floor((clientY - rect.top) * scaleY / CELL)

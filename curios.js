@@ -222,14 +222,13 @@ function startMagnetMess() {
   }
 
   function toCanvas(e) {
+    // canvasPoint (script.js) maps to the letterboxed game buffer so
+    // grabs track the game, not the stretched element box.
+    if (typeof canvasPoint === "function") return canvasPoint(canvas, e.clientX, e.clientY);
     const rect = canvas.getBoundingClientRect();
-    const bl = (rect.width - canvas.clientWidth) / 2;
-    const bt = (rect.height - canvas.clientHeight) / 2;
-    const innerW = Math.max(1, rect.width - bl * 2);
-    const innerH = Math.max(1, rect.height - bt * 2);
     return {
-      x: (e.clientX - rect.left - bl) * (W / innerW),
-      y: (e.clientY - rect.top - bt) * (H / innerH)
+      x: (e.clientX - rect.left) * (W / rect.width),
+      y: (e.clientY - rect.top) * (H / rect.height)
     };
   }
 
@@ -691,14 +690,13 @@ function startCoinFlip() {
   }
 
   function toCanvas(e) {
+    // canvasPoint (script.js) maps to the letterboxed game buffer so
+    // grabs track the game, not the stretched element box.
+    if (typeof canvasPoint === "function") return canvasPoint(canvas, e.clientX, e.clientY);
     const rect = canvas.getBoundingClientRect();
-    const bl = (rect.width - canvas.clientWidth) / 2;
-    const bt = (rect.height - canvas.clientHeight) / 2;
-    const innerW = Math.max(1, rect.width - bl * 2);
-    const innerH = Math.max(1, rect.height - bt * 2);
     return {
-      x: (e.clientX - rect.left - bl) * (W / innerW),
-      y: (e.clientY - rect.top - bt) * (H / innerH)
+      x: (e.clientX - rect.left) * (W / rect.width),
+      y: (e.clientY - rect.top) * (H / rect.height)
     };
   }
 
@@ -1507,14 +1505,13 @@ function startCheeseThief() {
   }
 
   function toCanvas(e) {
+    // canvasPoint (script.js) maps to the letterboxed game buffer so
+    // grabs track the game, not the stretched element box.
+    if (typeof canvasPoint === "function") return canvasPoint(canvas, e.clientX, e.clientY);
     const rect = canvas.getBoundingClientRect();
-    const bl = (rect.width - canvas.clientWidth) / 2;
-    const bt = (rect.height - canvas.clientHeight) / 2;
-    const innerW = Math.max(1, rect.width - bl * 2);
-    const innerH = Math.max(1, rect.height - bt * 2);
     return {
-      x: (e.clientX - rect.left - bl) * (W / innerW),
-      y: (e.clientY - rect.top - bt) * (H / innerH)
+      x: (e.clientX - rect.left) * (W / rect.width),
+      y: (e.clientY - rect.top) * (H / rect.height)
     };
   }
 
