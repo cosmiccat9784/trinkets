@@ -965,6 +965,7 @@ function startCheeseThief() {
   let splats = [];
   let flash = 0;
   let cleared = false;
+  let deliverFlash = 0;
 
   function startLevel(index) {
     const def = LEVELS[index];
@@ -1210,6 +1211,7 @@ function startCheeseThief() {
         state.cheese[state.carried].delivered = true;
         state.carried = -1;
         score += 100;
+        deliverFlash = 0.7;
         if (state.cheese.every((c) => c.delivered)) {
           cleared = true;
           const bonus = 100 * (levelIndex + 1);
@@ -1226,6 +1228,7 @@ function startCheeseThief() {
     }
 
     if (flash > 0) flash -= dt;
+    if (deliverFlash > 0) deliverFlash -= dt;
     scoreLabel.textContent = `Score: ${score}`;
     levelLabel.textContent = `Kitchen: ${levelIndex + 1}/${LEVELS.length}`;
     livesLabel.textContent = `Strikes: ${strikes}/3`;
@@ -1489,6 +1492,31 @@ function startCheeseThief() {
       ctx.beginPath();
       ctx.arc(p.x, p.y, 20, 0, Math.PI * 2);
       ctx.stroke();
+    }
+    if (deliverFlash > 0) {
+      const t = 1 - deliverFlash / 0.7;
+      ctx.strokeStyle = `rgba(246,196,69,${Math.max(0, 1 - t)})`;
+      ctx.lineWidth = 4;
+      ctx.beginPath();
+      ctx.arc(def.hole.x, def.hole.y, 26 + t * 34, 0, Math.PI * 2);
+      ctx.stroke();
+    }
+    if (cleared) {
+      const lastKitchen = levelIndex + 1 >= LEVELS.length;
+      ctx.font = "bold 44px sans-serif";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      const tw = ctx.measureText("KITCHEN CLEARED!").width + 56;
+      ctx.fillStyle = "rgba(12,10,20,0.82)";
+      ctx.beginPath();
+      if (ctx.roundRect) ctx.roundRect(W / 2 - tw / 2, H / 2 - 66, tw, 76, 14);
+      else ctx.rect(W / 2 - tw / 2, H / 2 - 66, tw, 76);
+      ctx.fill();
+      ctx.fillStyle = "#f6c445";
+      ctx.fillText("KITCHEN CLEARED!", W / 2, H / 2 - 44);
+      ctx.font = "bold 17px sans-serif";
+      ctx.fillStyle = "#fff8ea";
+      ctx.fillText(lastKitchen ? "The whole kitchen is yours. Magnificent." : "Sneak on to the next kitchen →", W / 2, H / 2 - 12);
     }
     if (flash > 0) {
       ctx.fillStyle = `rgba(255,60,60,${flash * 0.5})`;
