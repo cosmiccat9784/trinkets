@@ -7063,8 +7063,6 @@ body.embed .game-layout {
 .game-layout .mayhem-canvas,
 .game-layout .pty-canvas,
 .game-layout .pty-stage,
-.game-layout .penguin-canvas,
-.game-layout .penguin-stage,
 .game-layout .defence-canvas,
 .game-layout .defence-stage,
 .game-layout .ludo-main,
@@ -7096,6 +7094,27 @@ body.embed .game-layout {
   margin-right: 0 !important;
   overflow: hidden !important;
   min-height: 0 !important;
+}
+
+/* Penguin Parkour: the stage holds the canvas AND the touch-button row
+   in normal flow, so it must size to its content (base widths already
+   budget 380px of chrome via 100dvh caps). Stretching it to height:100%
+   makes the canvas eat the whole stage box and the touch row spills over
+   the Shop / Restart / Next buttons below. */
+.game-layout .penguin-stage {
+  flex: 0 1 auto !important;
+  width: min(100%, 720px, max(280px, calc((100dvh - 380px) * 3 / 2))) !important;
+  max-width: 100% !important;
+  height: auto !important;
+  max-height: 100% !important;
+  margin: auto !important;
+}
+
+.game-layout .penguin-canvas {
+  width: 100% !important;
+  height: auto !important;
+  aspect-ratio: 3 / 2 !important;
+  margin: 0 auto !important;
 }
 
 /* Toybox single window + Bubble Wrap sheet stay contained with internal
