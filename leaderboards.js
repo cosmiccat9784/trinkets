@@ -669,7 +669,9 @@
         var result = orig(game, value, mode);
         try {
           if (GAME_META[game] && typeof value === "number" && value > 0) {
-            // 2048 calls recordScore on every render: only log improvements.
+            // 2048 now reports once at win / game over; keep the new-best
+            // gate as a backstop so replays that don't beat the PB never
+            // post (mid-run scores must never reach the global board).
             if (game === "thousand" && !result.isNew) return result;
             if (isOnline(game)) {
               // Online-only display for trial games: submit globally,

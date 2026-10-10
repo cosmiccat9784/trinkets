@@ -3258,6 +3258,8 @@ function start2048() {
   const bestLabel = document.querySelector("#tBest");
 
   let grid, score, best, prev, won, over, tiles, nextId;
+  let reportedWin = false;
+  let reportedOver = false;
 
   const colors = {
     2: "#eee4da", 4: "#ede0c8", 8: "#f2b179", 16: "#f59563",
@@ -3285,6 +3287,8 @@ function start2048() {
     won = false;
     over = false;
     prev = null;
+    reportedWin = false;
+    reportedOver = false;
     addRandom();
     addRandom();
     render();
@@ -3424,9 +3428,18 @@ function start2048() {
     addRandom();
     if (won) {
       msg.textContent = "You reached 2048! Keep going or restart.";
+      // Report once per run — never per move (leaderboard spam).
+      if (!reportedWin) {
+        reportedWin = true;
+        recordScore("thousand", score, "high");
+      }
     } else if (isGameOver()) {
       over = true;
       msg.textContent = "Game over. Try again?";
+      if (!reportedOver) {
+        reportedOver = true;
+        recordScore("thousand", score, "high");
+      }
     } else {
       msg.textContent = "Use arrow keys or swipe to merge tiles.";
     }
@@ -3457,7 +3470,17 @@ function start2048() {
 
   function render() {
     best = Math.max(best || 0, score);
-    recordScore("thousand", best, "high");
+    // Persist the personal best locally WITHOUT reporting: render() runs
+    // on every move/undo, and reporting here spams the leaderboards with
+    // mid-run scores. Runs report exactly once at win / game over.
+    try {
+      const scores = readScores();
+      if (best > 0 && (scores.thousand || 0) < best) {
+        scores.thousand = best;
+        localStorage.setItem(SCORE_KEY, JSON.stringify(scores));
+      }
+    } catch (err) {}
+    updateStatsBand();
     tileLayer.innerHTML = "";
     tiles.forEach((t) => {
       const el = document.createElement("div");
