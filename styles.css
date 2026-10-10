@@ -7117,25 +7117,36 @@ body.embed .game-layout {
   overflow: auto !important;
 }
 
-/* Grid / board puzzlers: fit height, keep square cells, centered.
-   Keep overflow visible + breathing room so tile shadows and focus
-   rings are not clipped (Switchback / Button Bash cutoff fix). */
+/* Grid / board puzzlers: keep their definite base widths (which already
+   cap to the viewport) and center with margin auto. NOTE: never force
+   width:auto here — boards like Ludo are 100% absolutely-positioned
+   children with zero intrinsic size, so auto width collapses them to
+   min-width (the "mini board" bug). */
 .game-layout .pipe-grid,
 .game-layout .maze-grid,
 .game-layout .bash-grid,
 .game-layout .ice-grid,
-.game-layout .orch-grid,
-.game-layout .ludo-board {
-  flex: 0 1 auto !important;
+.game-layout .orch-grid {
+  flex: 0 0 auto !important;
   min-height: 0 !important;
   height: auto !important;
   max-height: 100% !important;
-  width: auto !important;
-  max-width: min(100%, 440px) !important;
+  max-width: 100% !important;
   aspect-ratio: 1 !important;
   margin: auto !important;
   padding: 6px !important;
   overflow: visible !important;
+}
+
+.game-layout .ludo-board {
+  flex: 0 0 auto !important;
+  min-height: 0 !important;
+  height: auto !important;
+  max-height: 100% !important;
+  max-width: 100% !important;
+  aspect-ratio: 1 !important;
+  margin: auto !important;
+  overflow: hidden !important;
 }
 
 /* 2048: always stay square, viewport-capped (RULES law: no scroll, d-pad visible) */
