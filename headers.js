@@ -14,7 +14,7 @@
  *      pencil icon -> Version: New version.
  *
  * BEHAVIOR:
- *   - Auto-rotates every 6 seconds with < > arrows and dots.
+ *   - Auto-rotates every 6 seconds with a fade. No controls to press.
  *   - A single row renders as a static banner (no arrows, dots or timer).
  *   - No rows (or no connection and nothing cached) = no banner at all.
  *   - The x button dismisses it for the session (it returns on reload,
@@ -122,7 +122,6 @@
 
   var banner = null;
   var viewport = null;
-  var dotsWrap = null;
   var headers = [];
   var index = 0;
   var timer = 0;
@@ -146,18 +145,6 @@
     node.className = "announce-text";
     node.textContent = h.text;
     viewport.appendChild(node);
-    if (dotsWrap) {
-      var dots = dotsWrap.querySelectorAll(".announce-dot");
-      for (var d = 0; d < dots.length; d++) {
-        if (d === index) {
-          dots[d].classList.add("active");
-          dots[d].setAttribute("aria-current", "true");
-        } else {
-          dots[d].classList.remove("active");
-          dots[d].setAttribute("aria-current", "false");
-        }
-      }
-    }
   }
 
   function show(i) {
@@ -183,16 +170,6 @@
     }
   }
 
-  function goNext() {
-    show(index + 1);
-    restart();
-  }
-
-  function goPrev() {
-    show(index - 1);
-    restart();
-  }
-
   function dismiss() {
     stop();
     try {
@@ -201,14 +178,12 @@
     if (banner && banner.remove) banner.remove();
     banner = null;
     viewport = null;
-    dotsWrap = null;
   }
 
   function build(list) {
     if (banner && banner.remove) banner.remove();
     banner = null;
     viewport = null;
-    dotsWrap = null;
     stop();
     headers = list;
     index = 0;
@@ -224,48 +199,9 @@
     banner.setAttribute("aria-live", "polite");
     banner.setAttribute("aria-label", "Announcements");
 
-    if (headers.length > 1) {
-      var prev = document.createElement("button");
-      prev.className = "announce-nav";
-      prev.type = "button";
-      prev.textContent = "‹";
-      prev.setAttribute("aria-label", "Previous announcement");
-      prev.addEventListener("click", goPrev);
-      banner.appendChild(prev);
-    }
-
     viewport = document.createElement("span");
     viewport.className = "announce-viewport";
     banner.appendChild(viewport);
-
-    if (headers.length > 1) {
-      var next = document.createElement("button");
-      next.className = "announce-nav";
-      next.type = "button";
-      next.textContent = "›";
-      next.setAttribute("aria-label", "Next announcement");
-      next.addEventListener("click", goNext);
-      banner.appendChild(next);
-
-      dotsWrap = document.createElement("span");
-      dotsWrap.className = "announce-dots";
-      dotsWrap.setAttribute("role", "tablist");
-      dotsWrap.setAttribute("aria-label", "Choose announcement");
-      headers.forEach(function (h, i) {
-        var dot = document.createElement("button");
-        dot.className = "announce-dot" + (i === 0 ? " active" : "");
-        dot.type = "button";
-        dot.setAttribute("role", "tab");
-        dot.setAttribute("aria-label", "Show announcement " + (i + 1));
-        dot.setAttribute("aria-current", i === 0 ? "true" : "false");
-        dot.addEventListener("click", function () {
-          show(i);
-          restart();
-        });
-        dotsWrap.appendChild(dot);
-      });
-      banner.appendChild(dotsWrap);
-    }
 
     var close = document.createElement("button");
     // .filter = the same button class as the beta banner's Exit button.
