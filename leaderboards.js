@@ -462,7 +462,7 @@
     box.append(head);
     var grid = document.createElement("div");
     grid.className = "lb-stats-charts";
-    grid.append(chartCard("🎮 Most played", chartEntries(plays, 8), gameTitle));
+    grid.append(chartCard("🎮 Most played", chartEntries(plays, 20), gameTitle));
     grid.append(chartCard("📱 Devices", chartEntries(s.devices, 5), identityLabel));
     grid.append(chartCard("🌐 Browsers", chartEntries(s.browsers, 5), identityLabel));
     box.append(grid);
