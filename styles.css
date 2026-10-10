@@ -456,6 +456,7 @@ footer {
 /* ── Announcement headers (headers.js): the same bar as beta, carousel inside ── */
 .announce-banner {
   gap: 10px 12px;
+  background: var(--coral);
 }
 
 .announce-viewport {
