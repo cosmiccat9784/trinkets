@@ -15,6 +15,13 @@
  *    (Anonymous arcade stats: one row per page view / game opened.
  *    Visitor is a random per-browser id, Device/Browser are coarse
  *    buckets like Mobile/Desktop and Chrome/Safari — no raw user agents.)
+ * 3c. Add a fourth tab named "Headers" with these headers in row 1:
+ *    Text | Link
+ *    (Site-wide announcement banner: one row per message. Text is the
+ *    banner message, Link is an optional URL it points to — leave Link
+ *    blank for plain text. Blank Text rows are skipped. The banner
+ *    (headers.js) cycles through every row in order, so reorder rows to
+ *    reorder the carousel. Delete a row to remove that message.)
  * 4. In the spreadsheet: Extensions -> Apps Script.
  * 5. Delete any placeholder code, paste this whole file, press Save.
  * 6. Deploy -> New deployment -> gear icon -> Web app.
@@ -28,7 +35,9 @@
  *    The arcade leaderboard client (leaderboards.js) reuses the same URL.
  * 8. Test it: send a report from feedback.html, watch the row appear;
  *    post a score from a beta board with ?beta=1, then load
- *    <exec-url>?action=scores&game=comet to see the JSON top-10.
+ *    <exec-url>?action=scores&game=comet to see the JSON top-10;
+ *    add a row to the Headers tab, then load
+ *    <exec-url>?action=headers to see the JSON carousel feed.
  *
  * NOTE: editing this script later requires redeploying:
  * Deploy -> Manage deployments -> pencil icon -> Version: New version.
@@ -94,6 +103,7 @@ function doPost(e) {
 function doGet(e) {
   // Global top-10 for one game: <exec-url>?action=scores&game=comet
   // Arcade stats: <exec-url>?action=stats
+  // Announcement headers: <exec-url>?action=headers
   var action = "";
   var game = "";
   try {
@@ -105,6 +115,7 @@ function doGet(e) {
     return jsonOut({ scores: [], stats: null });
   }
   if (action === "stats") return statsOut();
+  if (action === "headers") return headersOut();
   if (action !== "scores" || !game) return jsonOut({ scores: [] });
   var sheet = null;
   try {
@@ -132,6 +143,30 @@ function doGet(e) {
   // Trial set is all high-wins (biggest first). Low-wins games need a < b here.
   out.sort(function (a, b) { return b.s - a.s; });
   return jsonOut({ scores: out.slice(0, 10) });
+}
+
+function headersOut() {
+  // Announcement carousel feed: every non-blank row of the Headers tab
+  // (row 1 is the Text | Link header). Returns at most 20 entries.
+  var sheet = null;
+  try {
+    sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Headers");
+  } catch (err) {}
+  if (!sheet) return jsonOut({ headers: [] });
+  var rows = [];
+  try {
+    rows = sheet.getDataRange().getValues();
+  } catch (err) {
+    return jsonOut({ headers: [] });
+  }
+  var out = [];
+  for (var i = 1; i < rows.length && out.length < 20; i++) {
+    var text = String(rows[i][0] == null ? "" : rows[i][0]).trim();
+    if (!text) continue;
+    var link = String(rows[i][1] == null ? "" : rows[i][1]).trim();
+    out.push({ text: text.slice(0, 200), link: link.slice(0, 500) });
+  }
+  return jsonOut({ headers: out });
 }
 
 function statsOut() {

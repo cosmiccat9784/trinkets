@@ -453,6 +453,92 @@ footer {
   text-align: center;
 }
 
+/* ── Announcement headers (headers.js): the same bar as beta, carousel inside ── */
+.announce-banner {
+  gap: 10px 12px;
+}
+
+.announce-viewport {
+  flex: 1 1 auto;
+  min-width: min(220px, 100%);
+  transition: opacity 160ms ease;
+}
+
+.announce-viewport.is-fading {
+  opacity: 0;
+}
+
+.announce-text {
+  overflow-wrap: anywhere;
+}
+
+a.announce-text {
+  color: #fff;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+a.announce-text:hover,
+a.announce-text:focus-visible {
+  color: var(--gold);
+}
+
+.announce-nav {
+  flex: 0 0 auto;
+  width: 34px;
+  height: 34px;
+  background: rgba(255, 255, 255, 0.14);
+  border: 3px solid #fff;
+  border-radius: 8px;
+  color: #fff;
+  font-size: 1.2rem;
+  font-weight: 900;
+  line-height: 1;
+  cursor: pointer;
+  transition: transform 160ms ease, background 160ms ease;
+}
+
+.announce-nav:hover {
+  background: rgba(255, 255, 255, 0.28);
+  transform: translate(-1px, -1px);
+}
+
+.announce-nav:focus-visible,
+.announce-dot:focus-visible {
+  outline: 3px solid #fff;
+  outline-offset: 2px;
+}
+
+.announce-dots {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.announce-dot {
+  width: 12px;
+  height: 12px;
+  padding: 0;
+  background: rgba(255, 255, 255, 0.4);
+  border: 2px solid #fff;
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+.announce-dot.active {
+  background: #fff;
+}
+
+.announce-close {
+  min-width: 0;
+  min-height: 0;
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  font-size: 1.1rem;
+  line-height: 1;
+}
+
 /* ── Shelf list view ── */
 .game-grid.list-view {
   grid-template-columns: 1fr;
