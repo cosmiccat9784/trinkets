@@ -1119,9 +1119,9 @@ function startCometCatch() {
     });
     state.sparks.forEach((dot) => {
       if (distance(state.player, dot) < state.player.r + dot.r) {
-        state.score = Math.max(0, state.score - 8);
+        state.score = Math.max(0, state.score - 20);
         spawnParticles(dot.x, dot.y, "#ff6b6b", 10);
-        spawnPopup(dot.x, dot.y - 20, "-8", "#ff6b6b");
+        spawnPopup(dot.x, dot.y - 20, "-20", "#ff6b6b");
         state.hitFlash = 0.3;
         state.shakeX = (Math.random() - 0.5) * 12;
         state.shakeY = (Math.random() - 0.5) * 12;
